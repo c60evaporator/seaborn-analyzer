@@ -16,15 +16,17 @@ class CustomPairPlot():
     def _corrfunc(self, x, y, **kws):
         if self.hue_names==None:
             labelnum=0
+            hue_num = 0
         else:
             labelnum=self.hue_names.index(kws['label'])
+            hue_num = len(self.hue_names)
         #xまたはyがNaNの行を除外
         mask = ~np.logical_or(np.isnan(x), np.isnan(y))
         x, y = x[mask], y[mask]
         #相関係数算出＆0.4ごとにフォントサイズ拡大
         r, _ = stats.pearsonr(x, y)
-        fsize = 10 + 5 * np.ceil(abs(r)/0.4)
-        fsize = 10 if np.isnan(fsize) else fsize
+        fsize = min(9, 45/hue_num) + min(4.5, 22.5/hue_num) * np.ceil(abs(r)/0.4)
+        fsize = min(9, 45/hue_num) if np.isnan(fsize) else fsize
         #相関係数を表示（hue指定時は、下にずらす）
         ax = plt.gca()
         #hue指定なしのとき、一番上に相関係数を表示
@@ -32,7 +34,7 @@ class CustomPairPlot():
             ax.annotate("r={:.2f}".format(r), xy=(.1, .85), xycoords=ax.transAxes, size=fsize, color=kws['color'])
         #hue指定ありのとき、既に表示したhueの分だけ下にさげて表示
         else:
-            ax.annotate("r={:.2f}".format(r), xy=(.1, .65-.15*labelnum), xycoords=ax.transAxes, size=fsize, color=kws['color'])
+            ax.annotate("r={:.2f}".format(r), xy=(.1, .65-min(.15,.75/hue_num)*labelnum), xycoords=ax.transAxes, size=fsize, color=kws['color'])
     
     #hueを分けない相関係数計算して上半分に表示
     def _corrall_upper(self, g):
