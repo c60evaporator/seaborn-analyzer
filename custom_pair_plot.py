@@ -18,7 +18,7 @@ class CustomPairPlot():
             labelnum=0
             hue_num = 0
         else:
-            labelnum=self.hue_names.index(kws['label'])
+            labelnum=self.hue_names.index(kws["label"])
             hue_num = len(self.hue_names)
         #xまたはyがNaNの行を除外
         mask = ~np.logical_or(np.isnan(x), np.isnan(y))
@@ -30,7 +30,7 @@ class CustomPairPlot():
         #該当マスのaxを取得
         ax = plt.gca()
         #既に表示したhueの分だけ下にさげて相関係数表示
-        ax.annotate("r={:.2f}".format(r), xy=(.1, .65-min(.15,.75/hue_num)*labelnum), xycoords=ax.transAxes, size=fsize, color=kws['color'])
+        ax.annotate("r={:.2f}".format(r), xy=(.1, .65-min(.15,.75/hue_num)*labelnum), xycoords=ax.transAxes, size=fsize, color=kws["color"])
     
     #hueを分けない相関係数計算して上半分に表示
     def _corrall_upper(self, g):
@@ -48,10 +48,10 @@ class CustomPairPlot():
             fsize = 10 + 5 * np.ceil(abs(r)/0.2)
             fsize = 10 if np.isnan(fsize) else fsize
             #一番上に表示
-            ax.annotate("r={:.2f}".format(r), xy=(.1, .85), xycoords=ax.transAxes, size=fsize, color='black')
+            ax.annotate("r={:.2f}".format(r), xy=(.1, .85), xycoords=ax.transAxes, size=fsize, color="black")
 
     #重複数に応じたバブルチャート
-    def _duplicate_bubblescatter(self, data, x, y, hue=None, hue_names=None, hue_slide='horizontal', palette=None):
+    def _duplicate_bubblescatter(self, data, x, y, hue=None, hue_names=None, hue_slide="horizontal", palette=None):
         #hueの要素数および値を取得
         if hue is not None:
             #hue_nameを入力していないとき、hueの要素から自動生成
@@ -66,7 +66,7 @@ class CustomPairPlot():
             hue_vals = pd.Series(["_nolegend_"] * len(data),
                                       index=data.index)
         #hueで区切らない全データ数（NaNは除外）をカウント
-        ndata = len(data[[x,y]].dropna(how='any'))
+        ndata = len(data[[x,y]].dropna(how="any"))
 
         ######hueごとにGroupByして表示処理######
         hue_grouped = data.groupby(hue_vals)
@@ -78,11 +78,11 @@ class CustomPairPlot():
                                       dtype=np.float)
             #X,Yごとに要素数をカウント
             df_xy = data_k[[x,y]]
-            df_xy['xyrec'] = 1
-            df_xycount = df_xy.dropna(how='any').groupby([x,y], as_index=False).count()
+            df_xy["xyrec"] = 1
+            df_xycount = df_xy.dropna(how="any").groupby([x,y], as_index=False).count()
             #hueが2個以上存在するとき、表示位置ずらし量（対象軸のユニーク値差分最小値÷4に収まるよう設定）を計算
             if hue_num >=2:
-                if hue_slide == 'horizontal':
+                if hue_slide == "horizontal":
                     x_distinct_sort = sorted(list(dict.fromkeys(data[x].dropna())))
                     x_diff_min = min(np.diff(x_distinct_sort))
                     x_offset = k * (x_diff_min/4)/(hue_num - 1) - x_diff_min/8
@@ -97,7 +97,7 @@ class CustomPairPlot():
                 y_offset = 0
             #散布図表示（要素数をプロットサイズで表現）
             ax = plt.gca()
-            ax.scatter(df_xycount[x] + x_offset, df_xycount[y] + y_offset, s=df_xycount['xyrec']*1000/ndata, color=palette[k])
+            ax.scatter(df_xycount[x] + x_offset, df_xycount[y] + y_offset, s=df_xycount["xyrec"]*1000/ndata, color=palette[k])
 
     #plotter=scatterかつ要素数が2以下なら箱ひげ図、それ以外ならscatterplotを使用
     def _boxscatter_lower(self, g, **kwargs):
@@ -119,22 +119,26 @@ class CustomPairPlot():
             
             #箱ひげ図(x方向)
             if len(x_distinct) ==2 and len(y_distinct) >= 5:
-                sns.boxplot(data=self.df, x=x_var, y=y_var, orient='v',
+                sns.boxplot(data=self.df, x=x_var, y=y_var, orient="v",
                      hue=self.hue, palette=g.palette, **kwargs)
             #重複数に応じたバブルチャート(x方向)
             elif len(x_distinct) ==2 and len(y_distinct) < 5:
-                self._duplicate_bubblescatter(data=self.df, x=x_var, y=y_var, hue=self.hue, hue_names=self.hue_names, hue_slide='horizontal', palette=g.palette)
+                self._duplicate_bubblescatter(data=self.df, x=x_var, y=y_var, hue=self.hue, hue_names=g.hue_names, hue_slide="horizontal", palette=g.palette)
             #箱ひげ図(y方向)
             elif len(y_distinct) ==2 and len(x_distinct) >= 5:
-                sns.boxplot(data=self.df, x=x_var, y=y_var, orient='h',
+                sns.boxplot(data=self.df, x=x_var, y=y_var, orient="h",
                      hue=self.hue, palette=g.palette, **kwargs)
             #重複数に応じたバブルチャート(y方向)
             elif len(y_distinct) ==2 and len(x_distinct) < 5:
-                self._duplicate_bubblescatter(data=self.df, x=x_var, y=y_var, hue=self.hue, hue_names=self.hue_names, hue_slide='vertical', palette=g.palette)
+                self._duplicate_bubblescatter(data=self.df, x=x_var, y=y_var, hue=self.hue, hue_names=g.hue_names, hue_slide="vertical", palette=g.palette)
             #散布図
             else:
+                if len(g.hue_kws) > 0:#マーカー指定あるとき
+                    markers = dict(zip(g.hue_names, g.hue_kws["marker"]))
+                else:#マーカー指定ないとき
+                    markers = None
                 sns.scatterplot(data=self.df, x=x_var, y=y_var, hue=self.hue,
-                     palette=g.palette, **kwargs)
+                     palette=g.palette, style=self.hue, markers=markers)
             #凡例を追加
             g._clean_axis(ax)
             g._update_legend_data(ax)
@@ -150,18 +154,21 @@ class CustomPairPlot():
              height=2.5, aspect=1, dropna=True,
              lower_kws={}, diag_kws={}, grid_kws={}, size=None):
         #メンバ変数入力
-        self.df = df
+        if diag_kind=="hist":#ヒストグラム表示のとき、bool型の列を除外してデータ読込
+            self.df = df.select_dtypes(exclude=bool)
+        else:#kde表示のとき、bool型を含めデータ読込
+            self.df = df
         self.hue = hue
-        self.corr_mat = df.corr(method='pearson')
+        self.corr_mat = df.corr(method="pearson")
         #文字サイズ調整
-        sns.set_context('notebook')
+        sns.set_context("notebook")
 
         #PairGridインスタンス作成
         plt.figure()
         diag_sharey = diag_kind == "hist"
         g = sns.PairGrid(self.df, hue=self.hue,
                  palette=palette, vars=vars, diag_sharey=diag_sharey,
-                 height=height, aspect=aspect, dropna=dropna, **grid_kws)
+                 height=height, aspect=aspect, dropna=dropna, size=None, **grid_kws)
 
         #マーカーを設定
         if markers is not None:
