@@ -51,7 +51,7 @@ class CustomPairPlot():
             ax.annotate("r={:.2f}".format(r), xy=(.1, .85), xycoords=ax.transAxes, size=fsize, color='black')
 
     #重複数に応じたバブルチャート
-    def _duplicate_bubblescatter(self, data, x, y, hue=None, hue_names=None, hue_slide='horizontal'):
+    def _duplicate_bubblescatter(self, data, x, y, hue=None, hue_names=None, hue_slide='horizontal', palette=None):
         #hueの要素数および値を取得
         if hue is not None:
             #hue_nameを入力していないとき、hueの要素から自動生成
@@ -97,11 +97,12 @@ class CustomPairPlot():
                 y_offset = 0
             #散布図表示（要素数をプロットサイズで表現）
             ax = plt.gca()
-            ax.scatter(df_xycount[x] + x_offset, df_xycount[y] + y_offset, s=df_xycount['xyrec']*1000/ndata)
+            ax.scatter(df_xycount[x] + x_offset, df_xycount[y] + y_offset, s=df_xycount['xyrec']*1000/ndata, color=palette[k])
 
     #plotter=scatterかつ要素数が2以下なら箱ひげ図、それ以外ならscatterplotを使用
     def _boxscatter_lower(self, g, **kwargs):
-        kw_color = kwargs.pop("color", None)
+        #kw_color = kwargs.pop("color", None)
+        kw_color = g.palette
         #左下を走査
         for i, j in zip(*np.tril_indices_from(g.axes, -1)):
             ax = g.axes[i, j]
@@ -119,21 +120,21 @@ class CustomPairPlot():
             #箱ひげ図(x方向)
             if len(x_distinct) ==2 and len(y_distinct) >= 5:
                 sns.boxplot(data=self.df, x=x_var, y=y_var, orient='v',
-                     hue=self.hue, color=kw_color, **kwargs)
+                     hue=self.hue, palette=g.palette, **kwargs)
             #重複数に応じたバブルチャート(x方向)
             elif len(x_distinct) ==2 and len(y_distinct) < 5:
-                self._duplicate_bubblescatter(data=self.df, x=x_var, y=y_var, hue=self.hue, hue_names=self.hue_names, hue_slide='horizontal')
+                self._duplicate_bubblescatter(data=self.df, x=x_var, y=y_var, hue=self.hue, hue_names=self.hue_names, hue_slide='horizontal', palette=g.palette)
             #箱ひげ図(y方向)
             elif len(y_distinct) ==2 and len(x_distinct) >= 5:
                 sns.boxplot(data=self.df, x=x_var, y=y_var, orient='h',
-                     hue=self.hue, color=kw_color, **kwargs)
+                     hue=self.hue, palette=g.palette, **kwargs)
             #重複数に応じたバブルチャート(y方向)
             elif len(y_distinct) ==2 and len(x_distinct) < 5:
-                self._duplicate_bubblescatter(data=self.df, x=x_var, y=y_var, hue=self.hue, hue_names=self.hue_names, hue_slide='vertical')
+                self._duplicate_bubblescatter(data=self.df, x=x_var, y=y_var, hue=self.hue, hue_names=self.hue_names, hue_slide='vertical', palette=g.palette)
             #散布図
             else:
                 sns.scatterplot(data=self.df, x=x_var, y=y_var, hue=self.hue,
-                     color=kw_color, **kwargs)
+                     palette=g.palette, **kwargs)
             #凡例を追加
             g._clean_axis(ax)
             g._update_legend_data(ax)
