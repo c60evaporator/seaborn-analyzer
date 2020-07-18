@@ -27,14 +27,10 @@ class CustomPairPlot():
         r, _ = stats.pearsonr(x, y)
         fsize = min(9, 45/hue_num) + min(4.5, 22.5/hue_num) * np.ceil(abs(r)/0.4)
         fsize = min(9, 45/hue_num) if np.isnan(fsize) else fsize
-        #相関係数を表示（hue指定時は、下にずらす）
+        #該当マスのaxを取得
         ax = plt.gca()
-        #hue指定なしのとき、一番上に相関係数を表示
-        if self.hue_names == None:
-            ax.annotate("r={:.2f}".format(r), xy=(.1, .85), xycoords=ax.transAxes, size=fsize, color=kws['color'])
-        #hue指定ありのとき、既に表示したhueの分だけ下にさげて表示
-        else:
-            ax.annotate("r={:.2f}".format(r), xy=(.1, .65-min(.15,.75/hue_num)*labelnum), xycoords=ax.transAxes, size=fsize, color=kws['color'])
+        #既に表示したhueの分だけ下にさげて相関係数表示
+        ax.annotate("r={:.2f}".format(r), xy=(.1, .65-min(.15,.75/hue_num)*labelnum), xycoords=ax.transAxes, size=fsize, color=kws['color'])
     
     #hueを分けない相関係数計算して上半分に表示
     def _corrall_upper(self, g):
