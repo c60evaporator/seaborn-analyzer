@@ -56,7 +56,7 @@ class CustomPairPlot():
         if hue is not None:
             #hue_nameを入力していないとき、hueの要素から自動生成
             if hue_names is None:
-                hue_names = data[hue].unique()
+                hue_names = data[hue].dropna().unique()
             hue_num = len(hue_names)
             hue_vals = data[hue]
         #hueを入力していないときも、groupby用にhue関係変数生成
@@ -114,8 +114,8 @@ class CustomPairPlot():
             x_data = self.df[x_var]
             y_data = self.df[y_var]
             #XY軸のユニーク値
-            x_distinct = x_data.unique()
-            y_distinct = y_data.unique()
+            x_distinct = x_data.dropna().unique()
+            y_distinct = y_data.dropna().unique()
             
             #箱ひげ図(x方向)
             if len(x_distinct) ==2 and len(y_distinct) >= 5:
