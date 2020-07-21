@@ -56,7 +56,7 @@ class CustomPairPlot():
         if hue is not None:
             #hue_nameを入力していないとき、hueの要素から自動生成
             if hue_names is None:
-                hue_names = list(dict.fromkeys(data[hue]))
+                hue_names = data[hue].unique()
             hue_num = len(hue_names)
             hue_vals = data[hue]
         #hueを入力していないときも、groupby用にhue関係変数生成
@@ -83,12 +83,12 @@ class CustomPairPlot():
             #hueが2個以上存在するとき、表示位置ずらし量（対象軸のユニーク値差分最小値÷4に収まるよう設定）を計算
             if hue_num >=2:
                 if hue_slide == "horizontal":
-                    x_distinct_sort = sorted(list(dict.fromkeys(data[x].dropna())))
+                    x_distinct_sort = sorted(data[x].dropna().unique())
                     x_diff_min = min(np.diff(x_distinct_sort))
                     x_offset = k * (x_diff_min/4)/(hue_num - 1) - x_diff_min/8
                     y_offset = 0
                 else:
-                    y_distinct_sort = sorted(list(dict.fromkeys(data[y].dropna())))
+                    y_distinct_sort = sorted(data[y].dropna().unique())
                     y_diff_min = min(np.diff(y_distinct_sort))
                     x_offset = 0
                     y_offset = k * (y_diff_min/4)/(hue_num - 1) - y_diff_min/8
@@ -114,8 +114,8 @@ class CustomPairPlot():
             x_data = self.df[x_var]
             y_data = self.df[y_var]
             #XY軸のユニーク値
-            x_distinct = list(dict.fromkeys(x_data))
-            y_distinct = list(dict.fromkeys(y_data))
+            x_distinct = x_data.unique()
+            y_distinct = y_data.unique()
             
             #箱ひげ図(x方向)
             if len(x_distinct) ==2 and len(y_distinct) >= 5:
