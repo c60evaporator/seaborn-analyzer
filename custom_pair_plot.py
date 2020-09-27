@@ -14,7 +14,7 @@ class CustomPairPlot():
     
     #hueごとに相関係数計算
     def _corrfunc(self, x, y, **kws):
-        if self.hue_names==None:
+        if self.hue_names is None:
             labelnum=0
             hue_num = 0
         else:
@@ -201,7 +201,7 @@ class CustomPairPlot():
 
         #色分け（hue）有無で場合分けしてプロット＆相関係数表示実行
         #hueなし
-        if self.hue == None:
+        if self.hue is None:
             #右上に相関係数表示
             self.hue_names = None
             self._corrall_upper(g)
