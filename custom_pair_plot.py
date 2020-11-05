@@ -191,9 +191,18 @@ class CustomPairPlot():
             diag_kws["legend"] = False
             g.map_diag(sns.kdeplot, **diag_kws)
 
+        #各変数のユニーク数を計算
+        nuniques = []
+        for col_name in g.x_vars:
+            col_data = self.df[col_name]
+            nuniques.append(len(col_data.dropna().unique()))
+
         #左下に散布図etc.をプロット
         if lowerkind == "boxscatter":
-            self._boxscatter_lower(g, **lower_kws)
+            if min(nuniques) <= 2: #ユニーク数が2の変数が存在するときのみ、箱ひげ表示
+                self._boxscatter_lower(g, **lower_kws)
+            else: #ユニーク数が2の変数が存在しないとき、散布図(_boxscatter_lowerを実行すると凡例マーカーが消えてしまう)
+                g.map_lower(sns.scatterplot, **lower_kws)
         elif lowerkind == "scatter":
             g.map_lower(sns.scatterplot, **lower_kws)
         else:
