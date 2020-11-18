@@ -3,4 +3,4 @@
 
 ## 使用法
 こちら参照ください
-https://github.com/c60evaporator/seaborn_analyzer
+https://qiita.com/c60evaporator/items/20f11b6ee965cec48570
