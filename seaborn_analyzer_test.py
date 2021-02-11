@@ -13,5 +13,5 @@ import matplotlib.pyplot as plt
 
 iris = sns.load_dataset("iris")
 fig, axes = plt.subplots(2, 2, figsize=(8, 8))
-dist.hist_dist(iris['sepal_length'], ax=axes[0, 0])
+dist.hist_dist(iris['sepal_length'], ax=axes[0, 0], rounddigit=5)
 # %%
