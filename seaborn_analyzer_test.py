@@ -21,5 +21,5 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 
 iris = sns.load_dataset("iris")
-dist.regression_plot_pred(LinearRegression(), 'petal_length', 'sepal_length', iris, hue='species', rounddigit=5)
+dist.regression_plot_pred(LinearRegression(), 'petal_length', 'sepal_length', iris, plot_stats='median', rounddigit=5, cv=5)
 # %%

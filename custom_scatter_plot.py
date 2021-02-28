@@ -56,7 +56,7 @@ class dist():
         return dstdict
 
     @classmethod
-    def _plot_real_pred(cls, y_real, y_pred, hue_data=None, ax=None, linecolor='red', linesplit=50, rounddigit=None,
+    def plot_real_pred(cls, y_real, y_pred, hue_data=None, hue_name=None, ax=None, linecolor='red', linesplit=50, rounddigit=None,
                         score_dict=None, colname=None):
         """
         実測値と予測値を、回帰評価指標とともにプロット
@@ -69,6 +69,8 @@ class dist():
             目的変数予測値
         hue_data : ndarray
             色分け用ラベルデータ
+        hue_name : str
+            色分け用の列名
         ax : matplotlib.axes._subplots.Axes
             表示対象のax（Noneならplt.plotで1枚ごとにプロット）
         linecolor : str
@@ -82,17 +84,16 @@ class dist():
         colname : str
             列名
         """
-        # 実測値と予測値を合体
+        # 実測値と予測値を合体してDataFrame化
         data = np.stack([y_real, y_pred], axis=1)
-        columns = ['y_real', 'y_pred']
-        # 色分け指定しているとき
+        data = pd.DataFrame(data, columns=['y_real', 'y_pred'])
+        # 色分け指定しているとき、色分け用のフィールドを追加
         if hue_data is not None:
-            data = np.hstack([data, hue_data.reshape(len(hue_data), 1)])
-            columns.append('hue')
-        # DataFrame化
-        data = pd.DataFrame(data, columns=columns)
+            if hue_name == None:
+                hue_name = 'hue'
+            data[hue_name] = pd.Series(hue_data)
         # 散布図プロット
-        sns.scatterplot(x='y_real', y='y_pred', data=data, ax=ax, hue='hue')
+        sns.scatterplot(x='y_real', y='y_pred', data=data, ax=ax, hue=hue_name)
 
         # 描画用axがNoneのとき、matplotlib.pyplotを使用
         if ax == None:
@@ -113,8 +114,8 @@ class dist():
         ax.text(real_max, np.amin(y_pred), score_text, verticalalignment='bottom', horizontalalignment='right')
     
     @classmethod
-    def regression_plot_pred(cls, model, x: List[str], y: str, data: pd.DataFrame, ax=None, hue=None, linecolor='red', linesplit=50, rounddigit=None,
-                             scores='rmse', cv=None, cv_seed: int=42, model_params=None, fit_params=None):
+    def regression_plot_pred(cls, model, x: List[str], y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=None,
+                             scores='rmse', plot_stats='mean', cv=None, cv_seed: int=42, model_params=None, fit_params=None, subplot_kws={}):
         """
         回帰して予測値と実測値をプロットし、評価値を表示
 
@@ -128,18 +129,18 @@ class dist():
             目的変数カラム (列名指定)
         data : pd.DataFrame
             フィッティング対象のデータ
-        ax : matplotlib.axes._subplots.Axes
-            表示対象のax (Noneならplt.plotで1枚ごとにプロット)
         hue : str
             色分け指定カラム (列名指定)
         sigmarange : float
             フィッティング線の表示範囲 (標準偏差の何倍まで表示するか指定)
-        linesplit : int
-            フィッティング線の分割数 (カクカクしたら増やす)
         rounddigit: int
             表示指標の小数丸め桁数
+        subplot_kws : Dict[str, float]
+            プロット用のplt.subplots()に渡す引数 (例：figsize
         scores : str or list[str]
-            算出する評価指標（'r2', 'mae','rmse', 'rmsle', 'maxerror'）
+            算出する評価指標（'r2', 'mae','rmse', 'rmsle', 'max_error'）
+        plot_stats : Dict
+            クロスバリデーション時に表示する統計値 ('mean', 'median', 'max', 'min')
         cv : None or int or KFold
             クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)
         cv_seed : int
@@ -187,28 +188,106 @@ class dist():
             model.fit(X, y_real, **fit_params)
             y_pred = model.predict(X)
             # 評価指標算出
-            for score in scores:
-                if score == 'r2':
+            for scoring in scores:
+                if scoring == 'r2':
                     score_dict['r2'] = r2_score(y_real, y_pred)
-                elif score == 'mae':
+                elif scoring == 'mae':
                     score_dict['mae'] = mean_absolute_error(y_real, y_pred)
-                elif score == 'rmse':
+                elif scoring == 'rmse':
                     score_dict['rmse'] = mean_squared_error(y_real, y_pred)
-                elif score == 'rmsle':
+                elif scoring == 'rmsle':
                     score_dict['rmsle'] = mean_squared_log_error(y_real, y_pred)
-                elif score == 'maxerror':
-                    score_dict['maxerror'] = max([abs(p - r) for r, p in zip(y_real, y_pred)])
+                elif scoring == 'max_error':
+                    score_dict['max_error'] = max([abs(p - r) for r, p in zip(y_real, y_pred)])
             # 色分け用データ取得
             if hue is None:
                 hue_data = None
+                hue_name = None
             else:
                 hue_data = data[hue].values
+                hue_name = hue
             # プロット
-            cls._plot_real_pred(y_real, y_pred, hue_data, score_dict=score_dict, colname=None)
+            cls.plot_real_pred(y_real, y_pred, hue_data=hue_data, hue_name=hue_name,
+                                linecolor=linecolor, rounddigit=rounddigit, score_dict=score_dict, colname=None)
             
-        # クロスバリデーション実施時
+        # クロスバリデーション実施時(分割ごとに別々にプロット＆指標算出)
         if cv is not None:
             # 分割法未指定時、cv_numとseedに基づきランダムに分割
             if isinstance(cv, numbers.Integral):
                 cv = KFold(n_splits=cv, shuffle=True, random_state=cv_seed)
+
+            # スコア種類ごとにクロスバリデーションスコアの算出
+            score_all_dict = {}
+            for scoring in scores:
+                # cross_val_scoreでクロスバリデーション
+                if scoring == 'r2':
+                    score_all_dict['r2'] = cross_val_score(model, X, y_real, cv=cv, scoring='r2',
+                                                           fit_params=fit_params, n_jobs=-1)
+                elif scoring == 'mae':
+                    neg_mae = cross_val_score(model, X, y_real, cv=cv, scoring='neg_mean_absolute_error',
+                                                           fit_params=fit_params, n_jobs=-1)
+                    score_all_dict['mae'] = -neg_mae  # scikit-learnの仕様に合わせ正負を逆に
+                elif scoring == 'rmse':
+                    neg_rmse = cross_val_score(model, X, y_real, cv=cv, scoring='neg_root_mean_squared_error',
+                                                           fit_params=fit_params, n_jobs=-1)
+                    score_all_dict['rmse'] = -neg_rmse  # scikit-learnの仕様に合わせ正負を逆に
+                elif scoring == 'rmsle':
+                    neg_msle = cross_val_score(model, X, y_real, cv=cv, scoring='neg_mean_squared_log_error',
+                                                           fit_params=fit_params, n_jobs=-1)
+                    score_all_dict['rmsle'] = np.sqrt(-neg_msle)  # 正負を逆にしてルートをとる
+                elif scoring == 'max_error':
+                    neg_max_error = cross_val_score(model, X, y_real, cv=cv, scoring='max_error',
+                                                           fit_params=fit_params, n_jobs=-1)
+                    score_all_dict['max_error'] = - neg_max_error  # scikit-learnの仕様に合わせ正負を逆に
+
+            # 表示用のaxes作成
+            if 'figsize' not in subplot_kws.keys():
+                subplot_kws['figsize'] = (6, (cv.n_splits + 1) * 6)
+            fig, axes = plt.subplots(cv.n_splits + 1, 1, **subplot_kws)
+            # 表示用にテストデータと学習データ分割
+            y_real_all = []
+            y_pred_all = []
+            hue_all = []
+            for i, (train, test) in enumerate(cv.split(X, y_real)):
+                X_train = X[train]
+                y_train = y_real[train]
+                X_test = X[test]
+                y_test = y_real[test]
+                # 色分け用データ取得(していないときは、クロスバリデーション番号を使用)
+                if hue is None:
+                    hue_test = np.full(len(test) ,f'cv_{i}')
+                    hue_name = 'cv_number'  # 色分け名を'cv_number'に指定
+                else:
+                    hue_test = data[hue].values[test]
+                    hue_name = hue
+                # 学習と推論
+                model.fit(X_train, y_train, **fit_params)
+                y_pred = model.predict(X_test)
+                # CV内結果をプロット
+                score_cv_dict = {k: v[i] for k, v in score_all_dict.items()}
+                cls.plot_real_pred(y_test, y_pred, hue_data=hue_test, hue_name=hue_name, ax=axes[i],
+                                   linecolor=linecolor, rounddigit=rounddigit, score_dict=score_cv_dict, colname=None)
+                axes[i].set_title(f'Cross Validation No{i}')
+                # 全体プロット用データに追加
+                y_real_all.append(y_test)
+                y_pred_all.append(y_pred)
+                hue_all.append(hue_test)
+            # 合体
+            y_real_all = np.hstack(y_real_all)
+            y_pred_all = np.hstack(y_pred_all)
+            hue_all = np.hstack(hue_all)
+            # 指標の統計値を計算
+            if plot_stats == 'mean':
+                score_stats_dict = {f'{k}_mean': np.mean(v) for k, v in score_all_dict.items()}            
+            elif plot_stats == 'median':
+                score_stats_dict = {f'{k}_median': np.median(v) for k, v in score_all_dict.items()}            
+            elif plot_stats == 'min':
+                score_stats_dict = {f'{k}_min': np.amin(v) for k, v in score_all_dict.items()}            
+            elif plot_stats == 'max':
+                score_stats_dict = {f'{k}_max': np.amax(v) for k, v in score_all_dict.items()}
+            # 全体プロット
+            cls.plot_real_pred(y_real_all, y_pred_all, hue_data=hue_all, hue_name=hue_name, ax=axes[cv.n_splits],
+                               linecolor=linecolor, rounddigit=rounddigit, score_dict=score_stats_dict, colname=None)
+            axes[cv.n_splits].set_title('All Cross Validations')
+
         return score_dict
