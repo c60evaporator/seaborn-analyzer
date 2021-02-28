@@ -114,8 +114,42 @@ class dist():
         ax.text(real_max, np.amin(y_pred), score_text, verticalalignment='bottom', horizontalalignment='right')
     
     @classmethod
+    def _rank_display(cls, y_real, y_pred, rank_number, rank_field, rank_field_data, ax=None, rounddigit=None):
+        """
+        誤差上位をプロット
+
+        Parameters
+        ----------
+        y_real : ndarray
+            目的変数実測値
+        y_pred : ndarray
+            目的変数予測値
+        rank_number : int
+            誤差上位何番目までを文字表示するか
+        rank_field : List[str]
+            誤差上位と一緒に表示するフィールド (NoneならIndexを使用)
+        ax : matplotlib.axes._subplots.Axes
+            表示対象のax（Noneならplt.plotで1枚ごとにプロット）
+        rounddigit: int
+            表示指標の小数丸め桁数
+        """
+        # 描画用axがNoneのとき、matplotlib.pyplotを使用
+        if ax == None:
+            ax=plt
+
+        if rank_field == None:
+            rank_field = 'index'
+        y_error = np.abs(y_pred - y_real)
+        rank_index  = np.argsort(-y_error)[:rank_number]
+        for rank, i in enumerate(rank_index):
+            error = cls._round_digits(y_error[i], rounddigit=rounddigit, method='decimal')
+            rank_text = f'rank={rank+1}\n{rank_field}={rank_field_data[i]}\nerror={error}'
+            ax.text(y_real[i], y_pred[i], rank_text, verticalalignment='center', horizontalalignment='left')
+    
+    @classmethod
     def regression_plot_pred(cls, model, x: List[str], y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=None,
-                             scores='rmse', plot_stats='mean', cv=None, cv_seed: int=42, model_params=None, fit_params=None, subplot_kws={}):
+                             rank_number=None, rank_field=None, scores='rmse', plot_stats='mean', cv=None, cv_seed=42,
+                             model_params=None, fit_params=None, subplot_kws={}):
         """
         回帰して予測値と実測値をプロットし、評価値を表示
 
@@ -135,8 +169,10 @@ class dist():
             フィッティング線の表示範囲 (標準偏差の何倍まで表示するか指定)
         rounddigit: int
             表示指標の小数丸め桁数
-        subplot_kws : Dict[str, float]
-            プロット用のplt.subplots()に渡す引数 (例：figsize
+        rank_number : int
+            誤差上位何番目までを文字表示するか
+        rank_field : List[str]
+            誤差上位と一緒に表示するフィールド (NoneならIndexを使用)
         scores : str or list[str]
             算出する評価指標（'r2', 'mae','rmse', 'rmsle', 'max_error'）
         plot_stats : Dict
@@ -151,6 +187,8 @@ class dist():
             学習時のパラメータをdict指定 (例: XGBoostのearly_stopping_rounds)
             Noneならデフォルト
             Pipelineのときは{学習器名__パラメータ名:パラメータの値,‥}で指定する必要あり
+        subplot_kws : Dict[str, float]
+            プロット用のplt.subplots()に渡す引数 (例：figsize)
         """
         # xをndarray化
         if isinstance(x, list):
@@ -206,9 +244,18 @@ class dist():
             else:
                 hue_data = data[hue].values
                 hue_name = hue
-            # プロット
+            # 誤差上位表示用データ取得
+            if rank_number is not None:
+                if rank_field is None:  # 表示フィールド指定ないとき、Index使用
+                    rank_field_data = data.index.values
+                else:  # 表示フィールド指定あるとき
+                    rank_field_data = data[rank_field].values
+            # 予測値と実測値プロット
             cls.plot_real_pred(y_real, y_pred, hue_data=hue_data, hue_name=hue_name,
                                 linecolor=linecolor, rounddigit=rounddigit, score_dict=score_dict, colname=None)
+            # 誤差上位を文字表示
+            if rank_number is not None:
+                cls._rank_display(y_real, y_pred, rank_number, rank_field, rank_field_data, rounddigit=rounddigit)
             
         # クロスバリデーション実施時(分割ごとに別々にプロット＆指標算出)
         if cv is not None:
@@ -248,6 +295,7 @@ class dist():
             y_real_all = []
             y_pred_all = []
             hue_all = []
+            rank_field_all = []
             for i, (train, test) in enumerate(cv.split(X, y_real)):
                 X_train = X[train]
                 y_train = y_real[train]
@@ -260,6 +308,14 @@ class dist():
                 else:
                     hue_test = data[hue].values[test]
                     hue_name = hue
+                # 誤差上位表示用データ取得
+                if rank_number is not None:
+                    if rank_field is None:  # 表示フィールド指定ないとき、Index使用
+                        rank_field_test = data.index.values[test]
+                    else:  # 表示フィールド指定あるとき
+                        rank_field_test = data[rank_field].values[test]
+                else:
+                    rank_field_test = np.array([])
                 # 学習と推論
                 model.fit(X_train, y_train, **fit_params)
                 y_pred = model.predict(X_test)
@@ -272,10 +328,12 @@ class dist():
                 y_real_all.append(y_test)
                 y_pred_all.append(y_pred)
                 hue_all.append(hue_test)
+                rank_field_all.append(rank_field_test)
             # 合体
             y_real_all = np.hstack(y_real_all)
             y_pred_all = np.hstack(y_pred_all)
             hue_all = np.hstack(hue_all)
+            rank_field_all = np.hstack(rank_field_all)
             # 指標の統計値を計算
             if plot_stats == 'mean':
                 score_stats_dict = {f'{k}_mean': np.mean(v) for k, v in score_all_dict.items()}            
@@ -289,5 +347,9 @@ class dist():
             cls.plot_real_pred(y_real_all, y_pred_all, hue_data=hue_all, hue_name=hue_name, ax=axes[cv.n_splits],
                                linecolor=linecolor, rounddigit=rounddigit, score_dict=score_stats_dict, colname=None)
             axes[cv.n_splits].set_title('All Cross Validations')
+            # 誤差上位を文字表示
+            if rank_number is not None:
+                cls._rank_display(y_real_all, y_pred_all, rank_number, rank_field, rank_field_all,
+                                  ax=axes[cv.n_splits], rounddigit=rounddigit)
 
         return score_dict
