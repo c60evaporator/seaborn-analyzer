@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error, mean_squared_log_error
-from sklearn.model_selection import KFold, cross_val_score
+from sklearn.model_selection import KFold, LeaveOneOut, cross_val_score
 
 import decimal
 
@@ -148,7 +148,7 @@ class dist():
     
     @classmethod
     def regression_plot_pred(cls, model, x: List[str], y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=None,
-                             rank_number=None, rank_field=None, scores='rmse', plot_stats='mean', cv=None, cv_seed=42,
+                             rank_number=None, rank_field=None, scores=['rmse'], plot_stats='mean', cv=None, cv_seed=42,
                              model_params=None, fit_params=None, subplot_kws={}):
         """
         回帰して予測値と実測値をプロットし、評価値を表示
@@ -209,7 +209,7 @@ class dist():
             scores = []
         elif isinstance(scores, str):
             scores = [scores]
-        elif ~isinstance(scores, list):
+        elif not isinstance(scores, list):
             Exception('scores must be str or list[str]')
         
         # 学習器パラメータがあれば適用
@@ -286,11 +286,22 @@ class dist():
                     neg_max_error = cross_val_score(model, X, y_real, cv=cv, scoring='max_error',
                                                            fit_params=fit_params, n_jobs=-1)
                     score_all_dict['max_error'] = - neg_max_error  # scikit-learnの仕様に合わせ正負を逆に
-
+            
+            #LeaveOneOutかどうかを判定
+            isLeaveOneOut = isinstance(cv, LeaveOneOut)
+            cv_num = 1 if isLeaveOneOut else cv.n_splits
             # 表示用のaxes作成
-            if 'figsize' not in subplot_kws.keys():
-                subplot_kws['figsize'] = (6, (cv.n_splits + 1) * 6)
-            fig, axes = plt.subplots(cv.n_splits + 1, 1, **subplot_kws)
+            # LeaveOneOutのとき、クロスバリデーションごとの図は作成せず
+            if isLeaveOneOut:
+                if 'figsize' not in subplot_kws.keys():
+                    subplot_kws['figsize'] = (6, 6)
+                fig, axes = plt.subplots(1, 1, **subplot_kws)
+            # LeaveOneOut以外のとき、クロスバリデーションごとに図作成
+            else:
+                if 'figsize' not in subplot_kws.keys():
+                    subplot_kws['figsize'] = (6, (cv_num + 1) * 6)
+                fig, axes = plt.subplots(cv_num + 1, 1, **subplot_kws)
+
             # 表示用にテストデータと学習データ分割
             y_real_all = []
             y_pred_all = []
@@ -301,9 +312,9 @@ class dist():
                 y_train = y_real[train]
                 X_test = X[test]
                 y_test = y_real[test]
-                # 色分け用データ取得(していないときは、クロスバリデーション番号を使用)
+                # 色分け用データ取得(していないときは、クロスバリデーション番号を使用、LeaveOuneOutのときは番号分けない)
                 if hue is None:
-                    hue_test = np.full(len(test) ,f'cv_{i}')
+                    hue_test = np.full(1 ,'leave_one_out') if isLeaveOneOut else np.full(len(test) ,f'cv_{i}')
                     hue_name = 'cv_number'  # 色分け名を'cv_number'に指定
                 else:
                     hue_test = data[hue].values[test]
@@ -319,17 +330,19 @@ class dist():
                 # 学習と推論
                 model.fit(X_train, y_train, **fit_params)
                 y_pred = model.predict(X_test)
-                # CV内結果をプロット
-                score_cv_dict = {k: v[i] for k, v in score_all_dict.items()}
-                cls.plot_real_pred(y_test, y_pred, hue_data=hue_test, hue_name=hue_name, ax=axes[i],
-                                   linecolor=linecolor, rounddigit=rounddigit, score_dict=score_cv_dict, colname=None)
-                axes[i].set_title(f'Cross Validation No{i}')
+                # CV内結果をプロット(LeaveOneOutのときはプロットしない)
+                if not isLeaveOneOut:
+                    score_cv_dict = {k: v[i] for k, v in score_all_dict.items()}
+                    cls.plot_real_pred(y_test, y_pred, hue_data=hue_test, hue_name=hue_name, ax=axes[i],
+                                    linecolor=linecolor, rounddigit=rounddigit, score_dict=score_cv_dict, colname=None)
+                    axes[i].set_title(f'Cross Validation No{i}')
                 # 全体プロット用データに追加
                 y_real_all.append(y_test)
                 y_pred_all.append(y_pred)
                 hue_all.append(hue_test)
                 rank_field_all.append(rank_field_test)
-            # 合体
+
+            # 全体プロット用データを合体
             y_real_all = np.hstack(y_real_all)
             y_pred_all = np.hstack(y_pred_all)
             hue_all = np.hstack(hue_all)
@@ -344,12 +357,13 @@ class dist():
             elif plot_stats == 'max':
                 score_stats_dict = {f'{k}_max': np.amax(v) for k, v in score_all_dict.items()}
             # 全体プロット
-            cls.plot_real_pred(y_real_all, y_pred_all, hue_data=hue_all, hue_name=hue_name, ax=axes[cv.n_splits],
+            ax_all = axes if isLeaveOneOut else axes[cv_num]
+            cls.plot_real_pred(y_real_all, y_pred_all, hue_data=hue_all, hue_name=hue_name, ax=ax_all,
                                linecolor=linecolor, rounddigit=rounddigit, score_dict=score_stats_dict, colname=None)
-            axes[cv.n_splits].set_title('All Cross Validations')
+            ax_all.set_title('All Cross Validations')
             # 誤差上位を文字表示
             if rank_number is not None:
                 cls._rank_display(y_real_all, y_pred_all, rank_number, rank_field, rank_field_all,
-                                  ax=axes[cv.n_splits], rounddigit=rounddigit)
+                                  ax=ax_all, rounddigit=rounddigit)
 
         return score_dict
