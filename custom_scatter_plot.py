@@ -7,6 +7,7 @@ import pandas as pd
 from scipy import stats
 from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error, mean_squared_log_error
 from sklearn.model_selection import KFold, LeaveOneOut, cross_val_score
+from sklearn.linear_model import LinearRegression
 
 import decimal
 
@@ -105,7 +106,7 @@ class dist():
         hue_name : str
             色分け用の列名
         ax : matplotlib.axes._subplots.Axes
-            表示対象のax（Noneならplt.plotで1枚ごとにプロット）
+            表示対象のax (Noneならplt.plotで1枚ごとにプロット)
         linecolor : str
             予測値=実測値の線の色
         linesplit : int
@@ -165,8 +166,8 @@ class dist():
             フィッティング対象のデータ
         hue : str
             色分け指定カラム (列名指定)
-        sigmarange : float
-            フィッティング線の表示範囲 (標準偏差の何倍まで表示するか指定)
+        linecolor : str
+            予測値=実測値の線の色
         rounddigit: int
             表示指標の小数丸め桁数
         rank_number : int
@@ -174,7 +175,7 @@ class dist():
         rank_field : List[str]
             誤差上位と一緒に表示するフィールド (NoneならIndexを使用)
         scores : str or list[str]
-            算出する評価指標（'r2', 'mae','rmse', 'rmsle', 'max_error'）
+            算出する評価指標 ('r2', 'mae','rmse', 'rmsle', 'max_error')
         plot_stats : Dict
             クロスバリデーション時に表示する統計値 ('mean', 'median', 'max', 'min')
         cv : None or int or KFold
@@ -367,3 +368,64 @@ class dist():
                                   ax=ax_all, rounddigit=rounddigit)
 
         return score_dict
+
+    @classmethod
+    def linear_plot(cls, x: List[str], y: str, data: pd.DataFrame, ax=None, hue=None, linecolor='red', linesplit=50, rounddigit=None):
+        """
+        線形回帰してp値と相関係数を表示
+
+        Parameters
+        ----------
+        x : str or List[str]
+            説明変数カラム (列名指定 or 列名のリスト指定)
+        y : str
+            目的変数カラム (列名指定)
+        data : pd.DataFrame
+            フィッティング対象のデータ
+        ax : matplotlib.axes._subplots.Axes
+            表示対象のax (Noneならplt.plotで1枚ごとにプロット)
+        hue : str
+            色分け指定カラム (列名指定)
+        linecolor : str
+            予測値=実測値の線の色
+        linesplit : int
+            フィッティング線の分割数 (カクカクしたら増やす)
+        rounddigit: int
+            表示指標の小数丸め桁数
+        """
+        # xをndarray化
+        if isinstance(x, list):
+            X = data[x].values
+        elif isinstance(x, str):
+            X = data[[x]].values
+        else:
+            Exception('x must be str or list[str]')
+        # yをndarray化
+        if isinstance(y, str):
+            y_real = data[y].values
+        else:
+            Exception('y msut be str')
+
+        # まずは散布図プロット
+        sns.scatterplot(x=x, y=y, data=data, ax=ax, hue=hue)
+
+        # 線形回帰線をプロット
+        # 線形回帰モデル作成
+        lr = LinearRegression()
+        lr.fit(X, y_real)
+        xmin = np.amin(X)
+        xmax = np.amax(X)
+        Xline = np.linspace(xmin, xmax, linesplit)
+        Xline = Xline.reshape(len(Xline), 1)
+        # 描画用axがNoneのとき、matplotlib.pyplotを使用
+        if ax == None:
+            ax=plt
+        # 回帰線を描画
+        ax.plot(Xline, lr.predict(Xline), color=linecolor)
+
+        # ピアソンの相関係数およびp値を表示
+        pearsonr = stats.pearsonr(data[x], data[y])
+        r = cls._round_digits(pearsonr[0], rounddigit=rounddigit, method="decimal")
+        pvalue = cls._round_digits(pearsonr[1], rounddigit=rounddigit, method="decimal")
+        rtext = f'r={r}\np={pvalue}'
+        ax.text(xmax, np.amin(y_real), rtext, verticalalignment='bottom', horizontalalignment='right')
