@@ -56,6 +56,39 @@ class dist():
         return dstdict
 
     @classmethod
+    def _rank_display(cls, y_real, y_pred, rank_number, rank_field, rank_field_data, ax=None, rounddigit=None):
+        """
+        誤差上位をプロット
+
+        Parameters
+        ----------
+        y_real : ndarray
+            目的変数実測値
+        y_pred : ndarray
+            目的変数予測値
+        rank_number : int
+            誤差上位何番目までを文字表示するか
+        rank_field : List[str]
+            誤差上位と一緒に表示するフィールド (NoneならIndexを使用)
+        ax : matplotlib.axes._subplots.Axes
+            表示対象のax（Noneならplt.plotで1枚ごとにプロット）
+        rounddigit: int
+            表示指標の小数丸め桁数
+        """
+        # 描画用axがNoneのとき、matplotlib.pyplotを使用
+        if ax == None:
+            ax=plt
+
+        if rank_field == None:
+            rank_field = 'index'
+        y_error = np.abs(y_pred - y_real)
+        rank_index  = np.argsort(-y_error)[:rank_number]
+        for rank, i in enumerate(rank_index):
+            error = cls._round_digits(y_error[i], rounddigit=rounddigit, method='decimal')
+            rank_text = f'{rank+1}\n{rank_field}={rank_field_data[i]}\nerror={error}'
+            ax.text(y_real[i], y_pred[i], rank_text, verticalalignment='center', horizontalalignment='left')
+
+    @classmethod
     def plot_real_pred(cls, y_real, y_pred, hue_data=None, hue_name=None, ax=None, linecolor='red', linesplit=50, rounddigit=None,
                         score_dict=None, colname=None):
         """
@@ -112,39 +145,6 @@ class dist():
         # 線と文字をプロット
         ax.plot(real_line, real_line, color=linecolor)
         ax.text(real_max, np.amin(y_pred), score_text, verticalalignment='bottom', horizontalalignment='right')
-    
-    @classmethod
-    def _rank_display(cls, y_real, y_pred, rank_number, rank_field, rank_field_data, ax=None, rounddigit=None):
-        """
-        誤差上位をプロット
-
-        Parameters
-        ----------
-        y_real : ndarray
-            目的変数実測値
-        y_pred : ndarray
-            目的変数予測値
-        rank_number : int
-            誤差上位何番目までを文字表示するか
-        rank_field : List[str]
-            誤差上位と一緒に表示するフィールド (NoneならIndexを使用)
-        ax : matplotlib.axes._subplots.Axes
-            表示対象のax（Noneならplt.plotで1枚ごとにプロット）
-        rounddigit: int
-            表示指標の小数丸め桁数
-        """
-        # 描画用axがNoneのとき、matplotlib.pyplotを使用
-        if ax == None:
-            ax=plt
-
-        if rank_field == None:
-            rank_field = 'index'
-        y_error = np.abs(y_pred - y_real)
-        rank_index  = np.argsort(-y_error)[:rank_number]
-        for rank, i in enumerate(rank_index):
-            error = cls._round_digits(y_error[i], rounddigit=rounddigit, method='decimal')
-            rank_text = f'rank={rank+1}\n{rank_field}={rank_field_data[i]}\nerror={error}'
-            ax.text(y_real[i], y_pred[i], rank_text, verticalalignment='center', horizontalalignment='left')
     
     @classmethod
     def regression_plot_pred(cls, model, x: List[str], y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=None,
