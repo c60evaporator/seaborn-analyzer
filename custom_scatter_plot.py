@@ -370,14 +370,14 @@ class dist():
         return score_dict
 
     @classmethod
-    def linear_plot(cls, x: List[str], y: str, data: pd.DataFrame, ax=None, hue=None, linecolor='red', linesplit=50, rounddigit=None):
+    def linear_plot(cls, x: str, y: str, data: pd.DataFrame, ax=None, hue=None, linecolor='red', linesplit=50, rounddigit=None):
         """
-        線形回帰してp値と相関係数を表示
+        1変数線形回帰してプロットし、p値と相関係数を表示
 
         Parameters
         ----------
-        x : str or List[str]
-            説明変数カラム (列名指定 or 列名のリスト指定)
+        x : str
+            説明変数カラム (列名指定)
         y : str
             目的変数カラム (列名指定)
         data : pd.DataFrame
@@ -394,12 +394,10 @@ class dist():
             表示指標の小数丸め桁数
         """
         # xをndarray化
-        if isinstance(x, list):
-            X = data[x].values
-        elif isinstance(x, str):
+        if isinstance(x, str):
             X = data[[x]].values
         else:
-            Exception('x must be str or list[str]')
+            Exception('x must be str')
         # yをndarray化
         if isinstance(y, str):
             y_real = data[y].values
