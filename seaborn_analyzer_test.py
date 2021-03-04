@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 iris = sns.load_dataset("iris")
 fig, axes = plt.subplots(2, 2, figsize=(8, 8))
-dist.hist_dist(iris['sepal_length'], ax=axes[0, 0], rounddigit=5)
+dist.hist_dist(iris['sepal_length'], ax=axes[0, 0], bin_width=0.2, norm_hist=False, rounddigit=5)
 #%% custom_scatter_plot.regression_plot_pred
 from custom_scatter_plot import regplot
 import seaborn as sns
