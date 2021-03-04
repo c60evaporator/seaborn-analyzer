@@ -411,11 +411,7 @@ class regplot():
             Exception('y msut be str')
 
         # まずは散布図プロット
-        sns.scatterplot(x=x, y=y, data=data, ax=ax, hue=hue)
-
-        # 描画用axがNoneのとき、matplotlib.pyplotを使用
-        if ax == None:
-            ax=plt
+        ax = sns.scatterplot(x=x, y=y, data=data, ax=ax, hue=hue)
 
         # 線形回帰モデル作成
         lr = LinearRegression()
