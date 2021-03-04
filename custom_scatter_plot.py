@@ -56,6 +56,24 @@ class regplot():
                 dstdict[k] = v
         return dstdict
 
+    def _make_score_dict(y_real, y_pred, scores):
+        """
+        評価指標を算出してdict化
+        """
+        score_dict = {}
+        for scoring in scores:
+            if scoring == 'r2':
+                score_dict['r2'] = r2_score(y_real, y_pred)
+            elif scoring == 'mae':
+                score_dict['mae'] = mean_absolute_error(y_real, y_pred)
+            elif scoring == 'rmse':
+                score_dict['rmse'] = mean_squared_error(y_real, y_pred)
+            elif scoring == 'rmsle':
+                score_dict['rmsle'] = mean_squared_log_error(y_real, y_pred)
+            elif scoring == 'max_error':
+                score_dict['max_error'] = max([abs(p - r) for r, p in zip(y_real, y_pred)])
+        return score_dict
+
     @classmethod
     def _rank_display(cls, y_real, y_pred, rank_number, rank_field, rank_field_data, ax=None, rounddigit=None):
         """
@@ -211,7 +229,6 @@ class regplot():
             Exception('y msut be str')
 
         # scoresの型をListに統一
-        score_dict = {}
         if scores is None:
             scores = []
         elif isinstance(scores, str):
@@ -233,24 +250,10 @@ class regplot():
             model.fit(X, y_real, **fit_params)
             y_pred = model.predict(X)
             # 評価指標算出
-            for scoring in scores:
-                if scoring == 'r2':
-                    score_dict['r2'] = r2_score(y_real, y_pred)
-                elif scoring == 'mae':
-                    score_dict['mae'] = mean_absolute_error(y_real, y_pred)
-                elif scoring == 'rmse':
-                    score_dict['rmse'] = mean_squared_error(y_real, y_pred)
-                elif scoring == 'rmsle':
-                    score_dict['rmsle'] = mean_squared_log_error(y_real, y_pred)
-                elif scoring == 'max_error':
-                    score_dict['max_error'] = max([abs(p - r) for r, p in zip(y_real, y_pred)])
+            score_dict = cls._make_score_dict(y_real, y_pred, scores)
             # 色分け用データ取得
-            if hue is None:
-                hue_data = None
-                hue_name = None
-            else:
-                hue_data = data[hue].values
-                hue_name = hue
+            hue_data = None if hue is None else data[hue]
+            hue_name = None if hue is None else hue
             # 誤差上位表示用データ取得
             if rank_number is not None:
                 if rank_field is None:  # 表示フィールド指定ないとき、Index使用
@@ -263,6 +266,7 @@ class regplot():
             # 誤差上位を文字表示
             if rank_number is not None:
                 cls._rank_display(y_real, y_pred, rank_number, rank_field, rank_field_data, rounddigit=rounddigit)
+            return score_dict
             
         # クロスバリデーション実施時(分割ごとに別々にプロット＆指標算出)
         if cv is not None:
@@ -372,8 +376,7 @@ class regplot():
             if rank_number is not None:
                 cls._rank_display(y_real_all, y_pred_all, rank_number, rank_field, rank_field_all,
                                   ax=ax_all, rounddigit=rounddigit)
-
-        return score_dict
+            return score_stats_dict
 
     @classmethod
     def linear_plot(cls, x: str, y: str, data: pd.DataFrame, ax=None, hue=None, linecolor='red', linesplit=50, rounddigit=None):
@@ -431,15 +434,15 @@ class regplot():
         ax.text(xmax, np.amin(y_real), rtext, verticalalignment='bottom', horizontalalignment='right')
 
     @classmethod
-    def _model_plot_1d(cls, model, X, y_real, hue_data=None, hue_name=None, ax=None, linecolor='red', linesplit=50, rounddigit=None,
-                        score_dict=None, fit_params=None):
+    def _model_plot_1d(cls, trained_model, X, y_real, hue_data=None, hue_name=None, ax=None, linecolor='red', linesplit=50, rounddigit=None,
+                        score_dict=None):
         """
         1次説明変数回帰曲線を、回帰評価指標とともにプロット
 
         Parameters
         ----------
-        model : 
-            使用する回帰モデル(scikit-learn API)
+        trained_model : 
+            学習済の回帰モデル(scikit-learn API)
         X : ndarray
             説明変数
         y_real : ndarray
@@ -465,18 +468,17 @@ class regplot():
         # 描画用axがNoneのとき、matplotlib.pyplotを使用
         if ax == None:
             ax=plt
-        # score_dictがNoneのとき、空のDictを加瀬宇
+        # score_dictがNoneのとき、空のDictを入力
         if score_dict is None:
             score_dict = {}
 
         # 回帰モデルの線を作成
-        model.fit(X, y_real, **fit_params)
         xmin = np.amin(X)
         xmax = np.amax(X)
         Xline = np.linspace(xmin, xmax, linesplit)
         Xline = Xline.reshape(len(Xline), 1)
         # 回帰線を描画
-        ax.plot(Xline, model.predict(Xline), color=linecolor)
+        ax.plot(Xline, trained_model.predict(Xline), color=linecolor)
         
         # 評価指標文字列作成
         score_list = [f'{k}={v}' for k, v in cls._round_dict_digits(score_dict, rounddigit, 'sig').items()]
@@ -485,7 +487,7 @@ class regplot():
 
     @classmethod
     def regression_plot_1d(cls, model, x: List[str], y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=None,
-                             rank_number=None, rank_field=None, scores=['rmse'], plot_stats='mean', cv=None, cv_seed=42,
+                             scores=['rmse'], plot_stats='mean', cv=None, cv_seed=42,
                              model_params=None, fit_params=None, subplot_kws={}):
         """
         1次元説明変数の任意の回帰曲線をプロット
@@ -506,10 +508,6 @@ class regplot():
             予測値=実測値の線の色
         rounddigit: int
             表示指標の小数丸め桁数
-        rank_number : int
-            誤差上位何番目までを文字表示するか
-        rank_field : List[str]
-            誤差上位と一緒に表示するフィールド (NoneならIndexを使用)
         scores : str or list[str]
             算出する評価指標 ('r2', 'mae','rmse', 'rmsle', 'max_error')
         plot_stats : Dict
@@ -539,7 +537,6 @@ class regplot():
             Exception('y msut be str')
 
         # scoresの型をListに統一
-        score_dict = {}
         if scores is None:
             scores = []
         elif isinstance(scores, str):
@@ -561,27 +558,14 @@ class regplot():
             model.fit(X, y_real, **fit_params)
             y_pred = model.predict(X)
             # 評価指標算出
-            for scoring in scores:
-                if scoring == 'r2':
-                    score_dict['r2'] = r2_score(y_real, y_pred)
-                elif scoring == 'mae':
-                    score_dict['mae'] = mean_absolute_error(y_real, y_pred)
-                elif scoring == 'rmse':
-                    score_dict['rmse'] = mean_squared_error(y_real, y_pred)
-                elif scoring == 'rmsle':
-                    score_dict['rmsle'] = mean_squared_log_error(y_real, y_pred)
-                elif scoring == 'max_error':
-                    score_dict['max_error'] = max([abs(p - r) for r, p in zip(y_real, y_pred)])
+            score_dict = cls._make_score_dict(y_real, y_pred, scores)
             # 色分け用データ取得
-            if hue is None:
-                hue_data = None
-                hue_name = None
-            else:
-                hue_data = data[hue].values
-                hue_name = hue
+            hue_data = None if hue is None else data[hue]
+            hue_name = None if hue is None else hue
             # 回帰線プロット
             cls._model_plot_1d(model, X, y_real, hue_data=hue_data, hue_name=hue_name,
-                                linecolor=linecolor, rounddigit=rounddigit, score_dict=score_dict, fit_params=fit_params)
+                                linecolor=linecolor, rounddigit=rounddigit, score_dict=score_dict)
+            return score_dict
             
         # クロスバリデーション実施時(分割ごとに別々にプロット＆指標算出)
         if cv is not None:
@@ -629,10 +613,6 @@ class regplot():
                 fig, axes = plt.subplots(cv_num + 1, 1, **subplot_kws)
 
             # 表示用にテストデータと学習データ分割
-            y_real_all = []
-            y_pred_all = []
-            hue_all = []
-            rank_field_all = []
             for i, (train, test) in enumerate(cv.split(X, y_real)):
                 X_train = X[train]
                 y_train = y_real[train]
@@ -645,51 +625,37 @@ class regplot():
                 else:
                     hue_test = data[hue].values[test]
                     hue_name = hue
-                # 誤差上位表示用データ取得
-                if rank_number is not None:
-                    if rank_field is None:  # 表示フィールド指定ないとき、Index使用
-                        rank_field_test = data.index.values[test]
-                    else:  # 表示フィールド指定あるとき
-                        rank_field_test = data[rank_field].values[test]
-                else:
-                    rank_field_test = np.array([])
                 # 学習と推論
                 model.fit(X_train, y_train, **fit_params)
-                y_pred = model.predict(X_test)
                 # CV内結果をプロット(LeaveOneOutのときはプロットしない)
                 if not isLeaveOneOut:
                     score_cv_dict = {k: v[i] for k, v in score_all_dict.items()}
-                    cls.plot_real_pred(y_test, y_pred, hue_data=hue_test, hue_name=hue_name, ax=axes[i],
-                                    linecolor=linecolor, rounddigit=rounddigit, score_dict=score_cv_dict)
+                    cls._model_plot_1d(model, X_test, y_test, hue_data=hue_test, hue_name=hue_name, ax=axes[i],
+                                linecolor=linecolor, rounddigit=rounddigit, score_dict=score_cv_dict)
                     axes[i].set_title(f'Cross Validation No{i}')
-                # 全体プロット用データに追加
-                y_real_all.append(y_test)
-                y_pred_all.append(y_pred)
-                hue_all.append(hue_test)
-                rank_field_all.append(rank_field_test)
 
-            # 全体プロット用データを合体
-            y_real_all = np.hstack(y_real_all)
-            y_pred_all = np.hstack(y_pred_all)
-            hue_all = np.hstack(hue_all)
-            rank_field_all = np.hstack(rank_field_all)
             # 指標の統計値を計算
             if plot_stats == 'mean':
-                score_stats_dict = {f'{k}_mean': np.mean(v) for k, v in score_all_dict.items()}            
+                score_stats_dict = {f'{k}_mean': np.mean(v) for k, v in score_all_dict.items()}
             elif plot_stats == 'median':
-                score_stats_dict = {f'{k}_median': np.median(v) for k, v in score_all_dict.items()}            
+                score_stats_dict = {f'{k}_median': np.median(v) for k, v in score_all_dict.items()}
             elif plot_stats == 'min':
-                score_stats_dict = {f'{k}_min': np.amin(v) for k, v in score_all_dict.items()}            
+                score_stats_dict = {f'{k}_min': np.amin(v) for k, v in score_all_dict.items()}
             elif plot_stats == 'max':
                 score_stats_dict = {f'{k}_max': np.amax(v) for k, v in score_all_dict.items()}
+            # 全体データで学習＆評価指標算出
+            model.fit(X, y_real, **fit_params)
+            y_pred = model.predict(X)
+            score_dict = cls._make_score_dict(y_real, y_pred, scores)
+            # 全体データ指標を指標dictに追加
+            score_dict = {f'{k}_train': np.mean(v) for k, v in score_dict.items()}
+            score_stats_dict.update(score_dict)
+            # 全体色分け用データ取得
+            hue_data = None if hue is None else data[hue]
+            hue_name = None if hue is None else hue
             # 全体プロット
             ax_all = axes if isLeaveOneOut else axes[cv_num]
-            cls.plot_real_pred(y_real_all, y_pred_all, hue_data=hue_all, hue_name=hue_name, ax=ax_all,
-                               linecolor=linecolor, rounddigit=rounddigit, score_dict=score_stats_dict)
+            cls._model_plot_1d(model, X, y_real, hue_data=hue_data, hue_name=hue_name, ax=ax_all,
+                                linecolor=linecolor, rounddigit=rounddigit, score_dict=score_stats_dict)
             ax_all.set_title('All Cross Validations')
-            # 誤差上位を文字表示
-            if rank_number is not None:
-                cls._rank_display(y_real_all, y_pred_all, rank_number, rank_field, rank_field_all,
-                                  ax=ax_all, rounddigit=rounddigit)
-
-        return score_dict
+            return score_stats_dict
