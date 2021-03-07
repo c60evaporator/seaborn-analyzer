@@ -75,7 +75,7 @@ class regplot():
         return score_dict
 
     @classmethod
-    def _rank_display(cls, y_real, y_pred, rank_number, rank_field, rank_field_data, ax=None, rounddigit=None):
+    def _rank_display(cls, y_real, y_pred, rank_number, rank_col, rank_col_data, ax=None, rounddigit=None):
         """
         誤差上位をプロット
 
@@ -87,8 +87,8 @@ class regplot():
             目的変数予測値
         rank_number : int
             誤差上位何番目までを文字表示するか
-        rank_field : List[str]
-            誤差上位と一緒に表示するフィールド (NoneならIndexを使用)
+        rank_col : List[str]
+            誤差上位と一緒に表示するフィールド名 (NoneならIndexを使用)
         ax : matplotlib.axes._subplots.Axes
             表示対象のax（Noneならplt.plotで1枚ごとにプロット）
         rounddigit: int
@@ -98,13 +98,13 @@ class regplot():
         if ax == None:
             ax=plt
 
-        if rank_field == None:
-            rank_field = 'index'
+        if rank_col == None:
+            rank_col = 'index'
         y_error = np.abs(y_pred - y_real)
         rank_index  = np.argsort(-y_error)[:rank_number]
         for rank, i in enumerate(rank_index):
             error = cls._round_digits(y_error[i], rounddigit=rounddigit, method='decimal')
-            rank_text = f'{rank+1}\n{rank_field}={rank_field_data[i]}\nerror={error}'
+            rank_text = f'{rank+1}\n{rank_col}={rank_col_data[i]}\nerror={error}'
             ax.text(y_real[i], y_pred[i], rank_text, verticalalignment='center', horizontalalignment='left')
     
     @classmethod
@@ -173,7 +173,7 @@ class regplot():
     
     @classmethod
     def regression_plot_pred(cls, model, x: List[str], y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=None,
-                             rank_number=None, rank_field=None, scores=['rmse'], plot_stats='mean', cv=None, cv_seed=42,
+                             rank_number=None, rank_col=None, scores=['rmse'], plot_stats='mean', cv=None, cv_seed=42,
                              model_params=None, fit_params=None, subplot_kws={}):
 
         """
@@ -197,8 +197,8 @@ class regplot():
             表示指標の小数丸め桁数
         rank_number : int
             誤差上位何番目までを文字表示するか
-        rank_field : List[str]
-            誤差上位と一緒に表示するフィールド (NoneならIndexを使用)
+        rank_col : List[str]
+            誤差上位と一緒に表示するフィールド名 (NoneならIndexを使用)
         scores : str or list[str]
             算出する評価指標 ('r2', 'mae','rmse', 'rmsle', 'max_error')
         plot_stats : Dict
@@ -257,16 +257,16 @@ class regplot():
             hue_name = None if hue is None else hue
             # 誤差上位表示用データ取得
             if rank_number is not None:
-                if rank_field is None:  # 表示フィールド指定ないとき、Index使用
-                    rank_field_data = data.index.values
+                if rank_col is None:  # 表示フィールド指定ないとき、Index使用
+                    rank_col_data = data.index.values
                 else:  # 表示フィールド指定あるとき
-                    rank_field_data = data[rank_field].values
+                    rank_col_data = data[rank_col].values
             # 予測値と実測値プロット
             cls.plot_real_pred(y_real, y_pred, hue_data=hue_data, hue_name=hue_name,
                                 linecolor=linecolor, rounddigit=rounddigit, score_dict=score_dict)
             # 誤差上位を文字表示
             if rank_number is not None:
-                cls._rank_display(y_real, y_pred, rank_number, rank_field, rank_field_data, rounddigit=rounddigit)
+                cls._rank_display(y_real, y_pred, rank_number, rank_col, rank_col_data, rounddigit=rounddigit)
             return score_dict
             
         # クロスバリデーション実施時(分割ごとに別々にプロット＆指標算出)
@@ -318,7 +318,7 @@ class regplot():
             y_real_all = []
             y_pred_all = []
             hue_all = []
-            rank_field_all = []
+            rank_col_all = []
             for i, (train, test) in enumerate(cv.split(X, y_real)):
                 # 表示用にテストデータと学習データ分割
                 X_train = X[train]
@@ -334,12 +334,12 @@ class regplot():
                     hue_name = hue
                 # 誤差上位表示用データ取得
                 if rank_number is not None:
-                    if rank_field is None:  # 表示フィールド指定ないとき、Index使用
-                        rank_field_test = data.index.values[test]
+                    if rank_col is None:  # 表示フィールド指定ないとき、Index使用
+                        rank_col_test = data.index.values[test]
                     else:  # 表示フィールド指定あるとき
-                        rank_field_test = data[rank_field].values[test]
+                        rank_col_test = data[rank_col].values[test]
                 else:
-                    rank_field_test = np.array([])
+                    rank_col_test = np.array([])
                 # 学習と推論
                 model.fit(X_train, y_train, **fit_params)
                 y_pred = model.predict(X_test)
@@ -353,13 +353,13 @@ class regplot():
                 y_real_all.append(y_test)
                 y_pred_all.append(y_pred)
                 hue_all.append(hue_test)
-                rank_field_all.append(rank_field_test)
+                rank_col_all.append(rank_col_test)
 
             # 全体プロット用データを合体
             y_real_all = np.hstack(y_real_all)
             y_pred_all = np.hstack(y_pred_all)
             hue_all = np.hstack(hue_all)
-            rank_field_all = np.hstack(rank_field_all)
+            rank_col_all = np.hstack(rank_col_all)
             # 指標の統計値を計算
             if plot_stats == 'mean':
                 score_stats_dict = {f'{k}_mean': np.mean(v) for k, v in score_all_dict.items()}            
@@ -376,7 +376,7 @@ class regplot():
             ax_all.set_title('All Cross Validations')
             # 誤差上位を文字表示
             if rank_number is not None:
-                cls._rank_display(y_real_all, y_pred_all, rank_number, rank_field, rank_field_all,
+                cls._rank_display(y_real_all, y_pred_all, rank_number, rank_col, rank_col_all,
                                   ax=ax_all, rounddigit=rounddigit)
             return score_stats_dict
 
@@ -663,23 +663,29 @@ class regplot():
             ax_all.set_title('All Cross Validations')
             return score_stats_dict
 
-    def _reg_heat_plot_2d(X, y_real, y_pred, rounddigit=None, score_dict=None):
-        # 描画用axがNoneのとき、matplotlib.pyplotを使用
+    def _reg_heat_plot_2d(trained_model, x_heat, y_real_col, y_pred_col, rank_col, data,
+                          x1_start, x1_end, x2_start, x2_end, heat_division, other_x,
+                          ax, plot_scatter, rank_number, rounddigit,
+                          heat_kws={}, scatter_kws={}):
+        # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
         if ax == None:
-            ax=plt
-        # score_dictがNoneのとき、空のDictを入力
-        if score_dict is None:
-            score_dict = {}
+            ax=plt.gca()
 
-        # multiclass
-        if eps is None:
-            eps = X.std() / 2.
-
-        if ax is None:
-            ax = plt.gca()
-
-        x1_min, x1_max = X[:, 0].min() - eps, X[:, 0].max() + eps
-        x2_min, x2_max = X[:, 1].min() - eps, X[:, 1].max() + eps
+        # ヒートマップ用グリッドデータを作成
+        xx = np.linspace(x1_start, x1_end, heat_division)
+        yy = np.linspace(x2_start, x2_end, heat_division)
+        X1, X2 = np.meshgrid(xx, yy)
+        X_grid = np.c_[X1.ravel(), X2.ravel()]
+        df_heat = pd.DataFrame(X_grid, columns=x_heat)
+        # ヒートマップ非使用特徴量を固定値として追加
+        n_rows = X_grid.shape[0]
+        if len(other_x) == 1:
+            X_grid = np.hstack([X_grid, np.full((n_rows, 1), other_x[0])])
+        elif len(other_x) == 2:
+            X_grid = np.hstack([X_grid, np.full((n_rows, 1), other_x[0]), np.full((n_rows, 1), other_x[1])])
+        # グリッドデータに対して学習し、推定値を作成
+        y_pred_grid = trained_model.predict(X_grid)
+        df_heat['y_pred'] = pd.Series(y_pred_grid)
 
         # 回帰モデルの線を作成
         xmin = np.amin(X)
@@ -695,9 +701,10 @@ class regplot():
         ax.text(xmax, np.amin(y_real), score_text, verticalalignment='bottom', horizontalalignment='right')
     
     @classmethod
-    def _reg_heat_plot(cls, trained_model, X, y_pred, y_real, x_heat, x_not_heat, x_heat_indices, rank_field_data,
-                       pair_sigmarange = 2.0, pair_sigmainterval = 0.5, plot_scatter = True,
-                       rank_number=None, rounddigit=None,
+    def _reg_heat_plot(cls, trained_model, X, y_pred, y_real, x_heat, x_not_heat, x_heat_indices,
+                       rank_col, rank_col_data,
+                       pair_sigmarange=2.0, pair_sigmainterval=0.5, heat_extendsigma=0.5, heat_division=30, 
+                       plot_scatter=True, rank_number=None, rounddigit=None,
                        subplot_kws={}, heat_kws={}, scatter_kws={}):
         # 説明変数の数
         x_num = X.shape[1]
@@ -716,15 +723,27 @@ class regplot():
             columns = [f'normalize_{c}' for c in x_not_heat]
             df_all = df_all.join(pd.DataFrame(X_not_heat_norm, columns=[f'normalize_{c}' for c in x_not_heat]))
         # 誤差上位表示用IDデータをDataFrameに追加
-        df_all = df_all.join(pd.DataFrame(rank_field_data, columns=['rank_field_data']))
+        df_all = df_all.join(pd.DataFrame(rank_col_data, columns=[rank_col]))
 
         # 誤差の順位を計算
         y_error = np.abs(y_pred - y_real)
         rank_index  = np.argsort(-y_error)[:rank_number]
 
+        # ヒートマップのX1軸およびX2軸の表示範囲(最大最小値 + extendsigma)
+        x1_min = np.min(X[:, x_heat_indices[0]])
+        x1_max = np.max(X[:, x_heat_indices[0]])
+        x1_std = np.std(X[:, x_heat_indices[0]])
+        x1_start = x1_min - x1_std * heat_extendsigma
+        x1_end = x1_max + x1_std * heat_extendsigma
+        x2_min = np.min(X[:, x_heat_indices[1]])
+        x2_max = np.max(X[:, x_heat_indices[1]])
+        x2_std = np.std(X[:, x_heat_indices[1]])
+        x2_start = x2_min - x2_std * heat_extendsigma
+        x2_end = x2_max + x2_std * heat_extendsigma
+
         # プロットする図の数(sigmarange外「2枚」 + sigmarange内「int(pair_sigmarange / pair_sigmainterval) * 2枚」)
         pair_n = int(pair_sigmarange / pair_sigmainterval) * 2 + 2
-        # プロットする範囲の下限(標準化後)
+        # ヒートップ非使用特徴量をプロットする範囲の下限(標準化後)
         pair_min = -(pair_n - 2) / 2 * pair_sigmainterval
 
         # 説明変数が2次元のとき (図は1枚のみ)
@@ -752,8 +771,10 @@ class regplot():
                 # pair縦軸特徴量(標準化後)の最小値
                 if i == 0:
                     h_min = -float('inf')
+                    h_mean = pair_min - pair_sigmainterval / 2  # ヒートマップ外特徴量指定用の平均値
                 else:
                     h_min = pair_min + (i - 1) * pair_sigmainterval
+                    h_mean = pair_min + (i - 0.5) * pair_sigmainterval  # ヒートマップ外特徴量指定用の平均値
                 # pair縦軸特徴量(標準化後)の最大値
                 if i == pair_h - 1:
                     h_max = float('inf')
@@ -762,8 +783,10 @@ class regplot():
                 # pair横軸特徴量(標準化後)の最小値
                 if j == 0:
                     w_min = -float('inf')
+                    w_mean = pair_min - pair_sigmainterval / 2  # ヒートマップ外特徴量指定用の平均値
                 else:
                     w_min = pair_min + (j - 1) * pair_sigmainterval
+                    w_mean = pair_min + (j - 0.5) * pair_sigmainterval  # ヒートマップ外特徴量指定用の平均値
                 # pair横軸特徴量(標準化後)の最大値
                 if j == pair_w - 1:
                     w_max = float('inf')
@@ -774,11 +797,16 @@ class regplot():
                 if x_num == 2:
                     ax = axes
                     df_pair = df_all.copy()
+                    other_x = []
                 # 説明変数が3次元のとき (図はpair_n × 1枚)
                 elif x_num == 3:
                     ax = axes[i]
                     # 縦軸特徴量範囲内のみのデータを抽出
                     df_pair = df_all[(df_all[f'normalize_{x_not_heat[0]}'] >= h_min) & (df_all[f'normalize_{x_not_heat[0]}'] < h_max)]
+                    # ヒートマップ外特徴量の標準化逆変換
+                    x3_mean = np.mean(X_not_heat[:, 0])
+                    x3_std = np.std(X_not_heat[:, 0])
+                    other_x = [h_mean * x3_std + x3_mean]
                 # 説明変数が4次元のとき (図はpair_n × pair_n枚)
                 elif x_num == 4:
                     ax = axes[j, i]
@@ -786,13 +814,22 @@ class regplot():
                     df_pair = df_all[(df_all[f'normalize_{x_not_heat[0]}'] >= h_min) & (df_all[f'normalize_{x_not_heat[0]}'] < h_max)]
                     # 横軸特徴量範囲内のみのデータを抽出
                     df_pair = df_pair[(df_pair[f'normalize_{x_not_heat[1]}'] >= w_min) & (df_pair[f'normalize_{x_not_heat[1]}'] < w_max)]
+                    # ヒートマップ外特徴量の標準化逆変換
+                    x3_mean = np.mean(X_not_heat[:, 0])
+                    x3_std = np.std(X_not_heat[:, 0])
+                    x4_mean = np.mean(X_not_heat[:, 1])
+                    x4_std = np.std(X_not_heat[:, 1])
+                    other_x = [h_mean * x3_std + x3_mean, w_mean * x4_std + x4_mean]
                 
-                print('a')
+                cls._reg_heat_plot_2d(trained_model, x_heat, 'y_real', 'y_pred', rank_col, df_pair,
+                                      x1_start, x1_end, x2_start, x2_end, heat_division, other_x,
+                                      ax, plot_scatter, rank_number, rounddigit,
+                                      heat_kws=heat_kws, scatter_kws=scatter_kws)
 
     @classmethod
     def regression_heat_plot(cls, model, x: List[str], y: str, data: pd.DataFrame, x_heat: List[str] = None,
-                             pair_sigmarange = 1.5, pair_sigmainterval = 0.5, plot_scatter = True,
-                             rank_number=None, rank_field=None, rounddigit=None,
+                             pair_sigmarange = 1.5, pair_sigmainterval = 0.5, heat_extendsigma = 0.5, plot_scatter = True,
+                             rank_number=None, rank_col=None, rounddigit=None,
                              cv=None, cv_seed=42, display_cv_indices = 0,
                              model_params=None, fit_params=None, subplot_kws={}, heat_kws={}, scatter_kws={}):
         # 説明変数xの次元が2～4以外ならエラーを出す
@@ -844,11 +881,12 @@ class regplot():
             y_pred = model.predict(X)
             # 誤差上位表示用データ取得
             if rank_number is not None:
-                if rank_field is None:  # 表示フィールド指定ないとき、Index使用
-                    rank_field_data = data.index.values
+                if rank_col is None:  # 表示フィールド指定ないとき、Index使用
+                    rank_col_data = data.index.values
                 else:  # 表示フィールド指定あるとき
-                    rank_field_data = data[rank_field].values
-            cls._reg_heat_plot(model, X, y_pred, y_real, x_heat, x_not_heat, x_heat_indices, rank_field_data=rank_field_data,
+                    rank_col_data = data[rank_col].values
+            cls._reg_heat_plot(model, X, y_pred, y_real, x_heat, x_not_heat, x_heat_indices,
+                               rank_col=rank_col, rank_col_data=rank_col_data,
                                pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, plot_scatter = plot_scatter,
                                rank_number=rank_number, rounddigit=rounddigit,
                                subplot_kws=subplot_kws, heat_kws=heat_kws, scatter_kws=scatter_kws)
@@ -873,12 +911,13 @@ class regplot():
                 model.fit(X_train, y_train, **fit_params)
                 # 誤差上位表示用データ取得
                 if rank_number is not None:
-                    if rank_field is None:  # 表示フィールド指定ないとき、Index使用
-                        rank_field_test = data.index.values[test]
+                    if rank_col is None:  # 表示フィールド指定ないとき、Index使用
+                        rank_col_test = data.index.values[test]
                     else:  # 表示フィールド指定あるとき
-                        rank_field_test = data[rank_field].values[test]
+                        rank_col_test = data[rank_col].values[test]
                 # プロット
-                cls._reg_heat_plot(model, X, y_pred, y_real, x_heat, x_not_heat, x_heat_indices, rank_field_data=rank_field_data,
+                cls._reg_heat_plot(model, X, y_pred, y_real, x_heat, x_not_heat, x_heat_indices,
+                                   rank_col=rank_col, rank_col_data=rank_col_data,
                                    pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, plot_scatter = plot_scatter,
                                    rank_number=rank_number, rounddigit=rounddigit,
                                    subplot_kws=subplot_kws, heat_kws=heat_kws, scatter_kws=scatter_kws)
