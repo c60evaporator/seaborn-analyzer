@@ -663,9 +663,9 @@ class regplot():
             ax_all.set_title('All Cross Validations')
             return score_stats_dict
 
-    def _reg_heat_plot_2d(trained_model, x_heat, y_real_col, y_pred_col, rank_col, data,
+    def _reg_heat_plot_2d(trained_model, x_heat, y_real_col, y_pred_col, rank_col, data, x_heat_indices,
                           x1_start, x1_end, x2_start, x2_end, heat_division, other_x,
-                          ax, plot_scatter, rank_number, rounddigit,
+                          vmin, vmax, ax, plot_scatter, rank_number, rounddigit,
                           heat_kws={}, scatter_kws={}):
         # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
         if ax == None:
@@ -677,34 +677,39 @@ class regplot():
         X1, X2 = np.meshgrid(xx, yy)
         X_grid = np.c_[X1.ravel(), X2.ravel()]
         df_heat = pd.DataFrame(X_grid, columns=x_heat)
-        # ヒートマップ非使用特徴量を固定値として追加
+        # 推論用に全特徴量を保持したndarrayを作成 (ヒートマップ非使用特徴量は固定値other_xとして追加)
         n_rows = X_grid.shape[0]
-        if len(other_x) == 1:
-            X_grid = np.hstack([X_grid, np.full((n_rows, 1), other_x[0])])
-        elif len(other_x) == 2:
-            X_grid = np.hstack([X_grid, np.full((n_rows, 1), other_x[0]), np.full((n_rows, 1), other_x[1])])
+        X_all = []
+        other_add_flg = False
+        for i in range(2 + len(other_x)):
+            if i == x_heat_indices[0]: # ヒートマップ使用特徴量(1個目)を追加
+                X_all.append(X_grid[:, 0].reshape(n_rows, 1))
+            elif i == x_heat_indices[1]: # ヒートマップ使用特徴量(2個目)を追加
+                X_all.append(X_grid[:, 1].reshape(n_rows, 1))
+            elif len(other_x) >= 1 and not other_add_flg:  # ヒートマップ非使用特徴量(1個目)を固定値として追加
+                X_all.append(np.full((n_rows, 1), other_x[0]))
+                other_add_flg = True
+            elif len(other_x) == 2:  # ヒートマップ非使用特徴量(2個目)を固定値として追加
+                X_all.append(np.full((n_rows, 1), other_x[1]))
+        X_all = np.hstack(X_all)
         # グリッドデータに対して学習し、推定値を作成
-        y_pred_grid = trained_model.predict(X_grid)
+        y_pred_grid = trained_model.predict(X_all)
         df_heat['y_pred'] = pd.Series(y_pred_grid)
+        # グリッドデータをピボット化
+        df_heat_pivot = pd.pivot_table(data=df_heat, values='y_pred', 
+                                  columns=x_heat[0], index=x_heat[1], aggfunc=np.mean)
 
-        # 回帰モデルの線を作成
-        xmin = np.amin(X)
-        xmax = np.amax(X)
-        Xline = np.linspace(xmin, xmax, linesplit)
-        Xline = Xline.reshape(len(Xline), 1)
-        # 回帰線を描画
-        ax.plot(Xline, trained_model.predict(Xline), color=linecolor)
-        
-        # 評価指標文字列作成
-        score_list = [f'{k}={v}' for k, v in cls._round_dict_digits(score_dict, rounddigit, 'sig').items()]
-        score_text = "\n".join(score_list)
-        ax.text(xmax, np.amin(y_real), score_text, verticalalignment='bottom', horizontalalignment='right')
+        # ヒートマップのカラーマップ指定ないとき、YlGnを指定
+        if 'cmap' not in heat_kws.keys():
+            heat_kws['cmap'] = 'YlGn'
+        # ヒートマップをプロット
+        sns.heatmap(df_heat_pivot, ax=ax, vmax=vmax, vmin=vmin, center=(vmax+vmin)/2, **heat_kws)
     
     @classmethod
     def _reg_heat_plot(cls, trained_model, X, y_pred, y_real, x_heat, x_not_heat, x_heat_indices,
-                       rank_col, rank_col_data,
                        pair_sigmarange=2.0, pair_sigmainterval=0.5, heat_extendsigma=0.5, heat_division=30, 
-                       plot_scatter=True, rank_number=None, rounddigit=None,
+                       vmin=None, vmax=None, plot_scatter=True,
+                       rank_number=None, rank_col=None, rank_col_data=None, rounddigit=None,
                        subplot_kws={}, heat_kws={}, scatter_kws={}):
         # 説明変数の数
         x_num = X.shape[1]
@@ -821,14 +826,14 @@ class regplot():
                     x4_std = np.std(X_not_heat[:, 1])
                     other_x = [h_mean * x3_std + x3_mean, w_mean * x4_std + x4_mean]
                 
-                cls._reg_heat_plot_2d(trained_model, x_heat, 'y_real', 'y_pred', rank_col, df_pair,
+                cls._reg_heat_plot_2d(trained_model, x_heat, 'y_real', 'y_pred', rank_col, df_pair, x_heat_indices,
                                       x1_start, x1_end, x2_start, x2_end, heat_division, other_x,
-                                      ax, plot_scatter, rank_number, rounddigit,
+                                      vmin, vmax, ax, plot_scatter, rank_number, rounddigit,
                                       heat_kws=heat_kws, scatter_kws=scatter_kws)
 
     @classmethod
     def regression_heat_plot(cls, model, x: List[str], y: str, data: pd.DataFrame, x_heat: List[str] = None,
-                             pair_sigmarange = 1.5, pair_sigmainterval = 0.5, heat_extendsigma = 0.5, plot_scatter = True,
+                             pair_sigmarange = 1.5, pair_sigmainterval = 0.5, heat_extendsigma = 0.5, value_extendsigma = 0.5, plot_scatter = True,
                              rank_number=None, rank_col=None, rounddigit=None,
                              cv=None, cv_seed=42, display_cv_indices = 0,
                              model_params=None, fit_params=None, subplot_kws={}, heat_kws={}, scatter_kws={}):
@@ -866,6 +871,11 @@ class regplot():
         # ヒートマップ表示以外の列
         x_not_heat = [colname for colname in x if colname not in x_heat]
         
+        # ヒートマップの色分け最大最小値(y_realの最大最小値 ± y_realの標準偏差 × value_extendsigma)
+        y_real_std = np.std(y_real)
+        vmin = np.min(y_real) - y_real_std * value_extendsigma
+        vmax = np.max(y_real) + y_real_std * value_extendsigma
+
         # 学習器パラメータがあれば適用
         if model_params is not None:
             model.set_params(**model_params)
@@ -886,9 +896,9 @@ class regplot():
                 else:  # 表示フィールド指定あるとき
                     rank_col_data = data[rank_col].values
             cls._reg_heat_plot(model, X, y_pred, y_real, x_heat, x_not_heat, x_heat_indices,
-                               rank_col=rank_col, rank_col_data=rank_col_data,
-                               pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, plot_scatter = plot_scatter,
-                               rank_number=rank_number, rounddigit=rounddigit,
+                               pair_sigmarange = pair_sigmarange, pair_sigmainterval=pair_sigmainterval, heat_extendsigma=heat_extendsigma,
+                               vmin=vmin, vmax=vmax, plot_scatter=plot_scatter,
+                               rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_data, rounddigit=rounddigit,
                                subplot_kws=subplot_kws, heat_kws=heat_kws, scatter_kws=scatter_kws)
             
         # クロスバリデーション実施時(分割ごとに別々にプロット＆指標算出)
@@ -917,7 +927,7 @@ class regplot():
                         rank_col_test = data[rank_col].values[test]
                 # プロット
                 cls._reg_heat_plot(model, X, y_pred, y_real, x_heat, x_not_heat, x_heat_indices,
-                                   rank_col=rank_col, rank_col_data=rank_col_data,
-                                   pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, plot_scatter = plot_scatter,
-                                   rank_number=rank_number, rounddigit=rounddigit,
+                                   pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, heat_extendsigma=heat_extendsigma,
+                                   vmin=vmin, vmax=vmax, plot_scatter = plot_scatter,
+                                   rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_data, rounddigit=rounddigit,
                                    subplot_kws=subplot_kws, heat_kws=heat_kws, scatter_kws=scatter_kws)
