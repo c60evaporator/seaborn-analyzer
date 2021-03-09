@@ -666,7 +666,8 @@ class regplot():
     @classmethod
     def _reg_heat_plot_2d(cls, trained_model, x_heat, y_real_col, y_pred_col, rank_col, data, x_heat_indices,
                           x1_start, x1_end, x2_start, x2_end, heat_division, other_x,
-                          vmin, vmax, ax, plot_scatter, maxerror, rank_number, rounddigit,
+                          vmin, vmax, ax, plot_scatter, maxerror, rank_number,
+                          rounddigit_rank, rounddigit_x1, rounddigit_x2,
                           heat_kws={}, scatter_kws={}):
         # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
         if ax == None:
@@ -697,8 +698,8 @@ class regplot():
         y_pred_grid = trained_model.predict(X_all)
         df_heat['y_pred'] = pd.Series(y_pred_grid)
         # グリッドデータ縦軸横軸の表示桁数を調整
-        df_heat[x_heat[0]] = df_heat[x_heat[0]].map(lambda x: cls._round_digits(x, rounddigit=2))
-        df_heat[x_heat[1]] = df_heat[x_heat[1]].map(lambda x: cls._round_digits(x, rounddigit=2))
+        df_heat[x_heat[0]] = df_heat[x_heat[0]].map(lambda x: cls._round_digits(x, rounddigit=rounddigit_x1))
+        df_heat[x_heat[1]] = df_heat[x_heat[1]].map(lambda x: cls._round_digits(x, rounddigit=rounddigit_x2))
         # グリッドデータをピボット化
         df_heat_pivot = pd.pivot_table(data=df_heat, values='y_pred', 
                                   columns=x_heat[0], index=x_heat[1], aggfunc=np.mean)
@@ -715,14 +716,18 @@ class regplot():
             # 軸範囲が0～heat_divisionになっているので、スケール変換
             x1_scatter = 0.5 + (data[x_heat[0]].values - x1_start) * (heat_division - 1) / (x1_end - x1_start)
             x2_scatter = 0.5 + (data[x_heat[1]].values - x2_start) * (heat_division - 1) / (x2_end - x2_start)
+            # 散布図のカラーマップ指定ないとき、seismicを指定
+            if 'cmap' not in scatter_kws.keys():
+                scatter_kws['cmap'] = 'seismic'
             # 散布図プロット
-            ax.scatter(x1_scatter, x2_scatter, vmin=-maxerror, vmax=maxerror, c=y_error, cmap='seismic')
+            ax.scatter(x1_scatter, x2_scatter, vmin=-maxerror, vmax=maxerror, c=y_error, **scatter_kws)
     
     @classmethod
     def _reg_heat_plot(cls, trained_model, X, y_pred, y_real, x_heat, x_not_heat, x_heat_indices,
                        pair_sigmarange=2.0, pair_sigmainterval=0.5, heat_extendsigma=0.5, heat_division=30, 
                        vmin=None, vmax=None, plot_scatter=True, maxerror=None,
-                       rank_number=None, rank_col=None, rank_col_data=None, rounddigit=None,
+                       rank_number=None, rank_col=None, rank_col_data=None,
+                       rounddigit_rank=None, rounddigit_x1=None, rounddigit_x2=None, rounddigit_x3=None,
                        subplot_kws={}, heat_kws={}, scatter_kws={}):
         # 説明変数の数
         x_num = X.shape[1]
@@ -779,7 +784,7 @@ class regplot():
 
         # figsize (全ての図全体のサイズ)指定
         if 'figsize' not in subplot_kws.keys():
-            subplot_kws['figsize'] = (pair_w * 6, pair_h * 6)
+            subplot_kws['figsize'] = (pair_w * 6, pair_h * 5)
         # プロット用のaxes作成
         fig, axes = plt.subplots(pair_h, pair_w, **subplot_kws)
 
@@ -841,13 +846,28 @@ class regplot():
                 
                 cls._reg_heat_plot_2d(trained_model, x_heat, 'y_real', 'y_pred', rank_col, df_pair, x_heat_indices,
                                       x1_start, x1_end, x2_start, x2_end, heat_division, other_x,
-                                      vmin, vmax, ax, plot_scatter, maxerror, rank_number, rounddigit,
+                                      vmin, vmax, ax, plot_scatter, maxerror, rank_number,
+                                      rounddigit_rank, rounddigit_x1, rounddigit_x2,
                                       heat_kws=heat_kws, scatter_kws=scatter_kws)
+
+                # グラフタイトルとして、ヒートマップ外特徴量の範囲を記載
+                if x_num == 3:
+                    if i == 0:
+                        ax.set_title(f'{x_not_heat[0]}=- {cls._round_digits(h_max * x3_std + x3_mean, rounddigit=rounddigit_x3)} (- {h_max}σ)')
+                    elif i == pair_h - 1:
+                        ax.set_title(f'{x_not_heat[0]}={cls._round_digits(h_min * x3_std + x3_mean, rounddigit=rounddigit_x3)} - ({h_min}σ -)')
+                    else:
+                        ax.set_title(f'{x_not_heat[0]}={cls._round_digits(h_min * x3_std + x3_mean, rounddigit=rounddigit_x3)} - {cls._round_digits(h_max * x3_std + x3_mean, rounddigit=rounddigit_x3)} ({h_min}σ - {h_max}σ)')
+                if x_num == 4:
+                    ax.set_title(f'{x_not_heat[0]}= {h_min}σ - {h_max}σ  {x_not_heat[1]}= {w_min}σ - {w_max}σ')
+
+        # 字が重なるのでtight_layoutにする
+        plt.tight_layout()
 
     @classmethod
     def regression_heat_plot(cls, model, x: List[str], y: str, data: pd.DataFrame, x_heat: List[str] = None,
                              pair_sigmarange = 1.5, pair_sigmainterval = 0.5, heat_extendsigma = 0.5, value_extendsigma = 0.5, plot_scatter = True,
-                             rank_number=None, rank_col=None, rounddigit=None,
+                             rank_number=None, rank_col=None, rounddigit_rank=3, rounddigit_x1=2, rounddigit_x2=2, rounddigit_x3=2,
                              cv=None, cv_seed=42, display_cv_indices = 0,
                              model_params=None, fit_params=None, subplot_kws={}, heat_kws={}, scatter_kws={}):
         # 説明変数xの次元が2～4以外ならエラーを出す
@@ -914,7 +934,8 @@ class regplot():
             cls._reg_heat_plot(model, X, y_pred, y_real, x_heat, x_not_heat, x_heat_indices,
                                pair_sigmarange = pair_sigmarange, pair_sigmainterval=pair_sigmainterval, heat_extendsigma=heat_extendsigma,
                                vmin=vmin, vmax=vmax, plot_scatter=plot_scatter, maxerror=maxerror,
-                               rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_data, rounddigit=rounddigit,
+                               rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_data,
+                               rounddigit_rank=rounddigit_rank, rounddigit_x1=rounddigit_x1, rounddigit_x2=rounddigit_x2, rounddigit_x3=rounddigit_x3,
                                subplot_kws=subplot_kws, heat_kws=heat_kws, scatter_kws=scatter_kws)
             
         # クロスバリデーション実施時(分割ごとに別々にプロット＆指標算出)
@@ -948,5 +969,6 @@ class regplot():
                 cls._reg_heat_plot(model, X, y_pred, y_real, x_heat, x_not_heat, x_heat_indices,
                                    pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, heat_extendsigma=heat_extendsigma,
                                    vmin=vmin, vmax=vmax, plot_scatter = plot_scatter, maxerror=maxerror,
-                                   rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_data, rounddigit=rounddigit,
+                                   rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_data,
+                                   rounddigit_rank=rounddigit_rank, rounddigit_x1=rounddigit_x1, rounddigit_x2=rounddigit_x2, rounddigit_x3=rounddigit_x3,
                                    subplot_kws=subplot_kws, heat_kws=heat_kws, scatter_kws=scatter_kws)
