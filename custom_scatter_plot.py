@@ -666,7 +666,7 @@ class regplot():
     @classmethod
     def _reg_heat_plot_2d(cls, trained_model, x_heat, y_real_col, y_pred_col, rank_col, data, x_heat_indices,
                           x1_start, x1_end, x2_start, x2_end, heat_division, other_x,
-                          vmin, vmax, ax, plot_scatter, maxerror, rank_number,
+                          vmin, vmax, ax, plot_scatter, maxerror, rank_dict,
                           rounddigit_rank, rounddigit_x1, rounddigit_x2,
                           heat_kws={}, scatter_kws={}):
         # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
@@ -721,6 +721,19 @@ class regplot():
                 scatter_kws['cmap'] = 'seismic'
             # 散布図プロット
             ax.scatter(x1_scatter, x2_scatter, vmin=-maxerror, vmax=maxerror, c=y_error, **scatter_kws)
+        
+        # 誤差上位を文字表示
+        df_rank = data[data.index.isin(rank_dict.keys())]
+        for index, row in df_rank.iterrows():
+            # rank_col指定ないとき、indexがfloat型に変換されてしまうので、int型に戻す
+            rank_col_value = int(row[rank_col]) if rank_col == 'index' else row[rank_col]
+            # 誤差を計算してテキスト化
+            error = cls._round_digits(row['y_pred'] - row['y_real'], rounddigit=rounddigit_rank)
+            rank_text = f'{rank_dict[index]+1}\n{rank_col}={rank_col_value}\nerror={error}'
+            # 軸範囲が0～heat_divisionになっているので、スケール変換してプロット
+            x1_text = 0.5 + (row[x_heat[0]] - x1_start) * (heat_division - 1) / (x1_end - x1_start)
+            x2_text = 0.5 + (row[x_heat[1]] - x2_start) * (heat_division - 1) / (x2_end - x2_start)
+            ax.text(x1_text, x2_text, rank_text, verticalalignment='center', horizontalalignment='left')
     
     @classmethod
     def _reg_heat_plot(cls, trained_model, X, y_pred, y_real, x_heat, x_not_heat, x_heat_indices,
@@ -743,14 +756,18 @@ class regplot():
         # ヒートップ非使用特徴量を標準化してDataFrameに追加
         if x_num >= 3:
             X_not_heat_norm = stats.zscore(X_not_heat)
-            columns = [f'normalize_{c}' for c in x_not_heat]
             df_all = df_all.join(pd.DataFrame(X_not_heat_norm, columns=[f'normalize_{c}' for c in x_not_heat]))
         # 誤差上位表示用IDデータをDataFrameに追加
+        rank_col = 'index' if rank_col is None else rank_col
         df_all = df_all.join(pd.DataFrame(rank_col_data, columns=[rank_col]))
 
         # 誤差の順位を計算
-        y_error = np.abs(y_pred - y_real)
-        rank_index  = np.argsort(-y_error)[:rank_number]
+        if rank_number is not None:
+            y_error = np.abs(y_pred - y_real)
+            rank_index  = np.argsort(-y_error)[:rank_number]
+            rank_dict = dict(zip(rank_index.tolist(), range(rank_number)))
+        else:
+            rank_dict = {}
 
         # ヒートマップのX1軸およびX2軸の表示範囲(最大最小値 + extendsigma)
         x1_min = np.min(X[:, x_heat_indices[0]])
@@ -846,7 +863,7 @@ class regplot():
                 
                 cls._reg_heat_plot_2d(trained_model, x_heat, 'y_real', 'y_pred', rank_col, df_pair, x_heat_indices,
                                       x1_start, x1_end, x2_start, x2_end, heat_division, other_x,
-                                      vmin, vmax, ax, plot_scatter, maxerror, rank_number,
+                                      vmin, vmax, ax, plot_scatter, maxerror, rank_dict,
                                       rounddigit_rank, rounddigit_x1, rounddigit_x2,
                                       heat_kws=heat_kws, scatter_kws=scatter_kws)
 
@@ -928,6 +945,8 @@ class regplot():
                     rank_col_data = data.index.values
                 else:  # 表示フィールド指定あるとき
                     rank_col_data = data[rank_col].values
+            else:
+                rank_col_data = None
             # 誤差最大値
             maxerror = np.max(np.abs(y_pred - y_real))
             # ヒートマップをプロット
@@ -963,12 +982,14 @@ class regplot():
                         rank_col_test = data.index.values[test]
                     else:  # 表示フィールド指定あるとき
                         rank_col_test = data[rank_col].values[test]
+                else:
+                    rank_col_test = None
                 # 誤差最大値
                 maxerror = np.max(np.abs(y_pred - y_test))
                 # ヒートマップをプロット
-                cls._reg_heat_plot(model, X, y_pred, y_real, x_heat, x_not_heat, x_heat_indices,
+                cls._reg_heat_plot(model, X_test, y_pred, y_test, x_heat, x_not_heat, x_heat_indices,
                                    pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, heat_extendsigma=heat_extendsigma,
                                    vmin=vmin, vmax=vmax, plot_scatter = plot_scatter, maxerror=maxerror,
-                                   rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_data,
+                                   rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_test,
                                    rounddigit_rank=rounddigit_rank, rounddigit_x1=rounddigit_x1, rounddigit_x2=rounddigit_x2, rounddigit_x3=rounddigit_x3,
                                    subplot_kws=subplot_kws, heat_kws=heat_kws, scatter_kws=scatter_kws)

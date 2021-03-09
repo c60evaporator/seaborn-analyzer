@@ -19,6 +19,7 @@ from custom_scatter_plot import regplot
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
+
 from sklearn.svm import SVR
 from sklearn.model_selection import LeaveOneOut
 
@@ -40,6 +41,6 @@ from custom_scatter_plot import regplot
 import seaborn as sns
 from sklearn.svm import SVR
 iris = sns.load_dataset("iris")
-regplot.regression_heat_plot(SVR(), ['sepal_width', 'petal_width', 'petal_length'], 'sepal_length', iris, x_heat=['petal_length', 'petal_width'], rank_number=5, cv=None)
+regplot.regression_heat_plot(SVR(), ['sepal_width', 'petal_width', 'petal_length'], 'sepal_length', iris, x_heat=['petal_length', 'petal_width'], rank_number=3, cv=None)
 
 # %%
