@@ -663,9 +663,10 @@ class regplot():
             ax_all.set_title('All Cross Validations')
             return score_stats_dict
 
-    def _reg_heat_plot_2d(trained_model, x_heat, y_real_col, y_pred_col, rank_col, data, x_heat_indices,
+    @classmethod
+    def _reg_heat_plot_2d(cls, trained_model, x_heat, y_real_col, y_pred_col, rank_col, data, x_heat_indices,
                           x1_start, x1_end, x2_start, x2_end, heat_division, other_x,
-                          vmin, vmax, ax, plot_scatter, rank_number, rounddigit,
+                          vmin, vmax, ax, plot_scatter, maxerror, rank_number, rounddigit,
                           heat_kws={}, scatter_kws={}):
         # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
         if ax == None:
@@ -695,6 +696,9 @@ class regplot():
         # グリッドデータに対して学習し、推定値を作成
         y_pred_grid = trained_model.predict(X_all)
         df_heat['y_pred'] = pd.Series(y_pred_grid)
+        # グリッドデータ縦軸横軸の表示桁数を調整
+        df_heat[x_heat[0]] = df_heat[x_heat[0]].map(lambda x: cls._round_digits(x, rounddigit=2))
+        df_heat[x_heat[1]] = df_heat[x_heat[1]].map(lambda x: cls._round_digits(x, rounddigit=2))
         # グリッドデータをピボット化
         df_heat_pivot = pd.pivot_table(data=df_heat, values='y_pred', 
                                   columns=x_heat[0], index=x_heat[1], aggfunc=np.mean)
@@ -704,11 +708,20 @@ class regplot():
             heat_kws['cmap'] = 'YlGn'
         # ヒートマップをプロット
         sns.heatmap(df_heat_pivot, ax=ax, vmax=vmax, vmin=vmin, center=(vmax+vmin)/2, **heat_kws)
+
+        # 誤差散布図をプロット
+        if plot_scatter:
+            y_error = data[y_pred_col].values - data[y_real_col].values        
+            # 軸範囲が0～heat_divisionになっているので、スケール変換
+            x1_scatter = 0.5 + (data[x_heat[0]].values - x1_start) * (heat_division - 1) / (x1_end - x1_start)
+            x2_scatter = 0.5 + (data[x_heat[1]].values - x2_start) * (heat_division - 1) / (x2_end - x2_start)
+            # 散布図プロット
+            ax.scatter(x1_scatter, x2_scatter, vmin=-maxerror, vmax=maxerror, c=y_error, cmap='seismic')
     
     @classmethod
     def _reg_heat_plot(cls, trained_model, X, y_pred, y_real, x_heat, x_not_heat, x_heat_indices,
                        pair_sigmarange=2.0, pair_sigmainterval=0.5, heat_extendsigma=0.5, heat_division=30, 
-                       vmin=None, vmax=None, plot_scatter=True,
+                       vmin=None, vmax=None, plot_scatter=True, maxerror=None,
                        rank_number=None, rank_col=None, rank_col_data=None, rounddigit=None,
                        subplot_kws={}, heat_kws={}, scatter_kws={}):
         # 説明変数の数
@@ -828,7 +841,7 @@ class regplot():
                 
                 cls._reg_heat_plot_2d(trained_model, x_heat, 'y_real', 'y_pred', rank_col, df_pair, x_heat_indices,
                                       x1_start, x1_end, x2_start, x2_end, heat_division, other_x,
-                                      vmin, vmax, ax, plot_scatter, rank_number, rounddigit,
+                                      vmin, vmax, ax, plot_scatter, maxerror, rank_number, rounddigit,
                                       heat_kws=heat_kws, scatter_kws=scatter_kws)
 
     @classmethod
@@ -895,9 +908,12 @@ class regplot():
                     rank_col_data = data.index.values
                 else:  # 表示フィールド指定あるとき
                     rank_col_data = data[rank_col].values
+            # 誤差最大値
+            maxerror = np.max(np.abs(y_pred - y_real))
+            # ヒートマップをプロット
             cls._reg_heat_plot(model, X, y_pred, y_real, x_heat, x_not_heat, x_heat_indices,
                                pair_sigmarange = pair_sigmarange, pair_sigmainterval=pair_sigmainterval, heat_extendsigma=heat_extendsigma,
-                               vmin=vmin, vmax=vmax, plot_scatter=plot_scatter,
+                               vmin=vmin, vmax=vmax, plot_scatter=plot_scatter, maxerror=maxerror,
                                rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_data, rounddigit=rounddigit,
                                subplot_kws=subplot_kws, heat_kws=heat_kws, scatter_kws=scatter_kws)
             
@@ -919,15 +935,18 @@ class regplot():
                 y_test = y_real[test]
                 # 学習と推論
                 model.fit(X_train, y_train, **fit_params)
+                y_pred = model.predict(X_test)
                 # 誤差上位表示用データ取得
                 if rank_number is not None:
                     if rank_col is None:  # 表示フィールド指定ないとき、Index使用
                         rank_col_test = data.index.values[test]
                     else:  # 表示フィールド指定あるとき
                         rank_col_test = data[rank_col].values[test]
-                # プロット
+                # 誤差最大値
+                maxerror = np.max(np.abs(y_pred - y_test))
+                # ヒートマップをプロット
                 cls._reg_heat_plot(model, X, y_pred, y_real, x_heat, x_not_heat, x_heat_indices,
                                    pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, heat_extendsigma=heat_extendsigma,
-                                   vmin=vmin, vmax=vmax, plot_scatter = plot_scatter,
+                                   vmin=vmin, vmax=vmax, plot_scatter = plot_scatter, maxerror=maxerror,
                                    rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_data, rounddigit=rounddigit,
                                    subplot_kws=subplot_kws, heat_kws=heat_kws, scatter_kws=scatter_kws)
