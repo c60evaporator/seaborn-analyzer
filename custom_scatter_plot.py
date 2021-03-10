@@ -381,7 +381,8 @@ class regplot():
             return score_stats_dict
 
     @classmethod
-    def linear_plot(cls, x: str, y: str, data: pd.DataFrame, ax=None, hue=None, linecolor='red', linesplit=50, rounddigit=None):
+    def linear_plot(cls, x: str, y: str, data: pd.DataFrame, ax=None, hue=None, linecolor='red', linesplit=50,
+                    rounddigit=None, plot_scores=True):
         """
         1変数線形回帰してプロットし、p値と相関係数を表示
 
@@ -403,6 +404,8 @@ class regplot():
             フィッティング線の分割数 (カクカクしたら増やす)
         rounddigit: int
             表示指標の小数丸め桁数
+        plot_scores: bool
+            回帰式、ピアソンの相関係数およびp値の表示有無 (Trueなら表示あり)
         """
         # xをndarray化
         if isinstance(x, str):
@@ -428,12 +431,19 @@ class regplot():
         # 回帰線を描画
         ax.plot(Xline, lr.predict(Xline), color=linecolor)
 
-        # ピアソンの相関係数およびp値を表示
-        pearsonr = stats.pearsonr(data[x], data[y])
-        r = cls._round_digits(pearsonr[0], rounddigit=rounddigit, method="decimal")
-        pvalue = cls._round_digits(pearsonr[1], rounddigit=rounddigit, method="decimal")
-        rtext = f'r={r}\np={pvalue}'
-        ax.text(xmax, np.amin(y_real), rtext, verticalalignment='bottom', horizontalalignment='right')
+        # 回帰式、ピアソンの相関係数およびp値を表示
+        if plot_scores == True:
+            # 回帰式
+            coef = cls._round_digits(lr.coef_[0], rounddigit=rounddigit, method="decimal")
+            intercept = cls._round_digits(lr.intercept_, rounddigit=rounddigit, method="decimal")
+            equation = f'y={coef}x+{intercept}' if intercept >= 0 else f'y={coef}x-{-intercept}'
+            # ピアソン相関係数
+            pearsonr = stats.pearsonr(data[x], data[y])
+            r = cls._round_digits(pearsonr[0], rounddigit=rounddigit, method="decimal")
+            pvalue = cls._round_digits(pearsonr[1], rounddigit=rounddigit, method="decimal")            
+            # プロット
+            rtext = f'{equation}\nr={r}\np={pvalue}'
+            ax.text(xmax, np.amin(y_real), rtext, verticalalignment='bottom', horizontalalignment='right')
 
     @classmethod
     def _model_plot_1d(cls, trained_model, X, y_real, hue_data=None, hue_name=None, ax=None, linecolor='red', linesplit=50, rounddigit=None,
