@@ -113,6 +113,8 @@ class dist():
         # 正規分布
         if dist == 'norm':
             Xline ,Yline = cls._fit_norm(X, sigmarange, linesplit)
+        # ガンマ分布
+
         # 標準化していないとき、ヒストグラムと最大値の8割を合わせるようフィッティング線の倍率調整
         if norm_hist is False:
             line_max = np.amax(Yline)
@@ -161,23 +163,33 @@ class dist():
         # ヒストグラムとフィッティング線を描画
         cls.hist_dist(data, dist='norm', ax=axes[1], bin_width=bin_width, norm_hist=norm_hist,
                       sigmarange=sigmarange, linecolor=linecolor, linesplit=linesplit, rounddigit=rounddigit, hist_kws=hist_kws)
-
-        # 平均と不偏標準偏差
+        # 平均と不偏標準偏差を計算し、ヒストグラム図中に記載
         X = data.values
         mean = np.mean(X)
         std = np.std(X, ddof=1)
-        # 正規性検定
-        if len(X) <= 2000: # シャピロウィルク検定 (N<=2000のとき)
-            normality=stats.shapiro(X)
-        else: # コルモゴロフ-スミルノフ検定 (N>2000のとき)
-            normality = stats.kstest(X, stats.norm(loc=mean, scale=std).cdf)
-
-        # パラメータを記載
         params = {'mean':mean,
-                'std':std,
-                'statistic':normality.statistic,
-                'pvalue':normality.pvalue,
-            }
+                  'std':std
+                  }
         param_list = [f'{k}={v}' for k, v in cls._round_dict_digits(params, rounddigit, 'sig').items()]
         param_text = "\n".join(param_list)
-        axes[1].text(axes[1].get_xlim()[1] * 0.95, axes[1].get_ylim()[1] * 0.9, param_text, verticalalignment='top', horizontalalignment='right')
+        axes[1].text(axes[1].get_xlim()[0] + (axes[1].get_xlim()[1] - axes[1].get_xlim()[0]) * 0.95,
+                     axes[1].get_ylim()[1] * 0.9,
+                     param_text, verticalalignment='top', horizontalalignment='right')
+
+        # 正規性検定
+        if len(X) <= 2000: # シャピロウィルク検定 (N<=2000のとき)
+            method = 'shapiro-wilk'
+            normality=stats.shapiro(X)
+        else: # コルモゴロフ-スミルノフ検定 (N>2000のとき)
+            method = 'kolmogorov-smirnov'
+            normality = stats.kstest(X, stats.norm(loc=mean, scale=std).cdf)
+        # 検定結果を図中に記載
+        params = {'statistic':normality.statistic,
+                  'pvalue':normality.pvalue,
+                  }
+        param_list = [f'{k}={v}' for k, v in cls._round_dict_digits(params, rounddigit, 'sig').items()]
+        param_list.insert(0, f'method={method}')
+        param_text = "\n".join(param_list)
+        axes[0].text(axes[0].get_xlim()[0] + (axes[0].get_xlim()[1] - axes[0].get_xlim()[0]) * 0.95,
+                     axes[0].get_ylim()[0] + (axes[0].get_ylim()[1] - axes[0].get_ylim()[0]) * 0.1,
+                     param_text, verticalalignment='bottom', horizontalalignment='right')
