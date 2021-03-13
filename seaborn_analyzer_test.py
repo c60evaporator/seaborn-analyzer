@@ -47,7 +47,7 @@ from sklearn.svm import SVR
 iris = sns.load_dataset("iris")
 regplot.regression_plot_1d(SVR(), 'petal_length', 'sepal_length', iris, plot_stats='median', rounddigit=3, cv=5)
 
-# %% custom_scatter_plot.regression_plot_1d
+# %% custom_scatter_plot.regression_heat_plot
 from custom_scatter_plot import regplot
 import seaborn as sns
 from sklearn.svm import SVR
