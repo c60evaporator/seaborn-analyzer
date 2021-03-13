@@ -106,21 +106,22 @@ class dist():
         # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
         if ax == None:
             ax=plt.gca()
-        # まずはヒストグラム描画
+
+        # ビンサイズを設定
         if bin_width is None:
             bins = None
         else:
             bins = np.arange(np.floor(data.min()), np.ceil(data.max()), bin_width)
-
-        if hue_data is None:
+        # ヒストグラム描画
+        if hue_data is None:  # 色分けないとき
             sns.distplot(data, ax=ax, kde=False, bins=bins, norm_hist=norm_hist, hist_kws=hist_kws)
-        else:
+        else:  # 色分けあるとき
             df_hue = pd.concat([data, hue_data], axis=1)
             grby_hue = df_hue.groupby(hue_data.name)
             data_list = [df_group[data.name] for key, df_group in grby_hue]
             hue_list = [key for key, df_group in grby_hue]
             ax.hist(data_list, stacked=True, bins=bins, density=norm_hist, **hist_kws)
-            ax.legend(hue_list)
+            ax.legend(hue_list, loc='upper left')
 
         # 分布をフィッティング
         X = data.values
@@ -141,7 +142,7 @@ class dist():
         return params
 
     @classmethod
-    def plot_normality(cls, data: pd.Series, bin_width=None, norm_hist=True,
+    def plot_normality(cls, data: pd.Series, hue_data=None, bin_width=None, norm_hist=True,
                         sigmarange=4, linecolor='red', linesplit=50, rounddigit=None,
                         hist_kws={}, subplot_kws={}):
         """
@@ -151,6 +152,8 @@ class dist():
         ----------
         data : pd.Series
             フィッティング対象のデータ
+        hue_data : pd.Series
+            積み上げ色分け指定対象のデータ (Noneなら色分けなし)
         bin_width : float
             ビンの幅 (NoneならFreedman-Diaconis ruleで自動決定)
         norm_hist : bool
@@ -176,7 +179,7 @@ class dist():
         stats.probplot(data, dist='norm', plot=axes[0])
 
         # ヒストグラムとフィッティング線を描画
-        cls.hist_dist(data, dist='norm', ax=axes[1], bin_width=bin_width, norm_hist=norm_hist,
+        cls.hist_dist(data, dist='norm', ax=axes[1], hue_data=hue_data, bin_width=bin_width, norm_hist=norm_hist,
                       sigmarange=sigmarange, linecolor=linecolor, linesplit=linesplit, rounddigit=rounddigit, hist_kws=hist_kws)
         # 平均と不偏標準偏差を計算し、ヒストグラム図中に記載
         X = data.values
