@@ -74,7 +74,7 @@ class dist():
         return dstdict
 
     @classmethod
-    def hist_dist(cls, data: pd.Series, dist='norm', ax=None, bin_width=None, norm_hist=True,
+    def hist_dist(cls, data: pd.Series, dist='norm', ax=None, hue_data=None, bin_width=None, norm_hist=True,
                   sigmarange=4, linecolor='red', linesplit=50, rounddigit=None, hist_kws={}):
         """
         分布フィッティングと各指標の表示
@@ -84,9 +84,11 @@ class dist():
         data : pd.Series
             フィッティング対象のデータ
         dist : str
-            分布の種類 ("norm", "poisson", "exp", "chi2", "weibull", "lognorm", "gamma")
+            分布の種類 ("norm", "poisson", "exp", "chi2", "weibull", "lognorm", "gamma", "uniform")
         ax : matplotlib.axes._subplots.Axes
             表示対象のax (Noneならplt.plotで1枚ごとにプロット)
+        hue_data : pd.Series
+            積み上げ色分け指定対象のデータ (Noneなら色分けなし)
         bin_width : float
             ビンの幅 (NoneならFreedman-Diaconis ruleで自動決定)
         norm_hist : bool
@@ -100,12 +102,25 @@ class dist():
         hist_kws : Dict
             ヒストグラム表示(matplotlib.axes.Axes.hist())の引数
         """
+
+        # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
+        if ax == None:
+            ax=plt.gca()
         # まずはヒストグラム描画
         if bin_width is None:
             bins = None
         else:
             bins = np.arange(np.floor(data.min()), np.ceil(data.max()), bin_width)
-        ax = sns.distplot(data, ax=ax, kde=False, bins=bins, norm_hist=norm_hist, hist_kws=hist_kws)
+
+        if hue_data is None:
+            sns.distplot(data, ax=ax, kde=False, bins=bins, norm_hist=norm_hist, hist_kws=hist_kws)
+        else:
+            df_hue = pd.concat([data, hue_data], axis=1)
+            grby_hue = df_hue.groupby(hue_data.name)
+            data_list = [df_group[data.name] for key, df_group in grby_hue]
+            hue_list = [key for key, df_group in grby_hue]
+            ax.hist(data_list, stacked=True, bins=bins, density=norm_hist, **hist_kws)
+            ax.legend(hue_list)
 
         # 分布をフィッティング
         X = data.values
