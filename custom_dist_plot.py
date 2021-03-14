@@ -4,30 +4,48 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import stats
+from scipy.stats import distributions
 import decimal
 
 class dist():
-    def _fit_norm(X: np.ndarray, sigmarange: float, linesplit: int):
+    DEFAULT_LINECOLORS = ['red', 'darkmagenta', 'hotpink', 'yellow', 'brown', 'blue', 'green', 'cyan', 'orange']
+    
+    def _fit_distribution(x: np.ndarray, distribution: distributions, sigmarange: float, linesplit: int):
         """
-        正規分布のフィッティング
+        分布のフィッティング
 
         Parameters
         ----------
         X : ndarray
             フィッティング対象のデータ
+        dist : scipy.stats.distributions
+            分布の種類
         sigmarange : float
             フィッティング線の表示範囲（標準偏差の何倍まで表示するか指定）
         linesplit : int
             フィッティング線の分割数（カクカクしたら増やす）
         """
-        # 平均と不偏標準偏差
-        mean = np.mean(X)
-        std = np.std(X, ddof=1)
-        # フィッティング曲線の生成
-        Xline = np.linspace(min(mean - std * sigmarange, np.amin(X)), max(mean + std * sigmarange, np.amax(X)), linesplit)
-        Yline = stats.norm.pdf(Xline, mean, std)
+        # 平均と不偏標準偏差(正規分布のとき)
+        mean = np.mean(x)
+        std = np.std(x, ddof=1)
         
-        return Xline, Yline
+        # フィッティング実行
+        params = distribution.fit(x)
+        # フィッティング結果のパラメータを分割
+        fit_params = {'arg': params[:-2],
+                      'loc': params[-2],
+                      'scale': params[-1]
+                      }
+
+        # フィッティング誤差を計算
+        pred = distribution.pdf(x, loc=fit_params['loc'], scale=fit_params['scale'], *fit_params['arg'])
+        sum_squared_error = np.sum(np.power(x - pred, 2.0))
+
+        # フィッティング曲線の生成
+        Xline = np.linspace(min(mean - std * sigmarange, np.amin(x)), max(mean + std * sigmarange, np.amax(x)), linesplit)
+        Yline = distribution.pdf(Xline, loc=fit_params['loc'], scale=fit_params['scale'], *fit_params['arg'])
+        
+        return Xline, Yline, fit_params
     
     def _round_digits(src: float, rounddigit: int = None, method='decimal'):
         """
@@ -83,8 +101,8 @@ class dist():
         ----------
         data : pd.Series
             フィッティング対象のデータ
-        dist : str
-            分布の種類 ("norm", "poisson", "exp", "chi2", "weibull", "lognorm", "gamma", "uniform")
+        dist : str or List[str]
+            分布の種類 ("norm", "lognorm", "gamma", "t", "expon", "uniform", "chi2", "weibull")
         ax : matplotlib.axes._subplots.Axes
             表示対象のax (Noneならplt.plotで1枚ごとにプロット)
         hue_data : pd.Series
@@ -95,6 +113,8 @@ class dist():
             ヒストグラムを面積1となるよう正規化するか？
         sigmarange : float
             フィッティング線の表示範囲 (標準偏差の何倍まで表示するか指定)
+        linesplit : str or List[str]
+            フィッティング線の色指定 (複数分布フィッティング時は、List指定)
         linesplit : int
             フィッティング線の分割数 (カクカクしたら増やす)
         rounddigit: int
@@ -123,23 +143,87 @@ class dist():
             ax.hist(data_list, stacked=True, bins=bins, density=norm_hist, **hist_kws)
             ax.legend(hue_list, loc='upper left')
 
+        # distをList化
+        dists = [dist] if isinstance(dist, str) else dist
+        # フィッティング線の色指定をリスト化
+        linecolor = [linecolor] if isinstance(linecolor, str) else linecolor
+        # 2種類以上をプロットしており、かつ色指定がListでないとき、他の色を追加
+        if len(dists) >= 2:
+            if len(linecolor) == 1:
+                linecolor = cls.DEFAULT_LINECOLORS
+            elif len(dists) != len(linecolor):
+                Exception('length of "linecolor" must be equal to length of "dist"')
+
         # 分布をフィッティング
-        X = data.values
-        params = Xline = Yline = None
-        # 正規分布
-        if dist == 'norm':
-            Xline ,Yline = cls._fit_norm(X, sigmarange, linesplit)
-        # ガンマ分布
+        all_params = {}
+        line_legends = []
+        for i, distribution in enumerate(dists):
+            # 分布が文字列型のとき、scipy.stats.distributionsに変更
+            if isinstance(distribution, str):
+                if distribution == 'norm':
+                    distribution = stats.norm
+                elif distribution == 'lognorm':
+                    distribution = stats.lognorm
+                elif distribution == 'gamma':
+                    distribution = stats.gamma
+                elif distribution == 't':
+                    distribution = stats.t
+                elif distribution == 'expon':
+                    distribution = stats.expon
+                elif distribution == 'uniform':
+                    distribution = stats.uniform
+                elif distribution == 'chi2':
+                    distribution = stats.chi2
+                elif distribution == 'weibull':
+                    distribution = stats.weibull_min
+            # 分布フィット
+            x = data.values
+            xline, yline, fit_params = cls._fit_distribution(x, distribution, sigmarange, linesplit)
 
-        # 標準化していないとき、ヒストグラムと最大値の8割を合わせるようフィッティング線の倍率調整
-        if norm_hist is False:
-            line_max = np.amax(Yline)
-            hist_max = ax.get_ylim()[1]
-            Yline = Yline * hist_max / line_max * 0.8
-        # フィッティング線の描画
-        ax.plot(Xline, Yline, color=linecolor)
+            # 標準化していないとき、ヒストグラムと最大値の8割を合わせるようフィッティング線の倍率調整
+            if norm_hist is False:
+                line_max = np.amax(yline)
+                hist_max = ax.get_ylim()[1]
+                yline = yline * hist_max / line_max * 0.8
+            # フィッティング線の描画
+            leg, = ax.plot(xline, yline, color=linecolor[i])
+            line_legends.append(leg)
 
-        return params
+            # フィッティング結果パラメータをdict化
+            params = {}
+            # 正規分布
+            if distribution == stats.norm:
+                params['mean'] = fit_params['loc']
+                params['std'] = fit_params['scale']
+                all_params['norm'] = params
+            # 対数正規分布(参考https://analytics-note.xyz/statistics/scipy-lognorm/)
+            elif distribution == stats.lognorm:
+                params['mu'] = np.log(fit_params['scale'])
+                params['sigma'] = fit_params['arg'][0]
+                params['offset'] = fit_params['loc']
+                all_params['lognorm'] = params
+            # ガンマ分布
+            elif dist == 'gamma':
+                params['mu'] = np.log(scale)
+                params['sigma'] = arg[0]
+                params['offset'] = loc
+                all_params['lognorm'] = params
+            elif dist == 't':
+                distribution = stats.t
+            elif dist == 'expon':
+                distribution = stats.expon
+            elif dist == 'uniform':
+                distribution = stats.uniform
+            elif dist == 'chi2':
+                distribution = stats.chi2
+            elif dist == 'weibull':
+                distribution = stats.weibull_min
+        
+        # フィッティング線の凡例をプロット
+        line_labels = [str(d) for d in dists]
+        ax.legend(line_legends, line_labels, loc='upper right')
+
+        return all_params
 
     @classmethod
     def plot_normality(cls, data: pd.Series, hue_data=None, bin_width=None, norm_hist=True,
@@ -182,9 +266,9 @@ class dist():
         cls.hist_dist(data, dist='norm', ax=axes[1], hue_data=hue_data, bin_width=bin_width, norm_hist=norm_hist,
                       sigmarange=sigmarange, linecolor=linecolor, linesplit=linesplit, rounddigit=rounddigit, hist_kws=hist_kws)
         # 平均と不偏標準偏差を計算し、ヒストグラム図中に記載
-        X = data.values
-        mean = np.mean(X)
-        std = np.std(X, ddof=1)
+        x = data.values
+        mean = np.mean(x)
+        std = np.std(x, ddof=1)
         params = {'mean':mean,
                   'std':std
                   }
@@ -195,12 +279,12 @@ class dist():
                      param_text, verticalalignment='top', horizontalalignment='right')
 
         # 正規性検定
-        if len(X) <= 2000: # シャピロウィルク検定 (N<=2000のとき)
+        if len(x) <= 2000: # シャピロウィルク検定 (N<=2000のとき)
             method = 'shapiro-wilk'
-            normality=stats.shapiro(X)
+            normality=stats.shapiro(x)
         else: # コルモゴロフ-スミルノフ検定 (N>2000のとき)
             method = 'kolmogorov-smirnov'
-            normality = stats.kstest(X, stats.norm(loc=mean, scale=std).cdf)
+            normality = stats.kstest(x, stats.norm(loc=mean, scale=std).cdf)
         # 検定結果を図中に記載
         params = {'statistic':normality.statistic,
                   'pvalue':normality.pvalue,
