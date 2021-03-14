@@ -222,12 +222,12 @@ class regplot():
         elif isinstance(x, str):
             X = data[[x]].values
         else:
-            Exception('x must be str or list[str]')
+            raise Exception('x must be str or list[str]')
         # yをndarray化
         if isinstance(y, str):
             y_true = data[y].values
         else:
-            Exception('y msut be str')
+            raise Exception('y msut be str')
 
         # scoresの型をListに統一
         if scores is None:
@@ -235,7 +235,7 @@ class regplot():
         elif isinstance(scores, str):
             scores = [scores]
         elif not isinstance(scores, list):
-            Exception('scores must be str or list[str]')
+            raise Exception('scores must be str or list[str]')
         
         # 学習器パラメータがあれば適用
         if model_params is not None:
@@ -541,12 +541,12 @@ class regplot():
         if isinstance(x, str):
             X = data[[x]].values
         else:
-            Exception('x must be str')
+            raise Exception('x must be str')
         # yをndarray化
         if isinstance(y, str):
             y_true = data[y].values
         else:
-            Exception('y msut be str')
+            raise Exception('y msut be str')
 
         # scoresの型をListに統一
         if scores is None:
@@ -554,7 +554,7 @@ class regplot():
         elif isinstance(scores, str):
             scores = [scores]
         elif not isinstance(scores, list):
-            Exception('scores must be str or list[str]')
+            raise Exception('scores must be str or list[str]')
         
         # 学習器パラメータがあれば適用
         if model_params is not None:
@@ -899,24 +899,24 @@ class regplot():
                              model_params=None, fit_params=None, subplot_kws={}, heat_kws={}, scatter_kws={}):
         # 説明変数xの次元が2～4以外ならエラーを出す
         if len(x) < 2 or len(x) > 4:
-            Exception('length of x must be 2 to 4')
+            raise Exception('length of x must be 2 to 4')
         
         # display_cv_indexをList化
         if isinstance(display_cv_indices, int):
             display_cv_indices = [display_cv_indices]
         elif not isinstance(x, list):
-            Exception('cv_display_num must be int or List[int]')
+            raise Exception('cv_display_num must be int or List[int]')
         
         # xをndarray化
         if isinstance(x, list):
             X = data[x].values
         else:
-            Exception('x must be str or str')
+            raise Exception('x must be str or str')
         # yをndarray化
         if isinstance(y, str):
             y_true = data[y].values
         else:
-            Exception('y msut be str')
+            raise Exception('y msut be str')
         
         # ヒートマップ表示用の列を抽出
         if x_heat == None:  # 列名指定していないとき、前から2列を抽出
