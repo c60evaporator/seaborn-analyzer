@@ -220,8 +220,9 @@ class dist():
                 distribution = stats.weibull_min
         
         # フィッティング線の凡例をプロット
-        line_labels = [str(d) for d in dists]
-        ax.legend(line_legends, line_labels, loc='upper right')
+        if len(dists) >= 2:
+            line_labels = [str(d) for d in dists]
+            ax.legend(line_legends, line_labels, loc='upper right')
 
         return all_params
 
