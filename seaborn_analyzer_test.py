@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 iris = sns.load_dataset("iris")
 fig, axes = plt.subplots(2, 2, figsize=(8, 8))
-dist.hist_dist(iris['sepal_length'], ax=axes[0, 0], dist=['norm', 'lognorm'], hue_data=iris['species'], bin_width=0.2, norm_hist=False, rounddigit=5)
+dist.hist_dist(iris['sepal_width'], ax=axes[0, 0], dist=['norm', 'gamma', 'lognorm'], hue_data=iris['species'], bins=20, norm_hist=False, rounddigit=5)
 
 #%% custom_dist_plot.plot_normality
 from custom_dist_plot import dist

@@ -25,10 +25,10 @@ class dist():
         linesplit : int
             フィッティング線の分割数（カクカクしたら増やす）
         """
-        # 平均と不偏標準偏差(正規分布のとき)
+        # 表示範囲指定用に平均と不偏標準偏差計算(正規分布のときを基準に)
         mean = np.mean(x)
         std = np.std(x, ddof=1)
-        
+
         # フィッティング実行
         params = distribution.fit(x)
         # フィッティング結果のパラメータを分割
@@ -36,16 +36,31 @@ class dist():
                       'loc': params[-2],
                       'scale': params[-1]
                       }
-
-        # フィッティング誤差を計算
-        pred = distribution.pdf(x, loc=fit_params['loc'], scale=fit_params['scale'], *fit_params['arg'])
-        sum_squared_error = np.sum(np.power(x - pred, 2.0))
-
         # フィッティング曲線の生成
         Xline = np.linspace(min(mean - std * sigmarange, np.amin(x)), max(mean + std * sigmarange, np.amax(x)), linesplit)
         Yline = distribution.pdf(Xline, loc=fit_params['loc'], scale=fit_params['scale'], *fit_params['arg'])
-        
-        return Xline, Yline, fit_params
+
+        # フィッティングの残差平方和を計算 (参考https://rmizutaa.hatenablog.com/entry/2020/02/24/191312)
+        hist_y, hist_x = np.histogram(x, bins=20, density=True)  # ヒストグラム化して標準化
+        hist_x = (hist_x + np.roll(hist_x, -1))[:-1] / 2.0  # ヒストグラムのxの値をビンの左端→中央に移動
+        pred = distribution.pdf(hist_x, loc=fit_params['loc'], scale=fit_params['scale'], *fit_params['arg'])
+        sum_squared_error = np.sum(np.power(pred - hist_y, 2.0))
+        # AIC、BICを計算
+        k = len(params)  # パラメータ数
+        n = len(x)  # サンプル数
+        # TODO: Fitterだと対数尤度はhist_xから求めているが、本来の定義ではxから求めるのが適切な気がする
+        logL = np.sum(distribution.logpdf(x, loc=fit_params['loc'], scale=fit_params['scale'], *fit_params['arg']))  # 対数尤度
+        aic = -2 * logL + 2 * k  # AIC
+        bic = -2 * logL + k * np.log(n)  # BIC
+        bic_gauss = n * np.log(sum_squared_error / n) + k * np.log(n)
+        # 評価指標()
+        fit_scores = {'sum_squared_error': sum_squared_error,
+                      'AIC': aic,
+                      'BIC': bic,
+                      'BIC_Gauss': bic_gauss
+                      }
+
+        return Xline, Yline, fit_params, fit_scores
     
     def _round_digits(src: float, rounddigit: int = None, method='decimal'):
         """
@@ -92,7 +107,7 @@ class dist():
         return dstdict
 
     @classmethod
-    def hist_dist(cls, data: pd.Series, dist='norm', ax=None, hue_data=None, bin_width=None, norm_hist=True,
+    def hist_dist(cls, data: pd.Series, dist='norm', ax=None, hue_data=None, bin_width=None, bins=None, norm_hist=True,
                   sigmarange=4, linecolor='red', linesplit=50, rounddigit=None, hist_kws={}):
         """
         分布フィッティングと各指標の表示
@@ -109,6 +124,8 @@ class dist():
             積み上げ色分け指定対象のデータ (Noneなら色分けなし)
         bin_width : float
             ビンの幅 (NoneならFreedman-Diaconis ruleで自動決定)
+        bins : int
+            ビンの数 (bin_widthと共存不可)
         norm_hist : bool
             ヒストグラムを面積1となるよう正規化するか？
         sigmarange : float
@@ -128,10 +145,11 @@ class dist():
             ax=plt.gca()
 
         # ビンサイズを設定
-        if bin_width is None:
-            bins = None
-        else:
-            bins = np.arange(np.floor(data.min()), np.ceil(data.max()), bin_width)
+        if bin_width is not None:
+            if bins is None:
+                bins = np.arange(np.floor(data.min()), np.ceil(data.max()), bin_width)
+            else: # binsとbin_widthは同時指定できない
+                raise Exception('arguments "bins" and "bin_width" cannot coexist')
         # ヒストグラム描画
         if hue_data is None:  # 色分けないとき
             sns.distplot(data, ax=ax, kde=False, bins=bins, norm_hist=norm_hist, hist_kws=hist_kws)
@@ -152,10 +170,11 @@ class dist():
             if len(linecolor) == 1:
                 linecolor = cls.DEFAULT_LINECOLORS
             elif len(dists) != len(linecolor):
-                Exception('length of "linecolor" must be equal to length of "dist"')
+                raise Exception('length of "linecolor" must be equal to length of "dist"')
 
         # 分布をフィッティング
         all_params = {}
+        all_scores = {}
         line_legends = []
         for i, distribution in enumerate(dists):
             # 分布が文字列型のとき、scipy.stats.distributionsに変更
@@ -178,7 +197,7 @@ class dist():
                     distribution = stats.weibull_min
             # 分布フィット
             x = data.values
-            xline, yline, fit_params = cls._fit_distribution(x, distribution, sigmarange, linesplit)
+            xline, yline, fit_params, fit_scores = cls._fit_distribution(x, distribution, sigmarange, linesplit)
 
             # 標準化していないとき、ヒストグラムと最大値の8割を合わせるようフィッティング線の倍率調整
             if norm_hist is False:
@@ -196,18 +215,21 @@ class dist():
                 params['mean'] = fit_params['loc']
                 params['std'] = fit_params['scale']
                 all_params['norm'] = params
-            # 対数正規分布(参考https://analytics-note.xyz/statistics/scipy-lognorm/)
+                all_scores['norm'] = fit_scores  # フィッティングの評価指標
+            # 対数正規分布 (参考https://analytics-note.xyz/statistics/scipy-lognorm/)
             elif distribution == stats.lognorm:
                 params['mu'] = np.log(fit_params['scale'])
                 params['sigma'] = fit_params['arg'][0]
                 params['offset'] = fit_params['loc']
                 all_params['lognorm'] = params
-            # ガンマ分布
-            elif dist == 'gamma':
-                params['mu'] = np.log(scale)
-                params['sigma'] = arg[0]
-                params['offset'] = loc
-                all_params['lognorm'] = params
+                all_scores['lognorm'] = fit_scores  # フィッティングの評価指標
+            # ガンマ分布 (参考https://qiita.com/kidaufo/items/2a5ba5a4bf100dc0f106)
+            elif distribution == stats.gamma:
+                params['theta'] = fit_params['scale']
+                params['k'] = fit_params['arg'][0]
+                params['offset'] = fit_params['loc']
+                all_params['gamma'] = params
+                all_scores['gamma'] = fit_scores  # フィッティングの評価指標
             elif dist == 't':
                 distribution = stats.t
             elif dist == 'expon':
@@ -218,16 +240,17 @@ class dist():
                 distribution = stats.chi2
             elif dist == 'weibull':
                 distribution = stats.weibull_min
-        
-        # フィッティング線の凡例をプロット
+            
+        # フィッティング線の凡例をプロット (2色以上のときのみ)
         if len(dists) >= 2:
             line_labels = [str(d) for d in dists]
             ax.legend(line_legends, line_labels, loc='upper right')
 
-        return all_params
+        print(all_scores)
+        return all_params, all_scores
 
     @classmethod
-    def plot_normality(cls, data: pd.Series, hue_data=None, bin_width=None, norm_hist=True,
+    def plot_normality(cls, data: pd.Series, hue_data=None, bin_width=None, bins=None, norm_hist=True,
                         sigmarange=4, linecolor='red', linesplit=50, rounddigit=None,
                         hist_kws={}, subplot_kws={}):
         """
@@ -241,6 +264,8 @@ class dist():
             積み上げ色分け指定対象のデータ (Noneなら色分けなし)
         bin_width : float
             ビンの幅 (NoneならFreedman-Diaconis ruleで自動決定)
+        bins : int
+            ビンの数 (bin_widthと共存不可)
         norm_hist : bool
             ヒストグラムを面積1となるよう正規化するか？
         sigmarange : float
@@ -264,7 +289,7 @@ class dist():
         stats.probplot(data, dist='norm', plot=axes[0])
 
         # ヒストグラムとフィッティング線を描画
-        cls.hist_dist(data, dist='norm', ax=axes[1], hue_data=hue_data, bin_width=bin_width, norm_hist=norm_hist,
+        cls.hist_dist(data, dist='norm', ax=axes[1], hue_data=hue_data, bin_width=bin_width, bins=bins, norm_hist=norm_hist,
                       sigmarange=sigmarange, linecolor=linecolor, linesplit=linesplit, rounddigit=rounddigit, hist_kws=hist_kws)
         # 平均と不偏標準偏差を計算し、ヒストグラム図中に記載
         x = data.values
