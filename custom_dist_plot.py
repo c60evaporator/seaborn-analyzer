@@ -48,16 +48,14 @@ class dist():
         # AIC、BICを計算
         k = len(params)  # パラメータ数
         n = len(x)  # サンプル数
-        # TODO: Fitterだと対数尤度はhist_xから求めているが、本来の定義ではxから求めるのが適切な気がする
+        # TODO: Fitterライブラリだと対数尤度はhist_xから求めているが、本来の定義ではxから求めるのが適切に見える
         logL = np.sum(distribution.logpdf(x, loc=fit_params['loc'], scale=fit_params['scale'], *fit_params['arg']))  # 対数尤度
         aic = -2 * logL + 2 * k  # AIC
         bic = -2 * logL + k * np.log(n)  # BIC
-        bic_gauss = n * np.log(sum_squared_error / n) + k * np.log(n)
         # 評価指標()
         fit_scores = {'sum_squared_error': sum_squared_error,
                       'AIC': aic,
-                      'BIC': bic,
-                      'BIC_Gauss': bic_gauss
+                      'BIC': bic
                       }
 
         return Xline, Yline, fit_params, fit_scores
@@ -108,7 +106,7 @@ class dist():
 
     @classmethod
     def hist_dist(cls, data: pd.Series, dist='norm', ax=None, hue_data=None, bin_width=None, bins=None, norm_hist=True,
-                  sigmarange=4, linecolor='red', linesplit=50, rounddigit=None, hist_kws={}):
+                  sigmarange=4, linecolor='red', linesplit=50, hist_kws={}):
         """
         分布フィッティングと各指標の表示
 
@@ -134,8 +132,6 @@ class dist():
             フィッティング線の色指定 (複数分布フィッティング時は、List指定)
         linesplit : int
             フィッティング線の分割数 (カクカクしたら増やす)
-        rounddigit: int
-            表示指標の小数丸め桁数
         hist_kws : Dict
             ヒストグラム表示(matplotlib.axes.Axes.hist())の引数
         """
