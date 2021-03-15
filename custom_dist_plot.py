@@ -8,7 +8,7 @@ from scipy.stats import distributions
 import decimal
 
 class dist():
-    DEFAULT_LINECOLORS = ['red', 'darkmagenta', 'hotpink', 'yellow', 'brown', 'blue', 'green', 'cyan', 'orange']
+    DEFAULT_LINECOLORS = ['red', 'darkmagenta', 'yellow', 'hotpink', 'brown', 'blue', 'green', 'cyan', 'orange']
     
     def _fit_distribution(x: np.ndarray, distribution: distributions, sigmarange: float, linesplit: int):
         """
@@ -149,13 +149,15 @@ class dist():
         # ヒストグラム描画
         if hue_data is None:  # 色分けないとき
             sns.distplot(data, ax=ax, kde=False, bins=bins, norm_hist=norm_hist, hist_kws=hist_kws)
+            leg_hist = None
         else:  # 色分けあるとき
             df_hue = pd.concat([data, hue_data], axis=1)
             grby_hue = df_hue.groupby(hue_data.name)
             data_list = [df_group[data.name] for key, df_group in grby_hue]
             hue_list = [key for key, df_group in grby_hue]
             ax.hist(data_list, stacked=True, bins=bins, density=norm_hist, **hist_kws)
-            ax.legend(hue_list, loc='upper left')
+            leg_hist = ax.legend(hue_list, loc='upper left')
+            ax.add_artist(leg_hist)
 
         # distをList化
         dists = [dist] if isinstance(dist, str) else dist
