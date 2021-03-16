@@ -10,7 +10,7 @@ import decimal
 class dist():
     DEFAULT_LINECOLORS = ['red', 'darkmagenta', 'mediumblue', 'gold',  'pink', 'brown', 'green', 'cyan', 'orange']
     
-    def _fit_distribution(x: np.ndarray, distribution: distributions, sigmarange: float, linesplit: int):
+    def _fit_distribution(x: np.ndarray, distribution: distributions, sigmarange: float, linesplit: int, fit_params: Dict):
         """
         分布のフィッティング
 
@@ -24,32 +24,34 @@ class dist():
             フィッティング線の表示範囲（標準偏差の何倍まで表示するか指定）
         linesplit : int
             フィッティング線の分割数（カクカクしたら増やす）
+        fit_params : Dict
+            フィッティング時に固定するパラメータ
         """
         # 表示範囲指定用に平均と不偏標準偏差計算(正規分布のときを基準に)
         mean = np.mean(x)
         std = np.std(x, ddof=1)
 
         # フィッティング実行
-        params = distribution.fit(x)
+        params = distribution.fit(x, **fit_params)
         # フィッティング結果のパラメータを分割
-        fit_params = {'arg': params[:-2],
+        best_params = {'arg': params[:-2],
                       'loc': params[-2],
                       'scale': params[-1]
                       }
         # フィッティング曲線の生成
         Xline = np.linspace(min(mean - std * sigmarange, np.amin(x)), max(mean + std * sigmarange, np.amax(x)), linesplit)
-        Yline = distribution.pdf(Xline, loc=fit_params['loc'], scale=fit_params['scale'], *fit_params['arg'])
+        Yline = distribution.pdf(Xline, loc=best_params['loc'], scale=best_params['scale'], *best_params['arg'])
 
         # フィッティングの残差平方和を計算 (参考https://rmizutaa.hatenablog.com/entry/2020/02/24/191312)
         hist_y, hist_x = np.histogram(x, bins=20, density=True)  # ヒストグラム化して標準化
         hist_x = (hist_x + np.roll(hist_x, -1))[:-1] / 2.0  # ヒストグラムのxの値をビンの左端→中央に移動
-        pred = distribution.pdf(hist_x, loc=fit_params['loc'], scale=fit_params['scale'], *fit_params['arg'])
+        pred = distribution.pdf(hist_x, loc=best_params['loc'], scale=best_params['scale'], *best_params['arg'])
         sum_squared_error = np.sum(np.power(pred - hist_y, 2.0))
         # AIC、BICを計算
-        k = len(params)  # パラメータ数
+        k = len(params) - len(fit_params)  # パラメータ数
         n = len(x)  # サンプル数
         # TODO: Fitterライブラリだと対数尤度はhist_xから求めているが、本来の定義ではxから求めるのが適切に見える
-        logL = np.sum(distribution.logpdf(x, loc=fit_params['loc'], scale=fit_params['scale'], *fit_params['arg']))  # 対数尤度
+        logL = np.sum(distribution.logpdf(x, loc=best_params['loc'], scale=best_params['scale'], *best_params['arg']))  # 対数尤度
         aic = -2 * logL + 2 * k  # AIC
         bic = -2 * logL + k * np.log(n)  # BIC
         # 評価指標()
@@ -58,7 +60,7 @@ class dist():
                       'BIC': bic
                       }
 
-        return Xline, Yline, fit_params, fit_scores
+        return Xline, Yline, best_params, fit_scores
     
     def _round_digits(src: float, rounddigit: int = None, method='decimal'):
         """
@@ -175,6 +177,7 @@ class dist():
         all_scores = {}
         line_legends = []
         for i, distribution in enumerate(dists):
+            fit_params = {}
             # 分布が文字列型のとき、scipy.stats.distributionsに変更
             if isinstance(distribution, str):
                 if distribution == 'norm':
@@ -187,6 +190,7 @@ class dist():
                     distribution = stats.t
                 elif distribution == 'expon':
                     distribution = stats.expon
+                    fit_params = {'floc': 0} # 指数分布のとき、locationパラメータを0で固定
                 elif distribution == 'uniform':
                     distribution = stats.uniform
                 elif distribution == 'chi2':
@@ -195,7 +199,7 @@ class dist():
                     distribution = stats.weibull_min
             # 分布フィット
             x = data.values
-            xline, yline, fit_params, fit_scores = cls._fit_distribution(x, distribution, sigmarange, linesplit)
+            xline, yline, best_params, fit_scores = cls._fit_distribution(x, distribution, sigmarange, linesplit, fit_params)
 
             # 標準化していないとき、ヒストグラムと最大値の8割を合わせるようフィッティング線の倍率調整
             if norm_hist is False:
@@ -210,41 +214,51 @@ class dist():
             params = {}
             # 正規分布
             if distribution == stats.norm:
-                params['mean'] = fit_params['loc']
-                params['std'] = fit_params['scale']
+                params['mean'] = best_params['loc']
+                params['std'] = best_params['scale']
                 all_params['norm'] = params
                 all_scores['norm'] = fit_scores  # フィッティングの評価指標
             # 対数正規分布 (参考https://analytics-note.xyz/statistics/scipy-lognorm/)
             elif distribution == stats.lognorm:
-                params['mu'] = np.log(fit_params['scale'])
-                params['sigma'] = fit_params['arg'][0]
-                params['offset'] = fit_params['loc']
+                params['mu'] = np.log(best_params['scale'])
+                params['sigma'] = best_params['arg'][0]
+                params['offset'] = best_params['loc']
                 all_params['lognorm'] = params
                 all_scores['lognorm'] = fit_scores  # フィッティングの評価指標
             # ガンマ分布 (参考https://qiita.com/kidaufo/items/2a5ba5a4bf100dc0f106)
             elif distribution == stats.gamma:
-                params['theta'] = fit_params['scale']
-                params['k'] = fit_params['arg'][0]
-                params['offset'] = fit_params['loc']
+                params['theta'] = best_params['scale']
+                params['k'] = best_params['arg'][0]
+                params['offset'] = best_params['loc']
                 all_params['gamma'] = params
                 all_scores['gamma'] = fit_scores  # フィッティングの評価指標
-            elif dist == 't':
-                distribution = stats.t
-            elif dist == 'expon':
-                distribution = stats.expon
-            elif dist == 'uniform':
-                distribution = stats.uniform
-            elif dist == 'chi2':
-                distribution = stats.chi2
-            elif dist == 'weibull':
-                distribution = stats.weibull_min
+            # 指数分布 (参考https://stackoverflow.com/questions/25085200/scipy-stats-expon-fit-with-no-location-parameter)
+            elif distribution == stats.expon:
+                params['lambda'] = best_params['scale']
+                all_params['expon'] = params
+                all_scores['expon'] = fit_scores  # フィッティングの評価指標
+            elif distribution == stats.t:
+                params['theta'] = best_params['scale']
+                params['k'] = best_params['arg'][0]
+                params['offset'] = best_params['loc']
+            elif distribution == stats.uniform:
+                params['theta'] = best_params['scale']
+                params['k'] = best_params['arg'][0]
+                params['offset'] = best_params['loc']
+            elif distribution == stats.chi2:
+                params['theta'] = best_params['scale']
+                params['k'] = best_params['arg'][0]
+                params['offset'] = best_params['loc']
+            elif distribution == stats.weibull_min:
+                params['theta'] = best_params['scale']
+                params['k'] = best_params['arg'][0]
+                params['offset'] = best_params['loc']
             
         # フィッティング線の凡例をプロット (2色以上のときのみ)
         if len(dists) >= 2:
             line_labels = [str(d) for d in dists]
             ax.legend(line_legends, line_labels, loc='upper right')
 
-        print(all_scores)
         return all_params, all_scores
 
     @classmethod
