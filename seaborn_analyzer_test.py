@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 iris = sns.load_dataset("iris")
 fig, axes = plt.subplots(2, 2, figsize=(8, 8))
-dist.hist_dist(iris['sepal_width'], ax=axes[0, 0], dist=['expon', 'gamma', 'lognorm'], hue_data=iris['species'], bins=20, norm_hist=False)
+dist.hist_dist(iris, x='sepal_width', hue='species', ax=axes[0, 0], dist=['norm', 'gamma', 'lognorm', 'expon'], bins=20, norm_hist=False)
 
 #%% custom_dist_plot.plot_normality
 from custom_dist_plot import dist
@@ -21,7 +21,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 iris = sns.load_dataset("iris")
-dist.plot_normality(iris['sepal_length'], bin_width=0.2, norm_hist=False, rounddigit=5)
+dist.plot_normality(iris['sepal_width'], binwidth=0.2, norm_hist=False, rounddigit=5)
 
 #%% custom_scatter_plot.regression_plot_pred
 from custom_scatter_plot import regplot

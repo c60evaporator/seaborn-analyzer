@@ -8,7 +8,7 @@ from scipy.stats import distributions
 import decimal
 
 class dist():
-    DEFAULT_LINECOLORS = ['red', 'darkmagenta', 'mediumblue', 'gold',  'pink', 'brown', 'green', 'cyan', 'orange']
+    DEFAULT_LINECOLORS = ['red', 'darkmagenta', 'mediumblue', 'darkorange',  'pink', 'brown', 'green', 'cyan', 'gold']
     
     def _fit_distribution(x: np.ndarray, distribution: distributions, sigmarange: float, linesplit: int, fit_params: Dict):
         """
@@ -107,22 +107,24 @@ class dist():
         return dstdict
 
     @classmethod
-    def hist_dist(cls, data: pd.Series, dist='norm', ax=None, hue_data=None, bin_width=None, bins=None, norm_hist=True,
+    def hist_dist(cls, data: pd.DataFrame, x: str=None, hue=None, dist='norm', ax=None, binwidth=None, bins=None, norm_hist=True,
                   sigmarange=4, linecolor='red', linesplit=50, hist_kws={}):
         """
         分布フィッティングと各指標の表示
 
         Parameters
         ----------
-        data : pd.Series
+        data : pd.DataFrame or pd.Series or pd.ndarray
             フィッティング対象のデータ
+        x : str
+            ヒストグラム作成対象の変数カラム (列名指定、dataがDataFrameのときのみ指定可)
+        hue : str
+            色分け指定カラム (列名指定、dataがDataFrameのときのみ指定可)
         dist : str or List[str]
             分布の種類 ("norm", "lognorm", "gamma", "t", "expon", "uniform", "chi2", "weibull")
         ax : matplotlib.axes._subplots.Axes
             表示対象のax (Noneならplt.plotで1枚ごとにプロット)
-        hue_data : pd.Series
-            積み上げ色分け指定対象のデータ (Noneなら色分けなし)
-        bin_width : float
+        binwidth : float
             ビンの幅 (NoneならFreedman-Diaconis ruleで自動決定)
         bins : int
             ビンの数 (bin_widthと共存不可)
@@ -135,30 +137,40 @@ class dist():
         linesplit : int
             フィッティング線の分割数 (カクカクしたら増やす)
         hist_kws : Dict
-            ヒストグラム表示(matplotlib.axes.Axes.hist())の引数
+            ヒストグラム表示(seaborn.histplot)の引数
         """
 
         # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
         if ax == None:
             ax=plt.gca()
+        
+        # スタイルを変更 (デフォルト設定は見づらいため)
+        if 'alpha' not in hist_kws.keys():
+            hist_kws['alpha'] = 0.7
+        if 'edgecolor' not in hist_kws.keys():
+            hist_kws['edgecolor'] = 'white'
 
         # ビンサイズを設定
-        if bin_width is not None:
+        if binwidth is not None:
             if bins is None:
-                bins = np.arange(np.floor(data.min()), np.ceil(data.max()), bin_width)
+                bins = np.arange(np.floor(data.min()), np.ceil(data.max()), binwidth)
             else: # binsとbin_widthは同時指定できない
-                raise Exception('arguments "bins" and "bin_width" cannot coexist')
+                raise Exception('arguments "bins" and "binwidth" cannot coexist')
+
+        # norm_hist=Trueのとき、statをdensityに指定 (histplotの引数)
+        stat = 'density' if norm_hist else 'count'
+        # 色分けあるとき、ヒストグラム種類を積み上げに指定 (histplotの引数)
+        multiple = 'layer' if hue is None else 'stack'
+
         # ヒストグラム描画
-        if hue_data is None:  # 色分けないとき
-            sns.distplot(data, ax=ax, kde=False, bins=bins, norm_hist=norm_hist, hist_kws=hist_kws)
-            leg_hist = None
-        else:  # 色分けあるとき
-            df_hue = pd.concat([data, hue_data], axis=1)
-            grby_hue = df_hue.groupby(hue_data.name)
-            data_list = [df_group[data.name] for key, df_group in grby_hue]
-            hue_list = [key for key, df_group in grby_hue]
-            ax.hist(data_list, stacked=True, bins=bins, density=norm_hist, **hist_kws)
-            leg_hist = ax.legend(hue_list, loc='upper left')
+        ax = sns.histplot(data, x=x, hue=hue, ax=ax, bins=bins, stat=stat, multiple=multiple, **hist_kws)
+
+        # 色分けあるとき、凡例を左上に表示
+        if hue is not None:
+            lg = ax.legend_
+            handles = lg.legendHandles
+            labels = [t.get_text() for t in lg.texts]
+            leg_hist = ax.legend(handles, labels, loc='upper left')
             ax.add_artist(leg_hist)
 
         # distをList化
@@ -198,8 +210,13 @@ class dist():
                 elif distribution == 'weibull':
                     distribution = stats.weibull_min
             # 分布フィット
-            x = data.values
-            xline, yline, best_params, fit_scores = cls._fit_distribution(x, distribution, sigmarange, linesplit, fit_params)
+            if isinstance(data, pd.DataFrame):
+                X = data[x].values
+            elif isinstance(data, pd.Series):
+                X = data.values
+            elif isinstance(data, np.ndarray):
+                X = data
+            xline, yline, best_params, fit_scores = cls._fit_distribution(X, distribution, sigmarange, linesplit, fit_params)
 
             # 標準化していないとき、ヒストグラムと最大値の8割を合わせるようフィッティング線の倍率調整
             if norm_hist is False:
@@ -261,8 +278,10 @@ class dist():
 
         return all_params, all_scores
 
+
+
     @classmethod
-    def plot_normality(cls, data: pd.Series, hue_data=None, bin_width=None, bins=None, norm_hist=True,
+    def plot_normality(cls, data: pd.DataFrame, x: str=None, hue=None, binwidth=None, bins=None, norm_hist=True,
                         sigmarange=4, linecolor='red', linesplit=50, rounddigit=None,
                         hist_kws={}, subplot_kws={}):
         """
@@ -270,11 +289,13 @@ class dist():
 
         Parameters
         ----------
-        data : pd.Series
+        data : pd.DataFrame or pd.Series or pd.ndarray
             フィッティング対象のデータ
-        hue_data : pd.Series
-            積み上げ色分け指定対象のデータ (Noneなら色分けなし)
-        bin_width : float
+        x : str
+            ヒストグラム作成対象の変数カラム (列名指定、dataがDataFrameのときのみ指定可)
+        hue : str
+            色分け指定カラム (列名指定、dataがDataFrameのときのみ指定可)
+        binwidth : float
             ビンの幅 (NoneならFreedman-Diaconis ruleで自動決定)
         bins : int
             ビンの数 (bin_widthと共存不可)
@@ -301,8 +322,8 @@ class dist():
         stats.probplot(data, dist='norm', plot=axes[0])
 
         # ヒストグラムとフィッティング線を描画
-        cls.hist_dist(data, dist='norm', ax=axes[1], hue_data=hue_data, bin_width=bin_width, bins=bins, norm_hist=norm_hist,
-                      sigmarange=sigmarange, linecolor=linecolor, linesplit=linesplit, rounddigit=rounddigit, hist_kws=hist_kws)
+        cls.hist_dist(data, x=x, hue=hue, dist='norm', ax=axes[1], binwidth=binwidth, bins=bins, norm_hist=norm_hist,
+                      sigmarange=sigmarange, linecolor=linecolor, linesplit=linesplit, hist_kws=hist_kws)
         # 平均と不偏標準偏差を計算し、ヒストグラム図中に記載
         x = data.values
         mean = np.mean(x)
