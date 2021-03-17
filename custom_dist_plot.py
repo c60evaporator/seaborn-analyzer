@@ -150,10 +150,18 @@ class dist():
         if 'edgecolor' not in hist_kws.keys():
             hist_kws['edgecolor'] = 'white'
 
+        # フィッティング対象データをndarrayで抽出
+        if isinstance(data, pd.DataFrame):
+            X = data[x].values
+        elif isinstance(data, pd.Series):
+            X = data.values
+        elif isinstance(data, np.ndarray):
+            X = data
+
         # ビンサイズを設定
         if binwidth is not None:
             if bins is None:
-                bins = np.arange(np.floor(data.min()), np.ceil(data.max()), binwidth)
+                bins = np.arange(np.floor(X.min()), np.ceil(X.max()), binwidth)
             else: # binsとbin_widthは同時指定できない
                 raise Exception('arguments "bins" and "binwidth" cannot coexist')
 
@@ -210,12 +218,6 @@ class dist():
                 elif distribution == 'weibull':
                     distribution = stats.weibull_min
             # 分布フィット
-            if isinstance(data, pd.DataFrame):
-                X = data[x].values
-            elif isinstance(data, pd.Series):
-                X = data.values
-            elif isinstance(data, np.ndarray):
-                X = data
             xline, yline, best_params, fit_scores = cls._fit_distribution(X, distribution, sigmarange, linesplit, fit_params)
 
             # 標準化していないとき、ヒストグラムと最大値の8割を合わせるようフィッティング線の倍率調整
@@ -319,15 +321,20 @@ class dist():
         fig, axes = plt.subplots(2, 1, **subplot_kws)
 
         # QQプロット描画
-        stats.probplot(data, dist='norm', plot=axes[0])
+        if isinstance(data, pd.DataFrame):
+            X = data[x].values
+        elif isinstance(data, pd.Series):
+            X = data.values
+        elif isinstance(data, np.ndarray):
+            X = data
+        stats.probplot(X, dist='norm', plot=axes[0])
 
         # ヒストグラムとフィッティング線を描画
         cls.hist_dist(data, x=x, hue=hue, dist='norm', ax=axes[1], binwidth=binwidth, bins=bins, norm_hist=norm_hist,
                       sigmarange=sigmarange, linecolor=linecolor, linesplit=linesplit, hist_kws=hist_kws)
         # 平均と不偏標準偏差を計算し、ヒストグラム図中に記載
-        x = data.values
-        mean = np.mean(x)
-        std = np.std(x, ddof=1)
+        mean = np.mean(X)
+        std = np.std(X, ddof=1)
         params = {'mean':mean,
                   'std':std
                   }
@@ -338,12 +345,12 @@ class dist():
                      param_text, verticalalignment='top', horizontalalignment='right')
 
         # 正規性検定
-        if len(x) <= 2000: # シャピロウィルク検定 (N<=2000のとき)
+        if len(X) <= 2000: # シャピロウィルク検定 (N<=2000のとき)
             method = 'shapiro-wilk'
-            normality=stats.shapiro(x)
+            normality=stats.shapiro(X)
         else: # コルモゴロフ-スミルノフ検定 (N>2000のとき)
             method = 'kolmogorov-smirnov'
-            normality = stats.kstest(x, stats.norm(loc=mean, scale=std).cdf)
+            normality = stats.kstest(X, stats.norm(loc=mean, scale=std).cdf)
         # 検定結果を図中に記載
         params = {'statistic':normality.statistic,
                   'pvalue':normality.pvalue,

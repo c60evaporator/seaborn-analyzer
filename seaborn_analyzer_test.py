@@ -21,7 +21,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 iris = sns.load_dataset("iris")
-dist.plot_normality(iris['sepal_width'], binwidth=0.2, norm_hist=False, rounddigit=5)
+dist.plot_normality(iris, x='sepal_width', binwidth=0.2, norm_hist=False, rounddigit=5)
 
 #%% custom_scatter_plot.regression_plot_pred
 from custom_scatter_plot import regplot
