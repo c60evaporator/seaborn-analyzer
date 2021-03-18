@@ -7,7 +7,7 @@ from scipy import stats
 from scipy.stats import distributions
 import decimal
 
-class dist():
+class hist():
     DEFAULT_LINECOLORS = ['red', 'darkmagenta', 'mediumblue', 'darkorange',  'pink', 'brown', 'green', 'cyan', 'gold']
     
     def _fit_distribution(x: np.ndarray, distribution: distributions, sigmarange: float, linesplit: int, fit_params: Dict):
