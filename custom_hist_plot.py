@@ -108,7 +108,7 @@ class hist():
 
     @classmethod
     def hist_dist(cls, data: pd.DataFrame, x: str=None, hue=None, dist='norm', ax=None, binwidth=None, bins=None, norm_hist=True,
-                  sigmarange=4, linecolor='red', linesplit=50, hist_kws={}):
+                  sigmarange=4, linecolor='red', linesplit=100, hist_kws={}):
         """
         分布フィッティングと各指標の表示
 
@@ -237,18 +237,18 @@ class hist():
                 params['std'] = best_params['scale']
                 all_params['norm'] = params
                 all_scores['norm'] = fit_scores  # フィッティングの評価指標
-            # 対数正規分布 (参考https://analytics-note.xyz/statistics/scipy-lognorm/)
+            # 対数正規分布 (通常の対数正規分布＋x方向オフセット、参考https://analytics-note.xyz/statistics/scipy-lognorm/)
             elif distribution == stats.lognorm:
                 params['mu'] = np.log(best_params['scale'])
                 params['sigma'] = best_params['arg'][0]
-                params['offset'] = best_params['loc']
+                params['loc'] = best_params['loc']
                 all_params['lognorm'] = params
                 all_scores['lognorm'] = fit_scores  # フィッティングの評価指標
-            # ガンマ分布 (参考https://qiita.com/kidaufo/items/2a5ba5a4bf100dc0f106)
+            # ガンマ分布 (通常のガンマ分布＋x方向オフセット、参考https://qiita.com/kidaufo/items/2a5ba5a4bf100dc0f106)
             elif distribution == stats.gamma:
                 params['theta'] = best_params['scale']
                 params['k'] = best_params['arg'][0]
-                params['offset'] = best_params['loc']
+                params['loc'] = best_params['loc']
                 all_params['gamma'] = params
                 all_scores['gamma'] = fit_scores  # フィッティングの評価指標
             # 指数分布 (参考https://stackoverflow.com/questions/25085200/scipy-stats-expon-fit-with-no-location-parameter)
@@ -256,16 +256,19 @@ class hist():
                 params['lambda'] = best_params['scale']
                 all_params['expon'] = params
                 all_scores['expon'] = fit_scores  # フィッティングの評価指標
+            # t分布（通常のt分布＋x方向オフセット＋x方向倍率、参考https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.t.html）
             elif distribution == stats.t:
                 params['scale'] = best_params['scale']
                 params['df'] = best_params['arg'][0]
-                params['offset'] = best_params['loc']
+                params['loc'] = best_params['loc']
                 all_params['t'] = params
                 all_scores['t'] = fit_scores  # フィッティングの評価指標
+            # 一様分布（x方向オフセット＋x方向倍率、参考https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.uniform.html）
             elif distribution == stats.uniform:
-                params['theta'] = best_params['scale']
-                params['k'] = best_params['arg'][0]
-                params['offset'] = best_params['loc']
+                params['scale'] = best_params['scale']
+                params['loc'] = best_params['loc']
+                all_params['t'] = params
+                all_scores['t'] = fit_scores  # フィッティングの評価指標
             elif distribution == stats.chi2:
                 params['theta'] = best_params['scale']
                 params['k'] = best_params['arg'][0]
@@ -286,7 +289,7 @@ class hist():
 
     @classmethod
     def plot_normality(cls, data: pd.DataFrame, x: str=None, hue=None, binwidth=None, bins=None, norm_hist=True,
-                        sigmarange=4, linecolor='red', linesplit=50, rounddigit=None,
+                        sigmarange=4, linecolor='red', linesplit=100, rounddigit=None,
                         hist_kws={}, subplot_kws={}):
         """
         正規性検定プロット
