@@ -7,21 +7,21 @@ cp = CustomPairPlot()
 cp.pairanalyzer(titanic, hue='survived')
 
 #%% custom_dist_plot.hist_dist
-from custom_dist_plot import dist
+from custom_hist_plot import hist
 import seaborn as sns
 import matplotlib.pyplot as plt
 
 iris = sns.load_dataset("iris")
 fig, axes = plt.subplots(2, 2, figsize=(8, 8))
-dist.hist_dist(iris, x='sepal_width', hue='species', ax=axes[0, 0], dist=['norm', 'gamma', 'lognorm', 'expon'], bins=20, norm_hist=False)
+hist.hist_dist(iris, x='sepal_width', hue='species', ax=axes[0, 0], dist=['t', 'gamma', 'lognorm', 'expon'], bins=20, norm_hist=False)
 
 #%% custom_dist_plot.plot_normality
-from custom_dist_plot import dist
+from custom_hist_plot import hist
 import seaborn as sns
 import matplotlib.pyplot as plt
 
 iris = sns.load_dataset("iris")
-dist.plot_normality(iris, x='sepal_width', binwidth=0.2, norm_hist=False, rounddigit=5)
+hist.plot_normality(iris, x='sepal_width', binwidth=0.2, norm_hist=False, rounddigit=5)
 
 #%% custom_scatter_plot.regression_plot_pred
 from custom_scatter_plot import regplot

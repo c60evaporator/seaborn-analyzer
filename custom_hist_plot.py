@@ -257,9 +257,11 @@ class hist():
                 all_params['expon'] = params
                 all_scores['expon'] = fit_scores  # フィッティングの評価指標
             elif distribution == stats.t:
-                params['theta'] = best_params['scale']
-                params['k'] = best_params['arg'][0]
+                params['scale'] = best_params['scale']
+                params['df'] = best_params['arg'][0]
                 params['offset'] = best_params['loc']
+                all_params['t'] = params
+                all_scores['t'] = fit_scores  # フィッティングの評価指標
             elif distribution == stats.uniform:
                 params['theta'] = best_params['scale']
                 params['k'] = best_params['arg'][0]
