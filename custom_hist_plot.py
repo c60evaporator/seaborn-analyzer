@@ -217,6 +217,7 @@ class hist():
                     distribution = stats.chi2
                 elif distribution == 'weibull':
                     distribution = stats.weibull_min
+                    fit_params = {'loc': 0} # 指数分布のとき、locationパラメータを0で固定
             # 分布フィット
             xline, yline, best_params, fit_scores = cls._fit_distribution(X, distribution, sigmarange, linesplit, fit_params)
 
@@ -251,11 +252,23 @@ class hist():
                 params['loc'] = best_params['loc']
                 all_params['gamma'] = params
                 all_scores['gamma'] = fit_scores  # フィッティングの評価指標
-            # 指数分布 (参考https://stackoverflow.com/questions/25085200/scipy-stats-expon-fit-with-no-location-parameter)
+            # 指数分布 (オフセットなし、参考https://stackoverflow.com/questions/25085200/scipy-stats-expon-fit-with-no-location-parameter)
             elif distribution == stats.expon:
                 params['lambda'] = best_params['scale']
                 all_params['expon'] = params
                 all_scores['expon'] = fit_scores  # フィッティングの評価指標
+            # ワイブル分布 (オフセットなし、参考https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.weibull_min.html)
+            elif distribution == stats.weibull_min:
+                params['lambda'] = best_params['scale']
+                params['k'] = best_params['arg'][0]
+                all_params['weibull'] = params
+                all_scores['weibull'] = fit_scores  # フィッティングの評価指標
+            # 一様分布（x方向オフセット＋x方向倍率、参考https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.uniform.html）
+            elif distribution == stats.uniform:
+                params['scale'] = best_params['scale']
+                params['loc'] = best_params['loc']
+                all_params['uniform'] = params
+                all_scores['uniform'] = fit_scores  # フィッティングの評価指標
             # t分布（通常のt分布＋x方向オフセット＋x方向倍率、参考https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.t.html）
             elif distribution == stats.t:
                 params['scale'] = best_params['scale']
@@ -263,20 +276,11 @@ class hist():
                 params['loc'] = best_params['loc']
                 all_params['t'] = params
                 all_scores['t'] = fit_scores  # フィッティングの評価指標
-            # 一様分布（x方向オフセット＋x方向倍率、参考https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.uniform.html）
-            elif distribution == stats.uniform:
-                params['scale'] = best_params['scale']
-                params['loc'] = best_params['loc']
-                all_params['t'] = params
-                all_scores['t'] = fit_scores  # フィッティングの評価指標
             elif distribution == stats.chi2:
                 params['theta'] = best_params['scale']
                 params['k'] = best_params['arg'][0]
                 params['offset'] = best_params['loc']
-            elif distribution == stats.weibull_min:
-                params['theta'] = best_params['scale']
-                params['k'] = best_params['arg'][0]
-                params['offset'] = best_params['loc']
+            
             
         # フィッティング線の凡例をプロット (2色以上のときのみ)
         if len(dists) >= 2:
