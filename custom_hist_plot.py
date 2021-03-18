@@ -215,9 +215,12 @@ class hist():
                     distribution = stats.uniform
                 elif distribution == 'chi2':
                     distribution = stats.chi2
+                    fit_params = {'floc': 0,  # カイ二乗分布のとき、locationパラメータを0で固定
+                                  'fscale': 1,  # カイ二乗分布のとき、scaleパラメータを1で固定
+                                  }
                 elif distribution == 'weibull':
                     distribution = stats.weibull_min
-                    fit_params = {'loc': 0} # 指数分布のとき、locationパラメータを0で固定
+                    fit_params = {'floc': 0} # ワイブル分布のとき、locationパラメータを0で固定
             # 分布フィット
             xline, yline, best_params, fit_scores = cls._fit_distribution(X, distribution, sigmarange, linesplit, fit_params)
 
@@ -263,24 +266,24 @@ class hist():
                 params['k'] = best_params['arg'][0]
                 all_params['weibull'] = params
                 all_scores['weibull'] = fit_scores  # フィッティングの評価指標
-            # 一様分布（x方向オフセット＋x方向倍率、参考https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.uniform.html）
+            # 一様分布 (x方向オフセット＋x方向倍率、参考https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.uniform.html)
             elif distribution == stats.uniform:
                 params['scale'] = best_params['scale']
                 params['loc'] = best_params['loc']
                 all_params['uniform'] = params
                 all_scores['uniform'] = fit_scores  # フィッティングの評価指標
-            # t分布（通常のt分布＋x方向オフセット＋x方向倍率、参考https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.t.html）
+            # t分布 (通常のt分布＋x方向オフセット＋x方向倍率、参考https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.t.html)
             elif distribution == stats.t:
                 params['scale'] = best_params['scale']
                 params['df'] = best_params['arg'][0]
                 params['loc'] = best_params['loc']
                 all_params['t'] = params
                 all_scores['t'] = fit_scores  # フィッティングの評価指標
+            # カイ二乗分布 (オフセット・倍率なし、参考https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.chi2.html)
             elif distribution == stats.chi2:
-                params['theta'] = best_params['scale']
-                params['k'] = best_params['arg'][0]
-                params['offset'] = best_params['loc']
-            
+                params['df'] = best_params['arg'][0]
+                all_params['chi2'] = params
+                all_scores['chi2'] = fit_scores  # フィッティングの評価指標
             
         # フィッティング線の凡例をプロット (2色以上のときのみ)
         if len(dists) >= 2:
