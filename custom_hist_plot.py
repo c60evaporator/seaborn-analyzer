@@ -160,7 +160,7 @@ class hist():
         elif isinstance(data, np.ndarray):
             X = data
         # フィッティング対象データの最小値よりflocが大きい場合、エラーを出す
-        if np.amin(X) <= floc:
+        if floc is not None and floc >= np.amin(X):
             raise Exception('floc must be larger than minimum of data')
 
         # ビンサイズを設定
