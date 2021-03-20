@@ -150,7 +150,7 @@ class CustomPairPlot():
 
     #メイン関数
     def pairanalyzer(self, df, hue=None, palette=None, vars=None,
-             lowerkind="boxscatter", diag_kind="kde", markers=True,
+             lowerkind="boxscatter", diag_kind="kde", markers=None,
              height=2.5, aspect=1, dropna=True,
              lower_kws={}, diag_kws={}, grid_kws={}, size=None):
         #メンバ変数入力
