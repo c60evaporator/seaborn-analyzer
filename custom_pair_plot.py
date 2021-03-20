@@ -133,10 +133,10 @@ class CustomPairPlot():
                 self._duplicate_bubblescatter(data=self.df, x=x_var, y=y_var, hue=self.hue, hue_names=g.hue_names, hue_slide="vertical", palette=g.palette)
             #散布図
             else:
-                if len(g.hue_kws) > 0:#マーカー指定あるとき
+                if len(g.hue_kws) > 0 and "marker" in g.hue_kws.keys():#マーカー指定あるとき
                     markers = dict(zip(g.hue_names, g.hue_kws["marker"]))
                 else:#マーカー指定ないとき
-                    markers = None
+                    markers = True
                 sns.scatterplot(data=self.df, x=x_var, y=y_var, hue=self.hue,
                      palette=g.palette, style=self.hue, markers=markers)
             #凡例を追加
