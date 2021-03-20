@@ -77,7 +77,7 @@ class CustomPairPlot():
                 data_k = pd.DataFrame(columns=data.columns,
                                       dtype=np.float)
             #X,Yごとに要素数をカウント
-            df_xy = data_k[[x,y]]
+            df_xy = data_k[[x,y]].copy()
             df_xy["xyrec"] = 1
             df_xycount = df_xy.dropna(how="any").groupby([x,y], as_index=False).count()
             #hueが2個以上存在するとき、表示位置ずらし量（対象軸のユニーク値差分最小値÷4に収まるよう設定）を計算
@@ -150,7 +150,7 @@ class CustomPairPlot():
 
     #メイン関数
     def pairanalyzer(self, df, hue=None, palette=None, vars=None,
-             lowerkind="boxscatter", diag_kind="kde", markers=None,
+             lowerkind="boxscatter", diag_kind="kde", markers=True,
              height=2.5, aspect=1, dropna=True,
              lower_kws={}, diag_kws={}, grid_kws={}, size=None):
         #メンバ変数入力
