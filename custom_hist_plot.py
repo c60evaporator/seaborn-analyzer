@@ -108,7 +108,7 @@ class hist():
 
     @classmethod
     def hist_dist(cls, data: pd.DataFrame, x: str=None, hue=None, dist='norm', ax=None, binwidth=None, bins=None, norm_hist=True,
-                  sigmarange=4, linecolor='red', linesplit=100, hist_kws={}):
+                  floc=None, sigmarange=4, linecolor='red', linesplit=200, hist_kws={}):
         """
         分布フィッティングと各指標の表示
 
@@ -130,6 +130,8 @@ class hist():
             ビンの数 (bin_widthと共存不可)
         norm_hist : bool
             ヒストグラムを面積1となるよう正規化するか？
+        floc : float
+            フィッティング時のX方向オフセット (Noneなら指定なし(weibullとexponは0))
         sigmarange : float
             フィッティング線の表示範囲 (標準偏差の何倍まで表示するか指定)
         linesplit : str or List[str]
@@ -157,6 +159,9 @@ class hist():
             X = data.values
         elif isinstance(data, np.ndarray):
             X = data
+        # フィッティング対象データの最小値よりflocが大きい場合、エラーを出す
+        if np.amin(X) <= floc:
+            raise Exception('floc must be larger than minimum of data')
 
         # ビンサイズを設定
         if binwidth is not None:
@@ -221,6 +226,9 @@ class hist():
                 elif distribution == 'weibull':
                     distribution = stats.weibull_min
                     fit_params = {'floc': 0} # ワイブル分布のとき、locationパラメータを0で固定
+            # flocしているとき、X方向オフセットを指定値で固定
+            if floc is not None:
+                fit_params['floc'] = floc
             # 分布フィット
             xline, yline, best_params, fit_scores = cls._fit_distribution(X, distribution, sigmarange, linesplit, fit_params)
 
@@ -296,7 +304,7 @@ class hist():
 
     @classmethod
     def plot_normality(cls, data: pd.DataFrame, x: str=None, hue=None, binwidth=None, bins=None, norm_hist=True,
-                        sigmarange=4, linecolor='red', linesplit=100, rounddigit=None,
+                        sigmarange=4, linecolor='red', linesplit=200, rounddigit=None,
                         hist_kws={}, subplot_kws={}):
         """
         正規性検定プロット

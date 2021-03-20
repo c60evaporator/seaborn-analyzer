@@ -10,10 +10,12 @@ cp.pairanalyzer(titanic, hue='survived')
 from custom_hist_plot import hist
 import seaborn as sns
 import matplotlib.pyplot as plt
+import pandas as pd
 
 iris = sns.load_dataset("iris")
-fig, axes = plt.subplots(2, 2, figsize=(8, 8))
-hist.hist_dist(iris, x='sepal_width', hue='species', ax=axes[0, 0], dist=['norm', 'gamma', 'expon', 'uniform'], bins=20, norm_hist=True)
+all_params, all_scores = hist.hist_dist(iris, x='sepal_width', dist=['norm', 'gamma', 'expon', 'uniform'], bins=20, norm_hist=True)
+df_scores = pd.DataFrame(all_scores).T
+df_scores
 
 #%% custom_dist_plot.plot_normality
 from custom_hist_plot import hist
