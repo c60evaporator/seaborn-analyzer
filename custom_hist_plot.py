@@ -107,7 +107,7 @@ class hist():
         return dstdict
 
     @classmethod
-    def hist_dist(cls, data: pd.DataFrame, x: str=None, hue=None, dist='norm', ax=None, binwidth=None, bins=None, norm_hist=True,
+    def hist_dist(cls, data: pd.DataFrame, x: str=None, hue=None, dist='norm', ax=None, binwidth=None, bins='auto', norm_hist=True,
                   floc=None, sigmarange=4, linecolor='red', linesplit=200, hist_kws={}):
         """
         分布フィッティングと各指標の表示
@@ -127,7 +127,7 @@ class hist():
         binwidth : float
             ビンの幅 (NoneならFreedman-Diaconis ruleで自動決定)
         bins : int
-            ビンの数 (bin_widthと共存不可)
+            ビンの数 (bin_widthと共存不可、未記入なら'auto')
         norm_hist : bool
             ヒストグラムを面積1となるよう正規化するか？
         floc : float
@@ -165,7 +165,7 @@ class hist():
 
         # ビンサイズを設定
         if binwidth is not None:
-            if bins is None:
+            if bins == 'auto':
                 bins = np.arange(np.floor(X.min()), np.ceil(X.max()), binwidth)
             else: # binsとbin_widthは同時指定できない
                 raise Exception('arguments "bins" and "binwidth" cannot coexist')
@@ -303,7 +303,7 @@ class hist():
 
 
     @classmethod
-    def plot_normality(cls, data: pd.DataFrame, x: str=None, hue=None, binwidth=None, bins=None, norm_hist=True,
+    def plot_normality(cls, data: pd.DataFrame, x: str=None, hue=None, binwidth=None, bins='auto', norm_hist=True,
                         sigmarange=4, linecolor='red', linesplit=200, rounddigit=None,
                         hist_kws={}, subplot_kws={}):
         """
