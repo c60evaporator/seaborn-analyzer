@@ -6,14 +6,14 @@ titanic = sns.load_dataset("titanic")
 cp = CustomPairPlot()
 cp.pairanalyzer(titanic, hue='survived')
 
-#%% custom_dist_plot.hist_dist
+#%% custom_dist_plot.fit_dist
 from custom_hist_plot import hist
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
 
 iris = sns.load_dataset("iris")
-all_params, all_scores = hist.hist_dist(iris, x='sepal_width', dist=['norm', 'gamma', 'expon', 'uniform'], bins=20, norm_hist=True)
+all_params, all_scores = hist.fit_dist(iris, x='sepal_width', dist=['norm', 'gamma', 'expon', 'uniform'], bins=20, norm_hist=True)
 df_scores = pd.DataFrame(all_scores).T
 df_scores
 

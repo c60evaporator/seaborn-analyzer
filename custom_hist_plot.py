@@ -107,7 +107,7 @@ class hist():
         return dstdict
 
     @classmethod
-    def hist_dist(cls, data: pd.DataFrame, x: str=None, hue=None, dist='norm', ax=None, binwidth=None, bins='auto', norm_hist=True,
+    def fit_dist(cls, data: pd.DataFrame, x: str=None, hue=None, dist='norm', ax=None, binwidth=None, bins='auto', norm_hist=True,
                   floc=None, sigmarange=4, linecolor='red', linesplit=200, hist_kws={}):
         """
         分布フィッティングと各指標の表示
@@ -350,7 +350,7 @@ class hist():
         stats.probplot(X, dist='norm', plot=axes[0])
 
         # ヒストグラムとフィッティング線を描画
-        cls.hist_dist(data, x=x, hue=hue, dist='norm', ax=axes[1], binwidth=binwidth, bins=bins, norm_hist=norm_hist,
+        cls.fit_dist(data, x=x, hue=hue, dist='norm', ax=axes[1], binwidth=binwidth, bins=bins, norm_hist=norm_hist,
                       sigmarange=sigmarange, linecolor=linecolor, linesplit=linesplit, hist_kws=hist_kws)
         # 平均と不偏標準偏差を計算し、ヒストグラム図中に記載
         mean = np.mean(X)
