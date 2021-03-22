@@ -46,7 +46,7 @@ class hist():
         hist_y, hist_x = np.histogram(x, bins=20, density=True)  # ヒストグラム化して標準化
         hist_x = (hist_x + np.roll(hist_x, -1))[:-1] / 2.0  # ヒストグラムのxの値をビンの左端→中央に移動
         pred = distribution.pdf(hist_x, loc=best_params['loc'], scale=best_params['scale'], *best_params['arg'])
-        sum_squared_error = np.sum(np.power(pred - hist_y, 2.0))
+        rss = np.sum(np.power(pred - hist_y, 2.0))
         # AIC、BICを計算
         k = len(params) - len(fit_params)  # パラメータ数
         n = len(x)  # サンプル数
@@ -55,7 +55,7 @@ class hist():
         aic = -2 * logL + 2 * k  # AIC
         bic = -2 * logL + k * np.log(n)  # BIC
         # 評価指標()
-        fit_scores = {'sum_squared_error': sum_squared_error,
+        fit_scores = {'RSS': rss,
                       'AIC': aic,
                       'BIC': bic
                       }
