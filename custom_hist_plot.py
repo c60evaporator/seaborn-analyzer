@@ -16,9 +16,9 @@ class hist():
 
         Parameters
         ----------
-        X : ndarray
+        x : ndarray
             フィッティング対象のデータ
-        dist : scipy.stats.distributions
+        distribution : scipy.stats.distributions
             分布の種類
         sigmarange : float
             フィッティング線の表示範囲（標準偏差の何倍まで表示するか指定）
@@ -68,8 +68,8 @@ class hist():
 
         Parameters
         ----------
-        srcdict : Dict[str, float]
-            丸め対象のDict
+        src : float
+            丸め対象の数値
         rounddigit : int
             フィッティング線の表示範囲（標準偏差の何倍まで表示するか指定）
         method : int
@@ -127,14 +127,14 @@ class hist():
         binwidth : float
             ビンの幅 (NoneならFreedman-Diaconis ruleで自動決定)
         bins : int
-            ビンの数 (bin_widthと共存不可、未記入なら'auto')
+            ビンの数 (bin_widthと共存不可、'auto'とするとFreedman-Diaconis ruleで自動決定)
         norm_hist : bool
             ヒストグラムを面積1となるよう正規化するか？
         floc : float
             フィッティング時のX方向オフセット (Noneなら指定なし(weibullとexponは0))
         sigmarange : float
             フィッティング線の表示範囲 (標準偏差の何倍まで表示するか指定)
-        linesplit : str or List[str]
+        linecolor : str or List[str]
             フィッティング線の色指定 (複数分布フィッティング時は、List指定)
         linesplit : int
             フィッティング線の分割数 (カクカクしたら増やす)
@@ -320,11 +320,13 @@ class hist():
         binwidth : float
             ビンの幅 (NoneならFreedman-Diaconis ruleで自動決定)
         bins : int
-            ビンの数 (bin_widthと共存不可)
+            ビンの数 (bin_widthと共存不可、'auto'とするとFreedman-Diaconis ruleで自動決定)
         norm_hist : bool
             ヒストグラムを面積1となるよう正規化するか？
         sigmarange : float
             フィッティング線の表示範囲 (標準偏差の何倍まで表示するか指定)
+        linecolor : str
+            フィッティング線の色指定
         linesplit : int
             フィッティング線の分割数 (カクカクしたら増やす)
         rounddigit: int

@@ -18,8 +18,8 @@ class regplot():
 
         Parameters
         ----------
-        srcdict : Dict[str, float]
-            丸め対象のDict
+        src : float
+            丸め対象の数値
         rounddigit : int
             フィッティング線の表示範囲（標準偏差の何倍まで表示するか指定）
         method : int
