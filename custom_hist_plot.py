@@ -303,8 +303,8 @@ class hist():
 
 
     @classmethod
-    def plot_normality(cls, data: pd.DataFrame, x: str=None, hue=None, binwidth=None, bins='auto', norm_hist=True,
-                        sigmarange=4, linecolor='red', linesplit=200, rounddigit=None,
+    def plot_normality(cls, data: pd.DataFrame, x: str=None, hue=None, binwidth=None, bins='auto', norm_hist=False,
+                        sigmarange=4, linecolor='red', linesplit=200, rounddigit=5,
                         hist_kws={}, subplot_kws={}):
         """
         正規性検定プロット

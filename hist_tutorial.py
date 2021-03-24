@@ -50,10 +50,8 @@ from custom_hist_plot import hist
 from sklearn.datasets import load_boston
 import pandas as pd
 import matplotlib.pyplot as plt
-boston = load_boston()
-X = boston.data
-df = pd.DataFrame(X, columns= boston.feature_names)
-all_params, all_scores = hist.fit_dist(df, x='LSTAT', dist=['norm', 'gamma', 'lognorm', 'uniform'], norm_hist=True)
+df = pd.DataFrame(load_boston().data, columns= load_boston().feature_names)
+all_params, all_scores = hist.fit_dist(df, x='LSTAT', dist=['norm', 'gamma', 'lognorm', 'uniform'])
 df_scores = pd.DataFrame(all_scores).T
 df_scores
 

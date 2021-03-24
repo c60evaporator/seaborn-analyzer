@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 iris = sns.load_dataset("iris")
-all_params, all_scores = hist.fit_dist(iris, x='sepal_width', dist=['norm', 'gamma', 'expon', 'uniform'], bins=20, norm_hist=True)
+all_params, all_scores = hist.fit_dist(iris, x='sepal_width', dist=['norm', 'gamma', 'expon', 'uniform'], bins=20)
 df_scores = pd.DataFrame(all_scores).T
 df_scores
 
@@ -23,7 +23,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 iris = sns.load_dataset("iris")
-hist.plot_normality(iris, x='sepal_width', binwidth=0.2, norm_hist=False, rounddigit=5)
+hist.plot_normality(iris, x='sepal_width', binwidth=0.2, norm_hist=False, rounddigit=3)
 
 #%% custom_scatter_plot.regression_plot_pred
 from custom_scatter_plot import regplot
