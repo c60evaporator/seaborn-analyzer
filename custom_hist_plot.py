@@ -125,9 +125,9 @@ class hist():
         ax : matplotlib.axes._subplots.Axes
             表示対象のax (Noneならplt.plotで1枚ごとにプロット)
         binwidth : float
-            ビンの幅 (NoneならFreedman-Diaconis ruleで自動決定)
+            ビンの幅 (binsと共存不可)
         bins : int
-            ビンの数 (bin_widthと共存不可、'auto'とするとFreedman-Diaconis ruleで自動決定)
+            ビンの数 (bin_widthと共存不可、'auto'とするとスタージェスの公式で自動決定)
         norm_hist : bool
             ヒストグラムを面積1となるよう正規化するか？
         floc : float
@@ -318,9 +318,9 @@ class hist():
         hue : str
             色分け指定カラム (列名指定、dataがDataFrameのときのみ指定可)
         binwidth : float
-            ビンの幅 (NoneならFreedman-Diaconis ruleで自動決定)
+            ビンの幅 (binsと共存不可)
         bins : int
-            ビンの数 (bin_widthと共存不可、'auto'とするとFreedman-Diaconis ruleで自動決定)
+            ビンの数 (bin_widthと共存不可、'auto'とするとスタージェスの公式で自動決定)
         norm_hist : bool
             ヒストグラムを面積1となるよう正規化するか？
         sigmarange : float
