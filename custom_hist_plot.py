@@ -287,6 +287,12 @@ class hist():
                 params['loc'] = best_params['loc']
                 all_params['gamma'] = params
                 all_scores['gamma'] = fit_scores  # フィッティングの評価指標
+            # コーシー分布 (通常のコーシー分布＋オフセット＋スケール、参考https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.cauchy.html)
+            elif distribution == stats.cauchy:
+                params['scale'] = best_params['scale']
+                params['loc'] = best_params['loc']
+                all_params['cauchy'] = params
+                all_scores['cauchy'] = fit_scores  # フィッティングの評価指標
             # t分布 (通常のt分布＋オフセット＋スケール、参考https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.t.html)
             elif distribution == stats.t:
                 params['scale'] = best_params['scale']
