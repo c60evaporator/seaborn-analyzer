@@ -338,7 +338,7 @@ class hist():
 
     @classmethod
     def plot_normality(cls, data: pd.DataFrame, x: str=None, hue=None, binwidth=None, bins='auto', norm_hist=False,
-                        sigmarange=4, linecolor='red', linesplit=200, rounddigit=5,
+                        sigmarange=4, linesplit=200, rounddigit=5,
                         hist_kws={}, subplot_kws={}):
         """
         正規性検定プロット
@@ -359,8 +359,6 @@ class hist():
             ヒストグラムを面積1となるよう正規化するか？
         sigmarange : float
             フィッティング線の表示範囲 (標準偏差の何倍まで表示するか指定)
-        linecolor : str
-            フィッティング線の色指定
         linesplit : int
             フィッティング線の分割数 (カクカクしたら増やす)
         rounddigit: int
@@ -387,7 +385,7 @@ class hist():
 
         # ヒストグラムとフィッティング線を描画
         cls.fit_dist(data, x=x, hue=hue, dist='norm', ax=axes[1], binwidth=binwidth, bins=bins, norm_hist=norm_hist,
-                      sigmarange=sigmarange, linecolor=linecolor, linesplit=linesplit, hist_kws=hist_kws)
+                      sigmarange=sigmarange, linecolor='red', linesplit=linesplit, hist_kws=hist_kws)
         # 平均と不偏標準偏差を計算し、ヒストグラム図中に記載        
         mean = np.mean(X)
         std = np.std(X, ddof=1)
