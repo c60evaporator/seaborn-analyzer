@@ -312,7 +312,7 @@ class hist():
                 all_scores['expon'] = fit_scores  # フィッティングの評価指標
             # ワイブル分布 (オフセットなし、参考https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.weibull_min.html)
             elif distribution == stats.weibull_min:
-                params['lambda'] = best_params['scale']
+                params['c'] = best_params['scale']
                 params['k'] = best_params['arg'][0]
                 params['loc'] = best_params['loc']
                 all_params['weibull'] = params
@@ -386,7 +386,7 @@ class hist():
         # ヒストグラムとフィッティング線を描画
         cls.fit_dist(data, x=x, hue=hue, dist='norm', ax=axes[1], binwidth=binwidth, bins=bins, norm_hist=norm_hist,
                       sigmarange=sigmarange, linecolor='red', linesplit=linesplit, hist_kws=hist_kws)
-        # 平均と不偏標準偏差を計算し、ヒストグラム図中に記載        
+        # 平均と不偏標準偏差を計算し、ヒストグラム図中に記載
         mean = np.mean(X)
         std = np.std(X, ddof=1)
         if rounddigit > 0:  # rounddigitが0のときは文字表示しない
