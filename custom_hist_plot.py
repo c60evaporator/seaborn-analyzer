@@ -9,6 +9,7 @@ import decimal
 
 class hist():
     DEFAULT_LINECOLORS = ['red', 'darkmagenta', 'mediumblue', 'darkorange',  'pink', 'brown', 'green', 'cyan', 'gold']
+    DISCRETE_DISTRIBUTIONS = ['poisson', 'binom']
     
     def _fit_distribution(x: np.ndarray, distribution: distributions, sigmarange: float, linesplit: int, fit_params: Dict):
         """
@@ -61,6 +62,16 @@ class hist():
                       }
 
         return Xline, Yline, best_params, fit_scores
+    
+    def _is_all_integer(src: np.ndarray):
+        """
+        全要素が整数かを確認
+        """
+        if isinstance(src.dtype, int):
+            return True
+        if isinstance(src.dtype, float):
+            np.vectorize(lambda x: x.is_integer())
+        return False
     
     def _round_digits(src: float, rounddigit: int = None, method='decimal'):
         """
@@ -211,21 +222,34 @@ class hist():
                     distribution = stats.lognorm
                 elif distribution == 'gamma':
                     distribution = stats.gamma
+                elif distribution == 'cauchy':
+                    distribution = stats.cauchy
                 elif distribution == 't':
                     distribution = stats.t
-                elif distribution == 'expon':
-                    distribution = stats.expon
-                    fit_params = {'floc': 0} # 指数分布のとき、locationパラメータを0で固定
+                elif distribution == 'pareto':
+                    distribution = stats.pareto
                 elif distribution == 'uniform':
                     distribution = stats.uniform
-                elif distribution == 'chi2':
-                    distribution = stats.chi2
-                    fit_params = {'floc': 0,  # カイ二乗分布のとき、locationパラメータを0で固定
-                                  'fscale': 1,  # カイ二乗分布のとき、scaleパラメータを1で固定
-                                  }
+                elif distribution == 'binom':
+                    distribution = stats.poisson
+                    fit_params = {'floc': 0} # 二項分布のとき、locパラメータを0で固定
+                elif distribution == 'poisson':
+                    distribution = stats.poisson
+                    fit_params = {'floc': 0} # ポアソン分布のとき、locパラメータを0で固定
+                elif distribution == 'expon':
+                    distribution = stats.expon
+                    fit_params = {'floc': 0} # 指数分布のとき、locパラメータを0で固定
                 elif distribution == 'weibull':
                     distribution = stats.weibull_min
-                    fit_params = {'floc': 0} # ワイブル分布のとき、locationパラメータを0で固定
+                    fit_params = {'floc': 0} # ワイブル分布のとき、locパラメータを0で固定
+                elif distribution == 'chi2':
+                    distribution = stats.chi2
+                    fit_params = {'floc': 0,  # カイ二乗分布のとき、locパラメータを0で固定
+                                  'fscale': 1,  # カイ二乗分布のとき、scaleパラメータを1で固定
+                                  }
+            # 離散分布のとき、全てが整数型なら
+
+
             # flocしているとき、X方向オフセットを指定値で固定
             if floc is not None:
                 fit_params['floc'] = floc
@@ -263,6 +287,19 @@ class hist():
                 params['loc'] = best_params['loc']
                 all_params['gamma'] = params
                 all_scores['gamma'] = fit_scores  # フィッティングの評価指標
+            # t分布 (通常のt分布＋x方向オフセット＋x方向倍率、参考https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.t.html)
+            elif distribution == stats.t:
+                params['scale'] = best_params['scale']
+                params['df'] = best_params['arg'][0]
+                params['loc'] = best_params['loc']
+                all_params['t'] = params
+                all_scores['t'] = fit_scores  # フィッティングの評価指標
+            # 一様分布 (x方向オフセット＋x方向倍率、参考https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.uniform.html)
+            elif distribution == stats.uniform:
+                params['scale'] = best_params['scale']
+                params['loc'] = best_params['loc']
+                all_params['uniform'] = params
+                all_scores['uniform'] = fit_scores  # フィッティングの評価指標
             # 指数分布 (オフセットなし、参考https://stackoverflow.com/questions/25085200/scipy-stats-expon-fit-with-no-location-parameter)
             elif distribution == stats.expon:
                 params['lambda'] = best_params['scale']
@@ -274,19 +311,6 @@ class hist():
                 params['k'] = best_params['arg'][0]
                 all_params['weibull'] = params
                 all_scores['weibull'] = fit_scores  # フィッティングの評価指標
-            # 一様分布 (x方向オフセット＋x方向倍率、参考https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.uniform.html)
-            elif distribution == stats.uniform:
-                params['scale'] = best_params['scale']
-                params['loc'] = best_params['loc']
-                all_params['uniform'] = params
-                all_scores['uniform'] = fit_scores  # フィッティングの評価指標
-            # t分布 (通常のt分布＋x方向オフセット＋x方向倍率、参考https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.t.html)
-            elif distribution == stats.t:
-                params['scale'] = best_params['scale']
-                params['df'] = best_params['arg'][0]
-                params['loc'] = best_params['loc']
-                all_params['t'] = params
-                all_scores['t'] = fit_scores  # フィッティングの評価指標
             # カイ二乗分布 (オフセット・倍率なし、参考https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.chi2.html)
             elif distribution == stats.chi2:
                 params['df'] = best_params['arg'][0]
