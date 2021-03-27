@@ -230,12 +230,6 @@ class hist():
                     distribution = stats.pareto
                 elif distribution == 'uniform':
                     distribution = stats.uniform
-                elif distribution == 'binom':
-                    distribution = stats.poisson
-                    fit_params = {'floc': 0} # 二項分布のとき、locパラメータを0で固定
-                elif distribution == 'poisson':
-                    distribution = stats.poisson
-                    fit_params = {'floc': 0} # ポアソン分布のとき、locパラメータを0で固定
                 elif distribution == 'expon':
                     distribution = stats.expon
                     fit_params = {'floc': 0} # 指数分布のとき、locパラメータを0で固定
@@ -247,8 +241,6 @@ class hist():
                     fit_params = {'floc': 0,  # カイ二乗分布のとき、locパラメータを0で固定
                                   'fscale': 1,  # カイ二乗分布のとき、scaleパラメータを1で固定
                                   }
-            # 離散分布のとき、全てが整数型なら
-
 
             # flocしているとき、X方向オフセットを指定値で固定
             if floc is not None:
