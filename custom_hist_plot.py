@@ -388,17 +388,18 @@ class hist():
         # ヒストグラムとフィッティング線を描画
         cls.fit_dist(data, x=x, hue=hue, dist='norm', ax=axes[1], binwidth=binwidth, bins=bins, norm_hist=norm_hist,
                       sigmarange=sigmarange, linecolor=linecolor, linesplit=linesplit, hist_kws=hist_kws)
-        # 平均と不偏標準偏差を計算し、ヒストグラム図中に記載
+        # 平均と不偏標準偏差を計算し、ヒストグラム図中に記載        
         mean = np.mean(X)
         std = np.std(X, ddof=1)
-        params = {'mean':mean,
-                  'std':std
-                  }
-        param_list = [f'{k}={v}' for k, v in cls._round_dict_digits(params, rounddigit, 'sig').items()]
-        param_text = "\n".join(param_list)
-        axes[1].text(axes[1].get_xlim()[0] + (axes[1].get_xlim()[1] - axes[1].get_xlim()[0]) * 0.95,
-                     axes[1].get_ylim()[1] * 0.9,
-                     param_text, verticalalignment='top', horizontalalignment='right')
+        if rounddigit > 0:  # rounddigitが0のときは文字表示しない
+            params = {'mean':mean,
+                    'std':std
+                    }
+            param_list = [f'{k}={v}' for k, v in cls._round_dict_digits(params, rounddigit, 'sig').items()]
+            param_text = "\n".join(param_list)
+            axes[1].text(axes[1].get_xlim()[0] + (axes[1].get_xlim()[1] - axes[1].get_xlim()[0]) * 0.95,
+                        axes[1].get_ylim()[1] * 0.9,
+                        param_text, verticalalignment='top', horizontalalignment='right')
 
         # 正規性検定
         if len(X) <= 2000: # シャピロウィルク検定 (N<=2000のとき)
@@ -408,12 +409,13 @@ class hist():
             method = 'kolmogorov-smirnov'
             normality = stats.kstest(X, stats.norm(loc=mean, scale=std).cdf)
         # 検定結果を図中に記載
-        params = {'statistic':normality.statistic,
-                  'pvalue':normality.pvalue,
-                  }
-        param_list = [f'{k}={v}' for k, v in cls._round_dict_digits(params, rounddigit, 'sig').items()]
-        param_list.insert(0, f'method={method}')
-        param_text = "\n".join(param_list)
-        axes[0].text(axes[0].get_xlim()[0] + (axes[0].get_xlim()[1] - axes[0].get_xlim()[0]) * 0.95,
-                     axes[0].get_ylim()[0] + (axes[0].get_ylim()[1] - axes[0].get_ylim()[0]) * 0.1,
-                     param_text, verticalalignment='bottom', horizontalalignment='right')
+        if rounddigit > 0:  # rounddigitが0のときは文字表示しない
+            params = {'statistic':normality.statistic,
+                    'pvalue':normality.pvalue,
+                    }
+            param_list = [f'{k}={v}' for k, v in cls._round_dict_digits(params, rounddigit, 'sig').items()]
+            param_list.insert(0, f'method={method}')
+            param_text = "\n".join(param_list)
+            axes[0].text(axes[0].get_xlim()[0] + (axes[0].get_xlim()[1] - axes[0].get_xlim()[0]) * 0.95,
+                        axes[0].get_ylim()[0] + (axes[0].get_ylim()[1] - axes[0].get_ylim()[0]) * 0.1,
+                        param_text, verticalalignment='bottom', horizontalalignment='right')
