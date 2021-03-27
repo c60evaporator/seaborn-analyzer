@@ -51,7 +51,6 @@ class hist():
         # AIC、BICを計算
         k = len(params) - len(fit_params)  # パラメータ数
         n = len(x)  # サンプル数
-        # TODO: Fitterライブラリだと対数尤度はhist_xから求めているが、本来の定義ではxから求めるのが適切に見える
         logL = np.sum(distribution.logpdf(x, loc=best_params['loc'], scale=best_params['scale'], *best_params['arg']))  # 対数尤度
         aic = -2 * logL + 2 * k  # AIC
         bic = -2 * logL + k * np.log(n)  # BIC
@@ -198,7 +197,7 @@ class hist():
             ax.add_artist(leg_hist)
 
         # distをList化
-        dists = [dist] if isinstance(dist, str) else dist
+        dists = [dist] if not isinstance(dist, list) else dist
         # フィッティング線の色指定をリスト化
         linecolor = [linecolor] if isinstance(linecolor, str) else linecolor
         # 2種類以上をプロットしており、かつ色指定がListでないとき、他の色を追加
@@ -307,7 +306,7 @@ class hist():
                 all_scores['uniform'] = fit_scores  # フィッティングの評価指標
             # 指数分布 (オフセットなし、参考https://stackoverflow.com/questions/25085200/scipy-stats-expon-fit-with-no-location-parameter)
             elif distribution == stats.expon:
-                params['lambda'] = best_params['scale']
+                params['lambda'] = 1 / best_params['scale']
                 params['loc'] = best_params['loc']
                 all_params['expon'] = params
                 all_scores['expon'] = fit_scores  # フィッティングの評価指標
@@ -323,10 +322,14 @@ class hist():
                 params['df'] = best_params['arg'][0]
                 all_params['chi2'] = params
                 all_scores['chi2'] = fit_scores  # フィッティングの評価指標
+            # その他の分布
+            else:
+                all_params[distribution.name] = params
+                all_scores[distribution.name] = fit_scores
             
         # フィッティング線の凡例をプロット (2色以上のときのみ)
         if len(dists) >= 2:
-            line_labels = [str(d) for d in dists]
+            line_labels = [d if isinstance(d, str) else d.name for d in dists]
             ax.legend(line_legends, line_labels, loc='upper right')
 
         return all_params, all_scores
