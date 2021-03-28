@@ -1,4 +1,4 @@
-from typing import List, Dict, Tuple
+from typing import Dict
 import seaborn as sns
 import numpy as np
 import pandas as pd
@@ -61,17 +61,7 @@ class hist():
                       }
 
         return Xline, Yline, best_params, fit_scores
-    
-    def _is_all_integer(src: np.ndarray):
-        """
-        全要素が整数かを確認
-        """
-        if isinstance(src.dtype, int):
-            return True
-        if isinstance(src.dtype, float):
-            np.vectorize(lambda x: x.is_integer())
-        return False
-    
+
     def _round_digits(src: float, rounddigit: int = None, method='decimal'):
         """
         指定桁数で小数を丸める
