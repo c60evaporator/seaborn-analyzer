@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 iris = sns.load_dataset("iris")
-all_params, all_scores = hist.fit_dist(iris, x='sepal_width', dist=['norm', 'gamma', 'expon', 'uniform'], bins=20)
+all_params, all_scores = hist.fit_dist(iris, x='sepal_width', dist=['norm', 'gamma', 'lognorm', 'uniform'], bins=20)
 df_scores = pd.DataFrame(all_scores).T
 df_scores
 
