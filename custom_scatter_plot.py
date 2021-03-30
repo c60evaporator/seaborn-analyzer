@@ -208,7 +208,7 @@ class regplot():
         cv_seed : int
             クロスバリデーションの乱数シード
         params : Dict[str, float]
-            学習器に使用するパラメータの値 (Noneならデフォルト)
+            学習器に渡すパラメータの値 (チューニング後のパラメータがgood、Noneならデフォルト)
         fit_params : Dict[str, float]
             学習時のパラメータをdict指定 (例: XGBoostのearly_stopping_rounds)
             Noneならデフォルト
@@ -689,19 +689,19 @@ class regplot():
         X1, X2 = np.meshgrid(xx, yy)
         X_grid = np.c_[X1.ravel(), X2.ravel()]
         df_heat = pd.DataFrame(X_grid, columns=x_heat)
-        # 推論用に全特徴量を保持したndarrayを作成 (ヒートマップ非使用特徴量は固定値other_xとして追加)
+        # 推論用に全説明変数を保持したndarrayを作成 (ヒートマップ非使用変数は固定値other_xとして追加)
         n_rows = X_grid.shape[0]
         X_all = []
         other_add_flg = False
         for i in range(2 + len(other_x)):
-            if i == x_heat_indices[0]: # ヒートマップ使用特徴量(1個目)を追加
+            if i == x_heat_indices[0]: # ヒートマップ使用変数(1個目)を追加
                 X_all.append(X_grid[:, 0].reshape(n_rows, 1))
-            elif i == x_heat_indices[1]: # ヒートマップ使用特徴量(2個目)を追加
+            elif i == x_heat_indices[1]: # ヒートマップ使用変数(2個目)を追加
                 X_all.append(X_grid[:, 1].reshape(n_rows, 1))
-            elif len(other_x) >= 1 and not other_add_flg:  # ヒートマップ非使用特徴量(1個目)を固定値として追加
+            elif len(other_x) >= 1 and not other_add_flg:  # ヒートマップ非使用変数(1個目)を固定値として追加
                 X_all.append(np.full((n_rows, 1), other_x[0]))
                 other_add_flg = True
-            elif len(other_x) == 2:  # ヒートマップ非使用特徴量(2個目)を固定値として追加
+            elif len(other_x) == 2:  # ヒートマップ非使用変数(2個目)を固定値として追加
                 X_all.append(np.full((n_rows, 1), other_x[1]))
         X_all = np.hstack(X_all)
         # グリッドデータに対して学習し、推定値を作成
@@ -763,7 +763,7 @@ class regplot():
         df_all = df_heat.join(df_not_heat)
         df_all = df_all.join(pd.DataFrame(y_true, columns=['y_true']))
         df_all = df_all.join(pd.DataFrame(y_pred, columns=['y_pred']))
-        # ヒートップ非使用特徴量を標準化してDataFrameに追加
+        # ヒートップ非使用変数を標準化してDataFrameに追加
         if x_num >= 3:
             X_not_heat_norm = stats.zscore(X_not_heat)
             df_all = df_all.join(pd.DataFrame(X_not_heat_norm, columns=[f'normalize_{c}' for c in x_not_heat]))
@@ -793,7 +793,7 @@ class regplot():
 
         # プロットする図の数(sigmarange外「2枚」 + sigmarange内「int(pair_sigmarange / pair_sigmainterval) * 2枚」)
         pair_n = int(pair_sigmarange / pair_sigmainterval) * 2 + 2
-        # ヒートップ非使用特徴量をプロットする範囲の下限(標準化後)
+        # ヒートップ非使用変数をプロットする範囲の下限(標準化後)
         pair_min = -(pair_n - 2) / 2 * pair_sigmainterval
 
         # 説明変数が2次元のとき (図は1枚のみ)
@@ -818,26 +818,26 @@ class regplot():
         # 図ごとにプロット
         for i in range(pair_h):
             for j in range(pair_w):
-                # pair縦軸特徴量(標準化後)の最小値
+                # pair縦軸変数(標準化後)の最小値
                 if i == 0:
                     h_min = -float('inf')
-                    h_mean = pair_min - pair_sigmainterval / 2  # ヒートマップ外特徴量指定用の平均値
+                    h_mean = pair_min - pair_sigmainterval / 2  # ヒートマップ非使用変数指定用の平均値
                 else:
                     h_min = pair_min + (i - 1) * pair_sigmainterval
-                    h_mean = pair_min + (i - 0.5) * pair_sigmainterval  # ヒートマップ外特徴量指定用の平均値
-                # pair縦軸特徴量(標準化後)の最大値
+                    h_mean = pair_min + (i - 0.5) * pair_sigmainterval  # ヒートマップ非使用変数指定用の平均値
+                # pair縦軸変数(標準化後)の最大値
                 if i == pair_h - 1:
                     h_max = float('inf')
                 else:
                     h_max = pair_min + i * pair_sigmainterval
-                # pair横軸特徴量(標準化後)の最小値
+                # pair横軸変数(標準化後)の最小値
                 if j == 0:
                     w_min = -float('inf')
-                    w_mean = pair_min - pair_sigmainterval / 2  # ヒートマップ外特徴量指定用の平均値
+                    w_mean = pair_min - pair_sigmainterval / 2  # ヒートマップ非使用変数指定用の平均値
                 else:
                     w_min = pair_min + (j - 1) * pair_sigmainterval
-                    w_mean = pair_min + (j - 0.5) * pair_sigmainterval  # ヒートマップ外特徴量指定用の平均値
-                # pair横軸特徴量(標準化後)の最大値
+                    w_mean = pair_min + (j - 0.5) * pair_sigmainterval  # ヒートマップ非使用変数指定用の平均値
+                # pair横軸変数(標準化後)の最大値
                 if j == pair_w - 1:
                     w_max = float('inf')
                 else:
@@ -851,20 +851,20 @@ class regplot():
                 # 説明変数が3次元のとき (図はpair_n × 1枚)
                 elif x_num == 3:
                     ax = axes[i]
-                    # 縦軸特徴量範囲内のみのデータを抽出
+                    # 縦軸変数範囲内のみのデータを抽出
                     df_pair = df_all[(df_all[f'normalize_{x_not_heat[0]}'] >= h_min) & (df_all[f'normalize_{x_not_heat[0]}'] < h_max)]
-                    # ヒートマップ外特徴量の標準化逆変換
+                    # ヒートマップ非使用変数の標準化逆変換
                     x3_mean = np.mean(X_not_heat[:, 0])
                     x3_std = np.std(X_not_heat[:, 0])
                     other_x = [h_mean * x3_std + x3_mean]
                 # 説明変数が4次元のとき (図はpair_n × pair_n枚)
                 elif x_num == 4:
                     ax = axes[j, i]
-                    # 縦軸特徴量範囲内のみのデータを抽出
+                    # 縦軸変数範囲内のみのデータを抽出
                     df_pair = df_all[(df_all[f'normalize_{x_not_heat[0]}'] >= h_min) & (df_all[f'normalize_{x_not_heat[0]}'] < h_max)]
-                    # 横軸特徴量範囲内のみのデータを抽出
+                    # 横軸変数範囲内のみのデータを抽出
                     df_pair = df_pair[(df_pair[f'normalize_{x_not_heat[1]}'] >= w_min) & (df_pair[f'normalize_{x_not_heat[1]}'] < w_max)]
-                    # ヒートマップ外特徴量の標準化逆変換
+                    # ヒートマップ非使用変数の標準化逆変換
                     x3_mean = np.mean(X_not_heat[:, 0])
                     x3_std = np.std(X_not_heat[:, 0])
                     x4_mean = np.mean(X_not_heat[:, 1])
@@ -877,7 +877,7 @@ class regplot():
                                       rounddigit_rank, rounddigit_x1, rounddigit_x2,
                                       heat_kws=heat_kws, scatter_kws=scatter_kws)
 
-                # グラフタイトルとして、ヒートマップ外特徴量の範囲を記載
+                # グラフタイトルとして、ヒートマップ非使用変数の範囲を記載
                 if x_num == 3:
                     if i == 0:
                         ax.set_title(f'{x_not_heat[0]}=- {cls._round_digits(h_max * x3_std + x3_mean, rounddigit=rounddigit_x3)} (- {h_max}σ)')
@@ -897,11 +897,67 @@ class regplot():
                              rank_number=None, rank_col=None, rounddigit_rank=3, rounddigit_x1=2, rounddigit_x2=2, rounddigit_x3=2,
                              cv=None, cv_seed=42, display_cv_indices = 0,
                              model_params=None, fit_params=None, subplot_kws={}, heat_kws={}, scatter_kws={}):
+        """
+        2～4次元説明変数の回帰モデルをヒートマップで可視化
+
+        Parameters
+        ----------
+        model:
+            使用する回帰モデル(scikit-learn API)
+        x: List[str]
+            説明変数カラム (列名指定)
+        y: str
+            目的変数カラム (列名指定)
+        data: pd.DataFrame
+            フィッティング対象のデータ
+        x_heat: List[str], optional
+            説明変数のうち、ヒートマップ表示対象のカラム (Noneなら前から2カラム自動選択)
+        pair_sigmarange: float, optional
+            ヒートマップ非使用変数の分割範囲 (pair_sigmarange=2なら、-2σ~2σの範囲でpair_sigmaintervalに従いヒートマップ分割)
+        pair_sigmainterval: float, optional
+            ヒートマップ非使用変数の1枚あたり表示範囲 (pair_sigmainterval=0.5なら、‥1σ~-0.5σ, 0.5σ~-0σ, 0σ~0.5σ, 0.5σ~1σ‥というようにヒートマップ分割)
+        heat_extendsigma: float, optional
+            ヒートマップ縦軸横軸の表示拡張範囲 (ヒートマップ使用変数の最大最小値 + extendsigmaが横軸範囲となる)
+        value_extendsigma: float, optional
+            ヒートマップの色分け最大最小値拡張範囲(y_trueの最大最小値 ± y_trueの標準偏差 × value_extendsigma)
+        plot_scatter: bool, optional
+            散布図の描画有無
+        rank_number: int, optional
+            誤差上位何番目までを文字表示するか
+        rank_col: str, optional
+            誤差上位と一緒に表示するフィールド名 (NoneならIndexを使用)
+        rounddigit_rank: int, optional
+            表示指標の小数丸め桁数
+        rounddigit_x1: int, optional
+            ヒートマップ横軸の小数丸め桁数
+        rounddigit_x2: int, optional
+            ヒートマップ縦軸の小数丸め桁数
+        rounddigit_x3: int, optional
+            ヒートマップ非表示軸の小数丸め桁数
+        cv: int or KFold, optional
+            クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)
+        cv_seed: int, optional
+            クロスバリデーションの乱数シード
+        display_cv_indices: int, optional
+            表示対象のクロスバリデーション番号 (指定したCV番号での回帰結果が表示される。リスト指定も可)
+        model_params: Dict, optional
+            学習器に渡すパラメータの値 (チューニング後のパラメータがgood、Noneならデフォルト)
+        fit_params: Dict, optional
+            学習時のパラメータをdict指定 (例: XGBoostのearly_stopping_rounds)
+            Noneならデフォルト
+            Pipelineのときは{学習器名__パラメータ名:パラメータの値,‥}で指定する必要あり
+        subplot_kws: dict, optional
+            プロット用のplt.subplots()に渡す引数 (例：figsize)
+        heat_kws: dict, optional
+            ヒートマップ用のsns.heatmap()に渡す引数
+        scatter_kws: dict, optional
+            散布図用のax.scatter()に渡す引数
+        """
         # 説明変数xの次元が2～4以外ならエラーを出す
         if len(x) < 2 or len(x) > 4:
             raise Exception('length of x must be 2 to 4')
         
-        # display_cv_indexをList化
+        # display_cv_indicesをList化
         if isinstance(display_cv_indices, int):
             display_cv_indices = [display_cv_indices]
         elif not isinstance(x, list):
