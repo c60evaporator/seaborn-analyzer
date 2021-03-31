@@ -8,8 +8,8 @@ from scipy.stats import distributions
 import decimal
 
 class hist():
+    # 分布フィッティング線のデフォルトカラーマップ
     DEFAULT_LINECOLORS = ['red', 'darkmagenta', 'mediumblue', 'darkorange',  'pink', 'brown', 'green', 'cyan', 'gold']
-    DISCRETE_DISTRIBUTIONS = ['poisson', 'binom']
     
     def _fit_distribution(x: np.ndarray, distribution: distributions, sigmarange: float, linesplit: int, fit_params: Dict):
         """
@@ -161,14 +161,14 @@ class hist():
             X = data
         # フィッティング対象データの最小値よりflocが大きい場合、エラーを出す
         if floc is not None and floc >= np.amin(X):
-            raise Exception('floc must be larger than minimum of data')
+            raise Exception('the "floc" argument must be larger than minimum of data')
 
         # ビンサイズを設定
         if binwidth is not None:
             if bins == 'auto':
                 bins = np.arange(np.floor(X.min()), np.ceil(X.max()), binwidth)
             else: # binsとbin_widthは同時指定できない
-                raise Exception('arguments "bins" and "binwidth" cannot coexist')
+                raise Exception('the arguments "bins" and "binwidth" cannot coexist')
 
         # norm_hist=Trueのとき、statをdensityに指定 (histplotの引数)
         stat = 'density' if norm_hist else 'count'
@@ -195,7 +195,7 @@ class hist():
             if len(linecolor) == 1:
                 linecolor = cls.DEFAULT_LINECOLORS
             elif len(dists) != len(linecolor):
-                raise Exception('length of "linecolor" must be equal to length of "dist"')
+                raise Exception('the length of the "linecolor" argument must be equal to the length of the "dist" argument')
 
         # 分布をフィッティング
         all_params = {}
