@@ -1061,7 +1061,7 @@ class regplot():
             cls._reg_heat_plot(model, X, y_pred, y_true, x_heat, x_not_heat, x_heat_indices, hue_data, hue_name,
                                pair_sigmarange = pair_sigmarange, pair_sigmainterval=pair_sigmainterval, heat_extendsigma=heat_extendsigma,
                                vmin=vmin, vmax=vmax, plot_scatter=plot_scatter, maxerror=maxerror,
-                               rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_data, hue_dict=scatter_hue_dict,
+                               rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_data, scatter_hue_dict=scatter_hue_dict,
                                rounddigit_rank=rounddigit_rank, rounddigit_x1=rounddigit_x1, rounddigit_x2=rounddigit_x2, rounddigit_x3=rounddigit_x3,
                                subplot_kws=subplot_kws, heat_kws=heat_kws, scatter_kws=scatter_kws)
             
@@ -1101,6 +1101,6 @@ class regplot():
                 cls._reg_heat_plot(model, X_test, y_pred, y_test, x_heat, x_not_heat, x_heat_indices, hue_data, hue_name,
                                    pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, heat_extendsigma=heat_extendsigma,
                                    vmin=vmin, vmax=vmax, plot_scatter = plot_scatter, maxerror=maxerror,
-                                   rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_test, hue_dict=scatter_hue_dict,
+                                   rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_test, scatter_hue_dict=scatter_hue_dict,
                                    rounddigit_rank=rounddigit_rank, rounddigit_x1=rounddigit_x1, rounddigit_x2=rounddigit_x2, rounddigit_x3=rounddigit_x3,
                                    subplot_kws=subplot_kws, heat_kws=heat_kws, scatter_kws=scatter_kws)
