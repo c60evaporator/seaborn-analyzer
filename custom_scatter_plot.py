@@ -12,6 +12,9 @@ from sklearn.linear_model import LinearRegression
 import decimal
 
 class regplot():
+    # regression_heat_plotメソッド (回帰モデルヒートマップ表示)における、散布図カラーマップ
+    HEAT_SCATTER_HUECOLORS = ['red', 'mediumblue', 'darkorange', 'darkmagenta', 'cyan',  'pink', 'brown', 'gold', 'grey']
+
     def _round_digits(src: float, rounddigit: int = None, method='decimal'):
         """
         指定桁数で小数を丸める
@@ -222,12 +225,12 @@ class regplot():
         elif isinstance(x, str):
             X = data[[x]].values
         else:
-            raise Exception('x must be str or list[str]')
+            raise Exception('the "x" argument must be str or list[str]')
         # yをndarray化
         if isinstance(y, str):
             y_true = data[y].values
         else:
-            raise Exception('y msut be str')
+            raise Exception('the "y" argument must be str')
 
         # scoresの型をListに統一
         if scores is None:
@@ -235,7 +238,7 @@ class regplot():
         elif isinstance(scores, str):
             scores = [scores]
         elif not isinstance(scores, list):
-            raise Exception('scores must be str or list[str]')
+            raise Exception('the "scores" argument must be str or list[str]')
         
         # 学習器パラメータがあれば適用
         if model_params is not None:
@@ -411,12 +414,12 @@ class regplot():
         if isinstance(x, str):
             X = data[[x]].values
         else:
-            Exception('x must be str')
+            raise Exception('the "x" argument must be str')
         # yをndarray化
         if isinstance(y, str):
             y_true = data[y].values
         else:
-            Exception('y msut be str')
+            raise Exception('the "y" argument must be str')
 
         # まずは散布図プロット
         ax = sns.scatterplot(x=x, y=y, data=data, ax=ax, hue=hue)
@@ -541,12 +544,12 @@ class regplot():
         if isinstance(x, str):
             X = data[[x]].values
         else:
-            raise Exception('x must be str')
+            raise Exception('the "x" argument must be str')
         # yをndarray化
         if isinstance(y, str):
             y_true = data[y].values
         else:
-            raise Exception('y msut be str')
+            raise Exception('the "y" argument must be str')
 
         # scoresの型をListに統一
         if scores is None:
@@ -554,7 +557,7 @@ class regplot():
         elif isinstance(scores, str):
             scores = [scores]
         elif not isinstance(scores, list):
-            raise Exception('scores must be str or list[str]')
+            raise Exception('the "scores" argument must be str or list[str]')
         
         # 学習器パラメータがあれば適用
         if model_params is not None:
@@ -674,9 +677,9 @@ class regplot():
             return score_stats_dict
 
     @classmethod
-    def _reg_heat_plot_2d(cls, trained_model, x_heat, y_true_col, y_pred_col, rank_col, data, x_heat_indices,
+    def _reg_heat_plot_2d(cls, trained_model, x_heat, y_true_col, y_pred_col, rank_col, data, x_heat_indices, hue_name,
                           x1_start, x1_end, x2_start, x2_end, heat_division, other_x,
-                          vmin, vmax, ax, plot_scatter, maxerror, rank_dict,
+                          vmin, vmax, ax, plot_scatter, maxerror, rank_dict, scatter_hue_dict,
                           rounddigit_rank, rounddigit_x1, rounddigit_x2,
                           heat_kws={}, scatter_kws={}):
         # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
@@ -721,16 +724,34 @@ class regplot():
         sns.heatmap(df_heat_pivot, ax=ax, vmax=vmax, vmin=vmin, center=(vmax+vmin)/2, **heat_kws)
 
         # 誤差散布図をプロット
-        if plot_scatter:
-            y_error = data[y_pred_col].values - data[y_true_col].values        
+        if plot_scatter is not None:
             # 軸範囲が0～heat_divisionになっているので、スケール変換
             x1_scatter = 0.5 + (data[x_heat[0]].values - x1_start) * (heat_division - 1) / (x1_end - x1_start)
             x2_scatter = 0.5 + (data[x_heat[1]].values - x2_start) * (heat_division - 1) / (x2_end - x2_start)
-            # 散布図のカラーマップ指定ないとき、seismicを指定
-            if 'cmap' not in scatter_kws.keys():
-                scatter_kws['cmap'] = 'seismic'
-            # 散布図プロット
-            ax.scatter(x1_scatter, x2_scatter, vmin=-maxerror, vmax=maxerror, c=y_error, **scatter_kws)
+            # 色分け
+            if plot_scatter == 'error':  # 誤差で色分け
+                scatter_c = data[y_pred_col].values - data[y_true_col].values
+                scatter_vmin = -maxerror
+                scatter_vmax = maxerror
+                if 'cmap' not in scatter_kws.keys():  # 散布図のカラーマップ指定ないとき、seismicを指定
+                    scatter_kws['cmap'] = 'seismic'
+            elif plot_scatter == 'true':  # 真値で色分け
+                scatter_c = data[y_true_col].values
+                scatter_vmin = vmin
+                scatter_vmax = vmax
+                if 'cmap' not in scatter_kws.keys():  # 散布図のカラーマップ指定ないとき、ヒートマップと同cmap使用
+                    scatter_kws['cmap'] = heat_kws['cmap']
+                if 'edgecolors' not in scatter_kws.keys():  # 線の色指定ないとき、ブラウンを指定
+                    scatter_kws['edgecolors'] = 'brown'
+            # 散布図プロット (誤差or真値で色分けしたとき)
+            if plot_scatter == 'error' or plot_scatter == 'true':
+                ax.scatter(x1_scatter, x2_scatter, vmin=scatter_vmin, vmax=scatter_vmax, c=scatter_c, **scatter_kws)
+            # 散布図プロット (hue列名で色分けしたとき)
+            if plot_scatter == 'hue':
+                scatter_data = pd.DataFrame(np.stack([x1_scatter, x2_scatter, data[hue_name]], 1), columns=['x1', 'x2', hue_name])
+                for name, group in scatter_data.groupby(hue_name):
+                    ax.scatter(group['x1'].values, group['x2'].values, label=name, c=scatter_hue_dict[name])
+                ax.legend()
         
         # 誤差上位を文字表示
         df_rank = data[data.index.isin(rank_dict.keys())]
@@ -746,10 +767,10 @@ class regplot():
             ax.text(x1_text, x2_text, rank_text, verticalalignment='center', horizontalalignment='left')
     
     @classmethod
-    def _reg_heat_plot(cls, trained_model, X, y_pred, y_true, x_heat, x_not_heat, x_heat_indices,
+    def _reg_heat_plot(cls, trained_model, X, y_pred, y_true, x_heat, x_not_heat, x_heat_indices, hue_data, hue_name,
                        pair_sigmarange=2.0, pair_sigmainterval=0.5, heat_extendsigma=0.5, heat_division=30, 
                        vmin=None, vmax=None, plot_scatter=True, maxerror=None,
-                       rank_number=None, rank_col=None, rank_col_data=None,
+                       rank_number=None, rank_col=None, rank_col_data=None, scatter_hue_dict=None,
                        rounddigit_rank=None, rounddigit_x1=None, rounddigit_x2=None, rounddigit_x3=None,
                        subplot_kws={}, heat_kws={}, scatter_kws={}):
         # 説明変数の数
@@ -770,6 +791,9 @@ class regplot():
         # 誤差上位表示用IDデータをDataFrameに追加
         rank_col = 'index' if rank_col is None else rank_col
         df_all = df_all.join(pd.DataFrame(rank_col_data, columns=[rank_col]))
+        # 散布図色分け用列をDataFrameに追加(hue_nameがNoneでないときのみ))
+        if hue_name is not None:
+            df_all = df_all.join(pd.DataFrame(hue_data, columns=[hue_name]))
 
         # 誤差の順位を計算
         if rank_number is not None:
@@ -871,9 +895,9 @@ class regplot():
                     x4_std = np.std(X_not_heat[:, 1])
                     other_x = [h_mean * x3_std + x3_mean, w_mean * x4_std + x4_mean]
                 
-                cls._reg_heat_plot_2d(trained_model, x_heat, 'y_true', 'y_pred', rank_col, df_pair, x_heat_indices,
+                cls._reg_heat_plot_2d(trained_model, x_heat, 'y_true', 'y_pred', rank_col, df_pair, x_heat_indices, hue_name,
                                       x1_start, x1_end, x2_start, x2_end, heat_division, other_x,
-                                      vmin, vmax, ax, plot_scatter, maxerror, rank_dict,
+                                      vmin, vmax, ax, plot_scatter, maxerror, rank_dict, scatter_hue_dict,
                                       rounddigit_rank, rounddigit_x1, rounddigit_x2,
                                       heat_kws=heat_kws, scatter_kws=scatter_kws)
 
@@ -892,8 +916,8 @@ class regplot():
         plt.tight_layout()
 
     @classmethod
-    def regression_heat_plot(cls, model, x: List[str], y: str, data: pd.DataFrame, x_heat: List[str] = None,
-                             pair_sigmarange = 1.5, pair_sigmainterval = 0.5, heat_extendsigma = 0.5, value_extendsigma = 0.5, plot_scatter = True,
+    def regression_heat_plot(cls, model, x: List[str], y: str, data: pd.DataFrame, x_heat: List[str] = None, scatter_hue=None,
+                             pair_sigmarange = 1.5, pair_sigmainterval = 0.5, heat_extendsigma = 0.5, value_extendsigma = 0.5, plot_scatter = 'error',
                              rank_number=None, rank_col=None, rounddigit_rank=3, rounddigit_x1=2, rounddigit_x2=2, rounddigit_x3=2,
                              cv=None, cv_seed=42, display_cv_indices = 0,
                              model_params=None, fit_params=None, subplot_kws={}, heat_kws={}, scatter_kws={}):
@@ -912,6 +936,8 @@ class regplot():
             フィッティング対象のデータ
         x_heat: List[str], optional
             説明変数のうち、ヒートマップ表示対象のカラム (Noneなら前から2カラム自動選択)
+        scatter_hue : str
+            散布図色分け指定カラム (列名指定, plot_scatter='hue'のときのみ有効)
         pair_sigmarange: float, optional
             ヒートマップ非使用変数の分割範囲 (pair_sigmarange=2なら、-2σ~2σの範囲でpair_sigmaintervalに従いヒートマップ分割)
         pair_sigmainterval: float, optional
@@ -920,8 +946,8 @@ class regplot():
             ヒートマップ縦軸横軸の表示拡張範囲 (ヒートマップ使用変数の最大最小値 + extendsigmaが横軸範囲となる)
         value_extendsigma: float, optional
             ヒートマップの色分け最大最小値拡張範囲(y_trueの最大最小値 ± y_trueの標準偏差 × value_extendsigma)
-        plot_scatter: bool, optional
-            散布図の描画有無
+        plot_scatter: str, optional
+            散布図の描画有無('error':誤差で色分け, 'true':真値で色分け, 'hue':引数hue指定列で色分け, None:散布図表示なし)
         rank_number: int, optional
             誤差上位何番目までを文字表示するか
         rank_col: str, optional
@@ -961,18 +987,18 @@ class regplot():
         if isinstance(display_cv_indices, int):
             display_cv_indices = [display_cv_indices]
         elif not isinstance(x, list):
-            raise Exception('cv_display_num must be int or List[int]')
+            raise Exception('the "cv_display_num" argument must be int or List[int]')
         
         # xをndarray化
         if isinstance(x, list):
             X = data[x].values
         else:
-            raise Exception('x must be str or str')
+            raise Exception('the "x" argument must be str or str')
         # yをndarray化
         if isinstance(y, str):
             y_true = data[y].values
         else:
-            raise Exception('y msut be str')
+            raise Exception('the "y" argument must be str')
         
         # ヒートマップ表示用の列を抽出
         if x_heat == None:  # 列名指定していないとき、前から2列を抽出
@@ -980,17 +1006,30 @@ class regplot():
             x_heat_indices = [0, 1]
         else:  # 列名指定しているとき、該当列のXにおけるインデックス(0～3)を保持
             if len(x_heat) != 2:
-                Exception('length of x_heat must be 2')
+                raise Exception('length of x_heat must be 2')
             x_heat_indices = []
             for colname in x_heat:
                 x_heat_indices.append(x.index(colname))
         # ヒートマップ表示以外の列
-        x_not_heat = [colname for colname in x if colname not in x_heat]
-        
+        x_not_heat = [colname for colname in x if colname not in x_heat]        
         # ヒートマップの色分け最大最小値(y_trueの最大最小値 ± y_trueの標準偏差 × value_extendsigma)
         y_true_std = np.std(y_true)
         vmin = np.min(y_true) - y_true_std * value_extendsigma
         vmax = np.max(y_true) + y_true_std * value_extendsigma
+
+        # 引数plot_scatter='hue'とscatter_hueが同時指定されていないとき、エラーを出す
+        if scatter_hue is not None:
+            if plot_scatter != 'hue':
+                raise Exception('the "plot_scatter" argument must be "hue" when the argument "hue" is not None')
+        elif plot_scatter == 'hue':
+            raise Exception('the "hue" argument is required when the argument "plot_scatter" is "hue"')
+        # 引数plot_scatter='hue'のとき、色分け対象列とカラーマップを紐づけ(色分けを全ての図で統一用)
+        if plot_scatter == 'hue':
+            hue_list = data[scatter_hue].values.tolist()
+            hue_list = sorted(set(hue_list), key=hue_list.index)
+            scatter_hue_dict = dict(zip(hue_list, cls.HEAT_SCATTER_HUECOLORS[0:len(hue_list)]))
+        else:
+            scatter_hue_dict = None
 
         # 学習器パラメータがあれば適用
         if model_params is not None:
@@ -1015,11 +1054,14 @@ class regplot():
                 rank_col_data = None
             # 誤差最大値
             maxerror = np.max(np.abs(y_pred - y_true))
+            # 散布図色分け用データ取得(plot_scatter='hue'のときのみ有効))
+            hue_data = data[scatter_hue] if scatter_hue is not None and plot_scatter=='hue' else None
+            hue_name = scatter_hue if scatter_hue is not None and plot_scatter=='hue' else None
             # ヒートマップをプロット
-            cls._reg_heat_plot(model, X, y_pred, y_true, x_heat, x_not_heat, x_heat_indices,
+            cls._reg_heat_plot(model, X, y_pred, y_true, x_heat, x_not_heat, x_heat_indices, hue_data, hue_name,
                                pair_sigmarange = pair_sigmarange, pair_sigmainterval=pair_sigmainterval, heat_extendsigma=heat_extendsigma,
                                vmin=vmin, vmax=vmax, plot_scatter=plot_scatter, maxerror=maxerror,
-                               rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_data,
+                               rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_data, hue_dict=scatter_hue_dict,
                                rounddigit_rank=rounddigit_rank, rounddigit_x1=rounddigit_x1, rounddigit_x2=rounddigit_x2, rounddigit_x3=rounddigit_x3,
                                subplot_kws=subplot_kws, heat_kws=heat_kws, scatter_kws=scatter_kws)
             
@@ -1052,10 +1094,13 @@ class regplot():
                     rank_col_test = None
                 # 誤差最大値
                 maxerror = np.max(np.abs(y_pred - y_test))
+                # 散布図色分け用データ取得(plot_scatter='hue'のときのみ有効))
+                hue_data = data[scatter_hue].values[test] if scatter_hue is not None and plot_scatter=='hue' else None
+                hue_name = scatter_hue if scatter_hue is not None and plot_scatter=='hue' else None
                 # ヒートマップをプロット
-                cls._reg_heat_plot(model, X_test, y_pred, y_test, x_heat, x_not_heat, x_heat_indices,
+                cls._reg_heat_plot(model, X_test, y_pred, y_test, x_heat, x_not_heat, x_heat_indices, hue_data, hue_name,
                                    pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, heat_extendsigma=heat_extendsigma,
                                    vmin=vmin, vmax=vmax, plot_scatter = plot_scatter, maxerror=maxerror,
-                                   rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_test,
+                                   rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_test, hue_dict=scatter_hue_dict,
                                    rounddigit_rank=rounddigit_rank, rounddigit_x1=rounddigit_x1, rounddigit_x2=rounddigit_x2, rounddigit_x3=rounddigit_x3,
                                    subplot_kws=subplot_kws, heat_kws=heat_kws, scatter_kws=scatter_kws)

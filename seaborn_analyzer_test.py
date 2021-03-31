@@ -54,6 +54,6 @@ from custom_scatter_plot import regplot
 import seaborn as sns
 from sklearn.svm import SVR
 iris = sns.load_dataset("iris")
-regplot.regression_heat_plot(SVR(), ['sepal_width', 'petal_width', 'petal_length'], 'sepal_length', iris, x_heat=['petal_length', 'petal_width'], rank_number=3, cv=5, display_cv_indices=3)
+regplot.regression_heat_plot(SVR(), ['sepal_width', 'petal_width', 'petal_length'], 'sepal_length', iris, x_heat=['petal_length', 'petal_width'], rank_number=3, cv=5, display_cv_indices=3, scatter_hue='species', plot_scatter='hue')
 
 # %%
