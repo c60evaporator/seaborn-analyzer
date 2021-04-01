@@ -103,8 +103,9 @@ class regplot():
 
         if rank_col == None:
             rank_col = 'index'
-        y_error = np.abs(y_pred - y_true)
-        rank_index  = np.argsort(-y_error)[:rank_number]
+        y_error = y_pred - y_true
+        y_error_abs = np.abs(y_error)
+        rank_index  = np.argsort(-y_error_abs)[:rank_number]
         for rank, i in enumerate(rank_index):
             error = cls._round_digits(y_error[i], rounddigit=rounddigit, method='decimal')
             rank_text = f'{rank+1}\n{rank_col}={rank_col_data[i]}\nerror={error}'
@@ -797,8 +798,8 @@ class regplot():
 
         # 誤差の順位を計算
         if rank_number is not None:
-            y_error = np.abs(y_pred - y_true)
-            rank_index  = np.argsort(-y_error)[:rank_number]
+            y_error_abs = np.abs(y_pred - y_true)
+            rank_index  = np.argsort(-y_error_abs)[:rank_number]
             rank_dict = dict(zip(rank_index.tolist(), range(rank_number)))
         else:
             rank_dict = {}
