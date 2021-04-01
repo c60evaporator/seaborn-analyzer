@@ -1075,7 +1075,7 @@ class regplot():
                 # 表示対象以外のCVなら飛ばす
                 if i not in display_cv_indices:
                     continue
-                print(f'cv_number={i}')
+                print(f'cv_number={i}/{cv.n_splits}')
                 # 表示用にテストデータと学習データ分割
                 X_train = X[train]
                 y_train = y_true[train]
