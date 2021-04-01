@@ -176,7 +176,7 @@ class regplot():
     
     @classmethod
     def regression_pred_true(cls, model, x: List[str], y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=None,
-                             rank_number=None, rank_col=None, scores=['rmse'], plot_stats='mean', cv=None, cv_seed=42,
+                             rank_number=None, rank_col=None, scores=['mae'], plot_stats='mean', cv=None, cv_seed=42,
                              model_params=None, fit_params=None, subplot_kws={}):
 
         """
@@ -502,7 +502,7 @@ class regplot():
 
     @classmethod
     def regression_plot_1d(cls, model, x: str, y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=None,
-                             scores=['rmse'], plot_stats='mean', cv=None, cv_seed=42,
+                             scores=['mae'], plot_stats='mean', cv=None, cv_seed=42,
                              model_params=None, fit_params=None, subplot_kws={}):
         """
         1次元説明変数の任意の回帰曲線をプロット
@@ -917,7 +917,7 @@ class regplot():
 
     @classmethod
     def regression_heat_plot(cls, model, x: List[str], y: str, data: pd.DataFrame, x_heat: List[str] = None, scatter_hue=None,
-                             pair_sigmarange = 1.5, pair_sigmainterval = 0.5, heat_extendsigma = 0.5, value_extendsigma = 0.5, plot_scatter = 'error',
+                             pair_sigmarange = 1.5, pair_sigmainterval = 0.5, heat_extendsigma = 0.5, value_extendsigma = 0.5, plot_scatter = 'true',
                              rank_number=None, rank_col=None, rounddigit_rank=3, rounddigit_x1=2, rounddigit_x2=2, rounddigit_x3=2,
                              cv=None, cv_seed=42, display_cv_indices = 0,
                              model_params=None, fit_params=None, subplot_kws={}, heat_kws={}, scatter_kws={}):
