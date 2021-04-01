@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 iris = sns.load_dataset("iris")
 hist.plot_normality(iris, x='sepal_width', binwidth=0.2, norm_hist=False, rounddigit=3)
 
-#%% custom_scatter_plot.regression_plot_pred
+#%% custom_scatter_plot.regression_pred_true
 from custom_scatter_plot import regplot
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -34,7 +34,7 @@ from sklearn.svm import SVR
 from sklearn.model_selection import LeaveOneOut
 
 iris = sns.load_dataset("iris")
-regplot.regression_plot_pred(SVR(), 'petal_length', 'sepal_length', iris, plot_stats='median', rounddigit=3, rank_number=3, cv=5, scores=None)
+regplot.regression_pred_true(SVR(), 'petal_length', 'sepal_length', iris, plot_stats='median', rounddigit=3, rank_number=3, cv=5, scores=None)
 
 # %% custom_scatter_plot.linear_plot
 from custom_scatter_plot import regplot
@@ -54,6 +54,6 @@ from custom_scatter_plot import regplot
 import seaborn as sns
 from sklearn.svm import SVR
 iris = sns.load_dataset("iris")
-regplot.regression_heat_plot(SVR(), ['sepal_width', 'petal_width', 'petal_length'], 'sepal_length', iris, x_heat=['petal_length', 'petal_width'], rank_number=3, cv=5, display_cv_indices=3, scatter_hue='species', plot_scatter='hue')
+regplot.regression_heat_plot(SVR(), ['sepal_width', 'petal_width', 'petal_length'], 'sepal_length', iris, x_heat=['petal_length', 'petal_width'], rank_number=3, cv=5, display_cv_indices=3, plot_scatter='true')
 
 # %%
