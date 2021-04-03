@@ -7,10 +7,7 @@ regplot.linear_plot(x='petal_length', y='sepal_length', data=iris, hue='species'
 #%% 概要の「機能2」（予測値と実測値のプロット）
 from custom_scatter_plot import regplot
 import seaborn as sns
-import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
-from sklearn.model_selection import LeaveOneOut
 iris = sns.load_dataset("iris")
 regplot.regression_pred_true(SVR(), x='petal_length', y='sepal_length', data=iris, plot_stats='median', rounddigit=3, rank_number=3, cv=2)
 
@@ -32,4 +29,54 @@ regplot.regression_heat_plot(SVR(), x=['sepal_width', 'petal_width', 'petal_leng
 import seaborn as sns
 iris = sns.load_dataset("iris")
 sns.scatterplot(x='petal_length', y='sepal_length', data=iris)
+# %% custom_scatter_plot.regplot.linear_plot
+from custom_scatter_plot import regplot
+import seaborn as sns
+iris = sns.load_dataset("iris")
+regplot.linear_plot(x='petal_length', y='sepal_length', data=iris, rounddigit=3)
+# %% 気象庁の温度・標高・緯度データを可視化
+import pandas as pd
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+df_temp = pd.read_csv(f'./temp_pressure.csv')
+X = df_temp[['altitude', 'latitude']].values  # 説明変数(標高+緯度)
+y = df_temp['temperature'].values  # 目的変数(気温)
+fig = plt.figure()
+ax = Axes3D(fig)
+ax.scatter3D(X[:, 0], X[:, 1], y)
+ax.set_xlabel('altitude [m]')
+ax.set_ylabel('latitude [°]')
+ax.set_zlabel('temperature [°C]')
+# %% 線形回帰してr2_score
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score, mean_absolute_error
+lr = LinearRegression()  # 線形回帰用クラス
+lr.fit(X, y)  # 線形回帰学習
+y_pred = lr.predict(X)  # 学習モデルから回帰して予測値を算出
+print(1000, 0, f'R2={r2_score(y, y_pred)}')  # R2_Scoreを表示
+print(1000, 0, f'MAE={mean_absolute_error(y, y_pred)}')  # MAEを表示
+# %% 予測値 vs 実測値プロット
+import seaborn as sns
+sns.scatterplot(x=y, y=y_pred)
+ax = plt.gca()
+ax.set_xlabel('true')
+ax.set_ylabel('pred')
+
+#%% custom_scatter_plot.regplot.regression_pred_true
+import pandas as pd
+from custom_scatter_plot import regplot
+import seaborn as sns
+from sklearn.linear_model import LinearRegression
+df_temp = pd.read_csv(f'./temp_pressure.csv')
+regplot.regression_pred_true(LinearRegression(), x=['altitude', 'latitude'], y='temperature', data=df_temp, scores=['mae', 'r2'], rounddigit=3)
+# %% ランダムフォレスト回帰
+from sklearn.ensemble import RandomForestRegressor
+regplot.regression_pred_true(RandomForestRegressor(), x=['altitude', 'latitude'], y='temperature', data=df_temp, scores=['mae', 'r2'], rounddigit=3)
+# %% クロスバリデーション
+regplot.regression_pred_true(LinearRegression(), cv=2, x=['altitude', 'latitude'], y='temperature', data=df_temp, scores=['mae', 'r2'], rounddigit=3)
+# %% 誤差上位の表示
+regplot.regression_pred_true(LinearRegression(), rank_number=3, rank_col='city', x=['altitude', 'latitude'], y='temperature', data=df_temp, scores=['mae', 'r2'], rounddigit=3)
+# %%
+from sklearn.svm import SVR
+regplot.regression_heat_plot(SVR(), x=['altitude', 'latitude'], y='temperature', data=df_temp)
 # %%
