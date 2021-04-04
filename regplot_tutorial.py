@@ -104,7 +104,7 @@ from custom_scatter_plot import regplot
 from sklearn.svm import SVR
 iris = sns.load_dataset("iris")
 regplot.regression_plot_1d(SVR(), x='petal_length', y='sepal_length', data=iris, rounddigit=3)
-# %% 2次元説明変数の場合の回帰ヒートマップ
+# %% custom_scatter_plot.regplot.regression_heat_plot
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from custom_scatter_plot import regplot
@@ -115,4 +115,12 @@ from sklearn.ensemble import RandomForestRegressor
 regplot.regression_heat_plot(RandomForestRegressor(), x=['altitude', 'latitude'], y='temperature', data=df_temp)
 # %% クロスバリデーション
 regplot.regression_heat_plot(LinearRegression(), cv=2, display_cv_indices=[0, 1], x=['altitude', 'latitude'], y='temperature', data=df_temp)
+# %% 誤差上位の表示
+regplot.regression_heat_plot(LinearRegression(), rank_number=3, rank_col='city', x=['altitude', 'latitude'], y='temperature', data=df_temp)
+# %% 3次元ヒートマップ
+from custom_scatter_plot import regplot
+import seaborn as sns
+from sklearn.svm import SVR
+iris = sns.load_dataset("iris")
+regplot.regression_heat_plot(SVR(), x=['sepal_width', 'petal_width', 'petal_length'], y='sepal_length', data=iris, x_heat=['petal_length', 'petal_width'], pair_sigmarange=1.0)
 # %%
