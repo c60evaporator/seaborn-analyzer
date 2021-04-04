@@ -773,7 +773,7 @@ class regplot():
                        vmin=None, vmax=None, plot_scatter=True, maxerror=None,
                        rank_number=None, rank_col=None, rank_col_data=None, scatter_hue_dict=None,
                        rounddigit_rank=None, rounddigit_x1=None, rounddigit_x2=None, rounddigit_x3=None,
-                       subplot_kws={}, heat_kws={}, scatter_kws={}):
+                       cv_index=None, subplot_kws={}, heat_kws={}, scatter_kws={}):
         # 説明変数の数
         x_num = X.shape[1]
         # ヒートマップ使用DataFrame
@@ -839,6 +839,8 @@ class regplot():
             subplot_kws['figsize'] = (pair_w * 6, pair_h * 5)
         # プロット用のaxes作成
         fig, axes = plt.subplots(pair_h, pair_w, **subplot_kws)
+        if cv_index is not None:
+            fig.suptitle(f'CV No.{cv_index}')
 
         # 図ごとにプロット
         for i in range(pair_h):
@@ -1064,7 +1066,7 @@ class regplot():
                                vmin=vmin, vmax=vmax, plot_scatter=plot_scatter, maxerror=maxerror,
                                rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_data, scatter_hue_dict=scatter_hue_dict,
                                rounddigit_rank=rounddigit_rank, rounddigit_x1=rounddigit_x1, rounddigit_x2=rounddigit_x2, rounddigit_x3=rounddigit_x3,
-                               subplot_kws=subplot_kws, heat_kws=heat_kws, scatter_kws=scatter_kws)
+                               cv_index=None, subplot_kws=subplot_kws, heat_kws=heat_kws, scatter_kws=scatter_kws)
             
         # クロスバリデーション実施時(分割ごとに別々にプロット＆指標算出)
         if cv is not None:
@@ -1104,4 +1106,4 @@ class regplot():
                                    vmin=vmin, vmax=vmax, plot_scatter = plot_scatter, maxerror=maxerror,
                                    rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_test, scatter_hue_dict=scatter_hue_dict,
                                    rounddigit_rank=rounddigit_rank, rounddigit_x1=rounddigit_x1, rounddigit_x2=rounddigit_x2, rounddigit_x3=rounddigit_x3,
-                                   subplot_kws=subplot_kws, heat_kws=heat_kws, scatter_kws=scatter_kws)
+                                   cv_index=i, subplot_kws=subplot_kws, heat_kws=heat_kws, scatter_kws=scatter_kws)
