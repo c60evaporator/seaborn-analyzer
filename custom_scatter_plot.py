@@ -8,7 +8,6 @@ from scipy import stats
 from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error, mean_squared_log_error
 from sklearn.model_selection import KFold, LeaveOneOut, cross_val_score
 from sklearn.linear_model import LinearRegression
-
 import decimal
 
 class regplot():

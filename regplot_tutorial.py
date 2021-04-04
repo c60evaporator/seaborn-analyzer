@@ -19,11 +19,11 @@ iris = sns.load_dataset("iris")
 regplot.regression_plot_1d(SVR(), x='petal_length', y='sepal_length', data=iris, plot_stats='median', rounddigit=3, cv=2)
 
 # %% 概要の「機能4」（2～4次元説明変数回帰モデルの可視化）
+import pandas as pd
+from sklearn.linear_model import LinearRegression
 from custom_scatter_plot import regplot
-import seaborn as sns
-from sklearn.svm import SVR
-iris = sns.load_dataset("iris")
-regplot.regression_heat_plot(SVR(), x=['sepal_width', 'petal_width', 'petal_length'], y='sepal_length', data=iris, x_heat=['petal_length', 'petal_width'], pair_sigmarange=1.0, rank_number=3, cv=2, display_cv_indices=1)
+df_temp = pd.read_csv(f'./temp_pressure.csv')
+regplot.regression_heat_plot(LinearRegression(), x=['altitude', 'latitude'], y='temperature', data=df_temp)
 
 # %% 散布図
 import seaborn as sns
