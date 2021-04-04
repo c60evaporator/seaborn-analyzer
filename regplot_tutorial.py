@@ -76,7 +76,43 @@ regplot.regression_pred_true(RandomForestRegressor(), x=['altitude', 'latitude']
 regplot.regression_pred_true(LinearRegression(), cv=2, x=['altitude', 'latitude'], y='temperature', data=df_temp, scores=['mae', 'r2'], rounddigit=3)
 # %% 誤差上位の表示
 regplot.regression_pred_true(LinearRegression(), rank_number=3, rank_col='city', x=['altitude', 'latitude'], y='temperature', data=df_temp, scores=['mae', 'r2'], rounddigit=3)
-# %%
+
+# %% 1次元説明変数の場合の回帰線プロット
+import numpy as np
 from sklearn.svm import SVR
-regplot.regression_heat_plot(SVR(), x=['altitude', 'latitude'], y='temperature', data=df_temp)
+import seaborn as sns
+import matplotlib.pyplot as plt
+iris = sns.load_dataset("iris")
+# 散布図プロット
+sns.scatterplot(x='petal_length', y='sepal_length', data=iris)
+# サポートベクター回帰学習
+model = SVR()
+X = iris[['petal_length']].values
+y = iris['sepal_length'].values
+model.fit(X, y)  
+# 回帰モデルの線を作成
+xmin = np.amin(X)
+xmax = np.amax(X)
+Xline = np.linspace(xmin, xmax, 100)
+Xline = Xline.reshape(len(Xline), 1)
+# 回帰線を描画
+plt.plot(Xline, model.predict(Xline), color='red')
+
+# %% custom_scatter_plot.regplot.regression_plot_1d
+import seaborn as sns
+from custom_scatter_plot import regplot
+from sklearn.svm import SVR
+iris = sns.load_dataset("iris")
+regplot.regression_plot_1d(SVR(), x='petal_length', y='sepal_length', data=iris, rounddigit=3)
+# %% 2次元説明変数の場合の回帰ヒートマップ
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+from custom_scatter_plot import regplot
+df_temp = pd.read_csv(f'./temp_pressure.csv')
+regplot.regression_heat_plot(LinearRegression(), x=['altitude', 'latitude'], y='temperature', data=df_temp)
+# %% ランダムフォレスト回帰
+from sklearn.ensemble import RandomForestRegressor
+regplot.regression_heat_plot(RandomForestRegressor(), x=['altitude', 'latitude'], y='temperature', data=df_temp)
+# %% クロスバリデーション
+regplot.regression_heat_plot(LinearRegression(), cv=2, display_cv_indices=[0, 1], x=['altitude', 'latitude'], y='temperature', data=df_temp)
 # %%
