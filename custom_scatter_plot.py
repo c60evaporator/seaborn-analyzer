@@ -60,7 +60,7 @@ class regplot():
 
     def _make_score_dict(y_true, y_pred, scores):
         """
-        評価指標を算出してdict化
+        回帰評価指標を算出してdict化
         """
         score_dict = {}
         for scoring in scores:
@@ -79,7 +79,7 @@ class regplot():
     @classmethod
     def _rank_display(cls, y_true, y_pred, rank_number, rank_col, rank_col_data, ax=None, rounddigit=None):
         """
-        誤差上位をプロット
+        誤差上位を文字プロット
 
         Parameters
         ----------
@@ -113,7 +113,7 @@ class regplot():
     @classmethod
     def _scatterplot_ndarray(cls, x, x_name, y, y_name, hue_data, hue_name, ax):
         """
-        ndarrayからscatterplot
+        np.ndarrayを入力として散布図表示(scatterplot)
         """
         # X値とY値を合体してDataFrame化
         data = np.stack([x, y], axis=1)
@@ -682,6 +682,10 @@ class regplot():
                           vmin, vmax, ax, plot_scatter, maxerror, rank_dict, scatter_hue_dict,
                           rounddigit_rank, rounddigit_x1, rounddigit_x2,
                           heat_kws={}, scatter_kws={}):
+        """
+        回帰予測値ヒートマップと各種散布図の表示
+        (regression_heat_plotメソッドの描画処理部分)
+        """
         # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
         if ax == None:
             ax=plt.gca()
@@ -773,6 +777,10 @@ class regplot():
                        rank_number=None, rank_col=None, rank_col_data=None, scatter_hue_dict=None,
                        rounddigit_rank=None, rounddigit_x1=None, rounddigit_x2=None, rounddigit_x3=None,
                        cv_index=None, subplot_kws={}, heat_kws={}, scatter_kws={}):
+        """
+        回帰予測値ヒートマップ表示の、説明変数の数に応じた分岐処理
+        (regression_heat_plotメソッド処理のうち、説明変数の数に応じたデータ分割等を行う)
+        """
         # 説明変数の数
         x_num = X.shape[1]
         # ヒートマップ使用DataFrame
