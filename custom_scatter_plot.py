@@ -175,7 +175,7 @@ class regplot():
         ax.text(true_max, np.amin(y_pred), score_text, verticalalignment='bottom', horizontalalignment='right')
     
     @classmethod
-    def regression_pred_true(cls, model, x: List[str], y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=None,
+    def regression_pred_true(cls, model, x: List[str], y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=3,
                              rank_number=None, rank_col=None, scores=['mae'], plot_stats='mean', cv=None, cv_seed=42,
                              model_params=None, fit_params=None, subplot_kws={}):
 
@@ -385,7 +385,7 @@ class regplot():
 
     @classmethod
     def linear_plot(cls, x: str, y: str, data: pd.DataFrame, ax=None, hue=None, linecolor='red', linesplit=50,
-                    rounddigit=None, plot_scores=True):
+                    rounddigit=5, plot_scores=True):
         """
         1変数線形回帰してプロットし、p値と相関係数を表示
 
@@ -501,7 +501,7 @@ class regplot():
         ax.text(xmax, np.amin(y_true), score_text, verticalalignment='bottom', horizontalalignment='right')
 
     @classmethod
-    def regression_plot_1d(cls, model, x: str, y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=None,
+    def regression_plot_1d(cls, model, x: str, y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=3,
                              scores=['mae'], plot_stats='mean', cv=None, cv_seed=42,
                              model_params=None, fit_params=None, subplot_kws={}):
         """

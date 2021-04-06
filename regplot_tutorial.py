@@ -2,21 +2,21 @@
 from custom_scatter_plot import regplot
 import seaborn as sns
 iris = sns.load_dataset("iris")
-regplot.linear_plot(x='petal_length', y='sepal_length', data=iris, hue='species', rounddigit=5)
+regplot.linear_plot(x='petal_length', y='sepal_length', data=iris, hue='species')
 
 #%% 概要の「機能2」（予測値と実測値のプロット）
 from custom_scatter_plot import regplot
 import seaborn as sns
 from sklearn.svm import SVR
 iris = sns.load_dataset("iris")
-regplot.regression_pred_true(SVR(), x='petal_length', y='sepal_length', data=iris, plot_stats='median', rounddigit=3, rank_number=3, cv=2)
+regplot.regression_pred_true(SVR(), x='petal_length', y='sepal_length', data=iris, plot_stats='median', rank_number=3, cv=2)
 
 # %% 概要の「機能3」（1次元説明変数回帰モデルの可視化）
 from custom_scatter_plot import regplot
 import seaborn as sns
 from sklearn.svm import SVR
 iris = sns.load_dataset("iris")
-regplot.regression_plot_1d(SVR(), x='petal_length', y='sepal_length', data=iris, plot_stats='median', rounddigit=3, cv=2)
+regplot.regression_plot_1d(SVR(), x='petal_length', y='sepal_length', data=iris, plot_stats='median', cv=2)
 
 # %% 概要の「機能4」（2～4次元説明変数回帰モデルの可視化）
 import pandas as pd
@@ -33,7 +33,7 @@ sns.scatterplot(x='petal_length', y='sepal_length', data=iris)
 from custom_scatter_plot import regplot
 import seaborn as sns
 iris = sns.load_dataset("iris")
-regplot.linear_plot(x='petal_length', y='sepal_length', data=iris, rounddigit=3)
+regplot.linear_plot(x='petal_length', y='sepal_length', data=iris)
 # %% 気象庁の温度・標高・緯度データを可視化
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -68,14 +68,14 @@ from custom_scatter_plot import regplot
 import seaborn as sns
 from sklearn.linear_model import LinearRegression
 df_temp = pd.read_csv(f'./temp_pressure.csv')
-regplot.regression_pred_true(LinearRegression(), x=['altitude', 'latitude'], y='temperature', data=df_temp, scores=['mae', 'r2'], rounddigit=3)
+regplot.regression_pred_true(LinearRegression(), x=['altitude', 'latitude'], y='temperature', data=df_temp, scores=['mae', 'r2'])
 # %% ランダムフォレスト回帰
 from sklearn.ensemble import RandomForestRegressor
-regplot.regression_pred_true(RandomForestRegressor(), x=['altitude', 'latitude'], y='temperature', data=df_temp, scores=['mae', 'r2'], rounddigit=3)
+regplot.regression_pred_true(RandomForestRegressor(), x=['altitude', 'latitude'], y='temperature', data=df_temp, scores=['mae', 'r2'])
 # %% クロスバリデーション
-regplot.regression_pred_true(LinearRegression(), cv=2, x=['altitude', 'latitude'], y='temperature', data=df_temp, scores=['mae', 'r2'], rounddigit=3)
+regplot.regression_pred_true(LinearRegression(), cv=2, x=['altitude', 'latitude'], y='temperature', data=df_temp, scores=['mae', 'r2'])
 # %% 誤差上位の表示
-regplot.regression_pred_true(LinearRegression(), rank_number=3, rank_col='city', x=['altitude', 'latitude'], y='temperature', data=df_temp, scores=['mae', 'r2'], rounddigit=3)
+regplot.regression_pred_true(LinearRegression(), rank_number=3, rank_col='city', x=['altitude', 'latitude'], y='temperature', data=df_temp, scores=['mae', 'r2'])
 
 # %% 1次元説明変数の場合の回帰線プロット
 import numpy as np
@@ -103,7 +103,7 @@ import seaborn as sns
 from custom_scatter_plot import regplot
 from sklearn.svm import SVR
 iris = sns.load_dataset("iris")
-regplot.regression_plot_1d(SVR(), x='petal_length', y='sepal_length', data=iris, rounddigit=3)
+regplot.regression_plot_1d(SVR(), x='petal_length', y='sepal_length', data=iris)
 # %% custom_scatter_plot.regplot.regression_heat_plot
 import pandas as pd
 from sklearn.linear_model import LinearRegression
