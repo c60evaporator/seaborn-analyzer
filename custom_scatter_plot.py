@@ -176,7 +176,7 @@ class regplot():
     
     @classmethod
     def regression_pred_true(cls, model, x: List[str], y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=3,
-                             rank_number=None, rank_col=None, scores=['mae'], plot_stats='mean', cv=None, cv_seed=42,
+                             rank_number=None, rank_col=None, scores='mae', cv_stats='mean', cv=None, cv_seed=42,
                              model_params=None, fit_params=None, subplot_kws={}):
 
         """
@@ -204,7 +204,7 @@ class regplot():
             誤差上位と一緒に表示するフィールド名 (NoneならIndexを使用)
         scores : str or list[str]
             算出する評価指標 ('r2', 'mae','rmse', 'rmsle', 'max_error')
-        plot_stats : Dict
+        cv_stats : Dict
             クロスバリデーション時に表示する統計値 ('mean', 'median', 'max', 'min')
         cv : None or int or KFold
             クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)
@@ -364,13 +364,13 @@ class regplot():
             hue_all = np.hstack(hue_all)
             rank_col_all = np.hstack(rank_col_all)
             # 指標の統計値を計算
-            if plot_stats == 'mean':
+            if cv_stats == 'mean':
                 score_stats_dict = {f'{k}_mean': np.mean(v) for k, v in score_all_dict.items()}            
-            elif plot_stats == 'median':
+            elif cv_stats == 'median':
                 score_stats_dict = {f'{k}_median': np.median(v) for k, v in score_all_dict.items()}            
-            elif plot_stats == 'min':
+            elif cv_stats == 'min':
                 score_stats_dict = {f'{k}_min': np.amin(v) for k, v in score_all_dict.items()}            
-            elif plot_stats == 'max':
+            elif cv_stats == 'max':
                 score_stats_dict = {f'{k}_max': np.amax(v) for k, v in score_all_dict.items()}
             # 全体プロット
             ax_all = axes if isLeaveOneOut else axes[cv_num]
@@ -402,7 +402,7 @@ class regplot():
         hue : str
             色分け指定カラム (列名指定)
         linecolor : str
-            予測値=実測値の線の色
+            回帰直線の色
         linesplit : int
             フィッティング線の分割数 (カクカクしたら増やす)
         rounddigit: int
@@ -502,7 +502,7 @@ class regplot():
 
     @classmethod
     def regression_plot_1d(cls, model, x: str, y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=3,
-                             scores=['mae'], plot_stats='mean', cv=None, cv_seed=42,
+                             scores='mae', cv_stats='mean', cv=None, cv_seed=42,
                              model_params=None, fit_params=None, subplot_kws={}):
         """
         1次元説明変数の任意の回帰曲線をプロット
@@ -525,7 +525,7 @@ class regplot():
             表示指標の小数丸め桁数
         scores : str or list[str]
             算出する評価指標 ('r2', 'mae','rmse', 'rmsle', 'max_error')
-        plot_stats : Dict
+        cv_stats : Dict
             クロスバリデーション時に表示する統計値 ('mean', 'median', 'max', 'min')
         cv : None or int or KFold
             クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)
@@ -651,13 +651,13 @@ class regplot():
                     axes[i].set_title(f'Cross Validation No{i}')
 
             # 指標の統計値を計算
-            if plot_stats == 'mean':
+            if cv_stats == 'mean':
                 score_stats_dict = {f'{k}_mean': np.mean(v) for k, v in score_all_dict.items()}
-            elif plot_stats == 'median':
+            elif cv_stats == 'median':
                 score_stats_dict = {f'{k}_median': np.median(v) for k, v in score_all_dict.items()}
-            elif plot_stats == 'min':
+            elif cv_stats == 'min':
                 score_stats_dict = {f'{k}_min': np.amin(v) for k, v in score_all_dict.items()}
-            elif plot_stats == 'max':
+            elif cv_stats == 'max':
                 score_stats_dict = {f'{k}_max': np.amax(v) for k, v in score_all_dict.items()}
             # 全体データで学習＆評価指標算出
             model.fit(X, y_true, **fit_params)
