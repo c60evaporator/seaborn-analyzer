@@ -127,10 +127,10 @@ class regplot():
         sns.scatterplot(x=x_name, y=y_name, data=data, ax=ax, hue=hue_name)
 
     @classmethod
-    def plot_true_pred(cls, y_true, y_pred, hue_data=None, hue_name=None, ax=None, linecolor='red', linesplit=50, rounddigit=None,
+    def _plot_pred_true(cls, y_true, y_pred, hue_data=None, hue_name=None, ax=None, linecolor='red', linesplit=200, rounddigit=None,
                         score_dict=None):
         """
-        実測値と予測値を、回帰評価指標とともにプロット
+        予測値と実測値を、回帰評価指標とともにプロット
 
         Parameters
         ----------
@@ -210,8 +210,8 @@ class regplot():
             クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)
         cv_seed : int
             クロスバリデーションの乱数シード
-        params : Dict[str, float]
-            学習器に渡すパラメータの値 (チューニング後のパラメータがgood、Noneならデフォルト)
+        model_params : Dict[str, float]
+            回帰モデルに渡すパラメータ (チューニング後のパラメータがgood、Noneならデフォルト)
         fit_params : Dict[str, float]
             学習時のパラメータをdict指定 (例: XGBoostのearly_stopping_rounds)
             Noneならデフォルト
@@ -265,7 +265,7 @@ class regplot():
                 else:  # 表示フィールド指定あるとき
                     rank_col_data = data[rank_col].values
             # 予測値と実測値プロット
-            cls.plot_true_pred(y_true, y_pred, hue_data=hue_data, hue_name=hue_name,
+            cls._plot_pred_true(y_true, y_pred, hue_data=hue_data, hue_name=hue_name,
                                 linecolor=linecolor, rounddigit=rounddigit, score_dict=score_dict)
             # 誤差上位を文字表示
             if rank_number is not None:
@@ -349,7 +349,7 @@ class regplot():
                 # CV内結果をプロット(LeaveOneOutのときはプロットしない)
                 if not isLeaveOneOut:
                     score_cv_dict = {k: v[i] for k, v in score_all_dict.items()}
-                    cls.plot_true_pred(y_test, y_pred, hue_data=hue_test, hue_name=hue_name, ax=axes[i],
+                    cls._plot_pred_true(y_test, y_pred, hue_data=hue_test, hue_name=hue_name, ax=axes[i],
                                     linecolor=linecolor, rounddigit=rounddigit, score_dict=score_cv_dict)
                     axes[i].set_title(f'Cross Validation No{i}')
                 # 全体プロット用データに追加
@@ -374,7 +374,7 @@ class regplot():
                 score_stats_dict = {f'{k}_max': np.amax(v) for k, v in score_all_dict.items()}
             # 全体プロット
             ax_all = axes if isLeaveOneOut else axes[cv_num]
-            cls.plot_true_pred(y_true_all, y_pred_all, hue_data=hue_all, hue_name=hue_name, ax=ax_all,
+            cls._plot_pred_true(y_true_all, y_pred_all, hue_data=hue_all, hue_name=hue_name, ax=ax_all,
                                linecolor=linecolor, rounddigit=rounddigit, score_dict=score_stats_dict)
             ax_all.set_title('All Cross Validations')
             # 誤差上位を文字表示
@@ -384,7 +384,7 @@ class regplot():
             return score_stats_dict
 
     @classmethod
-    def linear_plot(cls, x: str, y: str, data: pd.DataFrame, ax=None, hue=None, linecolor='red', linesplit=50,
+    def linear_plot(cls, x: str, y: str, data: pd.DataFrame, ax=None, hue=None, linecolor='red', linesplit=200,
                     rounddigit=5, plot_scores=True):
         """
         1変数線形回帰してプロットし、p値と相関係数を表示
@@ -398,7 +398,7 @@ class regplot():
         data : pd.DataFrame
             フィッティング対象のデータ
         ax : matplotlib.axes._subplots.Axes
-            表示対象のax (Noneならplt.plotで1枚ごとにプロット)
+            表示対象のaxes (Noneならplt.plotで1枚ごとにプロット)
         hue : str
             色分け指定カラム (列名指定)
         linecolor : str
@@ -449,7 +449,7 @@ class regplot():
             ax.text(xmax, np.amin(y_true), rtext, verticalalignment='bottom', horizontalalignment='right')
 
     @classmethod
-    def _model_plot_1d(cls, trained_model, X, y_true, hue_data=None, hue_name=None, ax=None, linecolor='red', linesplit=50, rounddigit=None,
+    def _model_plot_1d(cls, trained_model, X, y_true, hue_data=None, hue_name=None, ax=None, linecolor='red', linesplit=200, rounddigit=None,
                         score_dict=None):
         """
         1次説明変数回帰曲線を、回帰評価指標とともにプロット
@@ -531,8 +531,8 @@ class regplot():
             クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)
         cv_seed : int
             クロスバリデーションの乱数シード
-        params : Dict[str, float]
-            学習器に使用するパラメータの値 (Noneならデフォルト)
+        model_params: Dict, optional
+            回帰モデルに渡すパラメータ (チューニング後のパラメータがgood、Noneならデフォルト)
         fit_params : Dict[str, float]
             学習時のパラメータをdict指定 (例: XGBoostのearly_stopping_rounds)
             Noneならデフォルト
@@ -977,7 +977,7 @@ class regplot():
         display_cv_indices: int, optional
             表示対象のクロスバリデーション番号 (指定したCV番号での回帰結果が表示される。リスト指定も可)
         model_params: Dict, optional
-            学習器に渡すパラメータの値 (チューニング後のパラメータがgood、Noneならデフォルト)
+            回帰モデルに渡すパラメータ (チューニング後のパラメータがgood、Noneならデフォルト)
         fit_params: Dict, optional
             学習時のパラメータをdict指定 (例: XGBoostのearly_stopping_rounds)
             Noneならデフォルト
