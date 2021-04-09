@@ -77,20 +77,22 @@ class regplot():
         return score_dict
 
     @classmethod
-    def _rank_display(cls, y_true, y_pred, rank_number, rank_col, rank_col_data, ax=None, rounddigit=None):
+    def _rank_display(cls, y_true, y_pred, rank_number, rank_col, rank_col_data, x=None, ax=None, rounddigit=None):
         """
         誤差上位を文字プロット
 
         Parameters
         ----------
-        y_true : ndarray
+        y_true : np.ndarray
             目的変数実測値
-        y_pred : ndarray
+        y_pred : np.ndarray
             目的変数予測値
         rank_number : int
             誤差上位何番目までを文字表示するか
         rank_col : List[str]
             誤差上位と一緒に表示するフィールド名 (NoneならIndexを使用)
+        x : np.ndarray
+            説明変数の値 (Noneなら横軸y_true縦軸y_pred、Noneでなければ横軸x縦軸y_true)
         ax : matplotlib.axes._subplots.Axes
             表示対象のax（Noneならplt.plotで1枚ごとにプロット）
         rounddigit: int
@@ -108,7 +110,10 @@ class regplot():
         for rank, i in enumerate(rank_index):
             error = cls._round_digits(y_error[i], rounddigit=rounddigit, method='decimal')
             rank_text = f'{rank+1}\n{rank_col}={rank_col_data[i]}\nerror={error}'
-            ax.text(y_true[i], y_pred[i], rank_text, verticalalignment='center', horizontalalignment='left')
+            if x is None:  # 横軸y_true縦軸y_pred (regression_pred_trueメソッド用)
+                ax.text(y_true[i], y_pred[i], rank_text, verticalalignment='center', horizontalalignment='left')
+            else:  # 横軸x縦軸y_true (regression_plot_1dメソッド用)
+                ax.text(x[i], y_true[i], rank_text, verticalalignment='center', horizontalalignment='left')
     
     @classmethod
     def _scatterplot_ndarray(cls, x, x_name, y, y_name, hue_data, hue_name, ax):
@@ -365,7 +370,7 @@ class regplot():
             rank_col_all = np.hstack(rank_col_all)
             # 指標の統計値を計算
             if cv_stats == 'mean':
-                score_stats_dict = {f'{k}_mean': np.mean(v) for k, v in score_all_dict.items()}            
+                score_stats_dict = {f'{k}_mean': np.mean(v) for k, v in score_all_dict.items()}
             elif cv_stats == 'median':
                 score_stats_dict = {f'{k}_median': np.median(v) for k, v in score_all_dict.items()}            
             elif cv_stats == 'min':
@@ -449,8 +454,8 @@ class regplot():
             ax.text(xmax, np.amin(y_true), rtext, verticalalignment='bottom', horizontalalignment='right')
 
     @classmethod
-    def _model_plot_1d(cls, trained_model, X, y_true, hue_data=None, hue_name=None, ax=None, linecolor='red', linesplit=200, rounddigit=None,
-                        score_dict=None):
+    def _model_plot_1d(cls, trained_model, X, y_true, hue_data=None, hue_name=None, ax=None, linecolor='red', linesplit=1000, rounddigit=None,
+                       score_dict=None):
         """
         1次説明変数回帰曲線を、回帰評価指標とともにプロット
 
@@ -502,8 +507,8 @@ class regplot():
 
     @classmethod
     def regression_plot_1d(cls, model, x: str, y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=3,
-                             scores='mae', cv_stats='mean', cv=None, cv_seed=42,
-                             model_params=None, fit_params=None, subplot_kws={}):
+                           rank_number=None, rank_col=None, scores='mae', cv_stats='mean', cv=None, cv_seed=42,
+                           model_params=None, fit_params=None, subplot_kws={}):
         """
         1次元説明変数の任意の回帰曲線をプロット
 
@@ -523,8 +528,12 @@ class regplot():
             予測値=実測値の線の色
         rounddigit: int
             表示指標の小数丸め桁数
+        rank_number : int
+            誤差上位何番目までを文字表示するか
+        rank_col : List[str]
+            誤差上位と一緒に表示するフィールド名 (NoneならIndexを使用)
         scores : str or list[str]
-            算出する評価指標 ('r2', 'mae','rmse', 'rmsle', 'max_error')
+            算出する評価指標 ('r2', 'mae', 'rmse', 'rmsle', 'max_error')
         cv_stats : Dict
             クロスバリデーション時に表示する統計値 ('mean', 'median', 'max', 'min')
         cv : None or int or KFold
@@ -577,9 +586,18 @@ class regplot():
             # 色分け用データ取得
             hue_data = None if hue is None else data[hue]
             hue_name = None if hue is None else hue
+            # 誤差上位表示用データ取得
+            if rank_number is not None:
+                if rank_col is None:  # 表示フィールド指定ないとき、Index使用
+                    rank_col_data = data.index.values
+                else:  # 表示フィールド指定あるとき
+                    rank_col_data = data[rank_col].values
             # 回帰線プロット
             cls._model_plot_1d(model, X, y_true, hue_data=hue_data, hue_name=hue_name,
                                 linecolor=linecolor, rounddigit=rounddigit, score_dict=score_dict)
+            # 誤差上位を文字表示
+            if rank_number is not None:
+                cls._rank_display(y_true, y_pred, rank_number, rank_col, rank_col_data, x=X, rounddigit=rounddigit)
             return score_dict
             
         # クロスバリデーション実施時(分割ごとに別々にプロット＆指標算出)
@@ -641,6 +659,12 @@ class regplot():
                 else:
                     hue_test = data[hue].values[test]
                     hue_name = hue
+                # 誤差上位表示用データ取得
+                if rank_number is not None:
+                    if rank_col is None:  # 表示フィールド指定ないとき、Index使用
+                        rank_col_test = data.index.values[test]
+                    else:  # 表示フィールド指定あるとき
+                        rank_col_test = data[rank_col].values[test]
                 # 学習と推論
                 model.fit(X_train, y_train, **fit_params)
                 # CV内結果をプロット(LeaveOneOutのときはプロットしない)
@@ -648,6 +672,9 @@ class regplot():
                     score_cv_dict = {k: v[i] for k, v in score_all_dict.items()}
                     cls._model_plot_1d(model, X_test, y_test, hue_data=hue_test, hue_name=hue_name, ax=axes[i],
                                 linecolor=linecolor, rounddigit=rounddigit, score_dict=score_cv_dict)
+                    # 誤差上位を文字表示
+                    if rank_number is not None:
+                        cls._rank_display(y_test, model.predict(X_test), rank_number, rank_col, rank_col_test, x=X_test, ax=axes[i], rounddigit=rounddigit)
                     axes[i].set_title(f'Cross Validation No{i}')
 
             # 指標の統計値を計算
