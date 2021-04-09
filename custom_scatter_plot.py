@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error, mean_squared_log_error
-from sklearn.model_selection import KFold, LeaveOneOut, cross_val_score
+from sklearn.model_selection import KFold, LeaveOneOut, GroupKFold, LeaveOneGroupOut, cross_val_score
 from sklearn.linear_model import LinearRegression
 import decimal
 
@@ -279,9 +279,25 @@ class regplot():
             
         # クロスバリデーション実施時(分割ごとに別々にプロット＆指標算出)
         if cv is not None:
-            # 分割法未指定時、cv_numとseedに基づきランダムに分割
+            # 分割法未指定時、cv_numとseedに基づきKFoldでランダムに分割
             if isinstance(cv, numbers.Integral):
                 cv = KFold(n_splits=cv, shuffle=True, random_state=cv_seed)
+            #LeaveOneOutかどうかを判定
+            isLeaveOneOut = isinstance(cv, LeaveOneOut)
+            # GroupKFold、LeaveOneGroupOutのとき、hueをグルーピング対象に指定
+            split_kws={}
+            if isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
+                if hue is not None:
+                    split_kws['groups'] = data[hue].values
+                else:
+                    raise Exception('"GroupKFold" cross validation needs "hue" argument')
+            # LeaveOneGroupOutのとき、クロスバリデーション分割数をhueの数に指定
+            if isinstance(cv, LeaveOneGroupOut):
+                cv_num = len(set(data[hue].values))
+            elif isLeaveOneOut:
+                cv_num = 1
+            else:
+                cv_num = cv.n_splits
 
             # スコア種類ごとにクロスバリデーションスコアの算出
             score_all_dict = {}
@@ -289,27 +305,24 @@ class regplot():
                 # cross_val_scoreでクロスバリデーション
                 if scoring == 'r2':
                     score_all_dict['r2'] = cross_val_score(model, X, y_true, cv=cv, scoring='r2',
-                                                           fit_params=fit_params, n_jobs=-1)
+                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
                 elif scoring == 'mae':
                     neg_mae = cross_val_score(model, X, y_true, cv=cv, scoring='neg_mean_absolute_error',
-                                                           fit_params=fit_params, n_jobs=-1)
+                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['mae'] = -neg_mae  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'rmse':
                     neg_rmse = cross_val_score(model, X, y_true, cv=cv, scoring='neg_root_mean_squared_error',
-                                                           fit_params=fit_params, n_jobs=-1)
+                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['rmse'] = -neg_rmse  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'rmsle':
                     neg_msle = cross_val_score(model, X, y_true, cv=cv, scoring='neg_mean_squared_log_error',
-                                                           fit_params=fit_params, n_jobs=-1)
+                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['rmsle'] = np.sqrt(-neg_msle)  # 正負を逆にしてルートをとる
                 elif scoring == 'max_error':
                     neg_max_error = cross_val_score(model, X, y_true, cv=cv, scoring='max_error',
-                                                           fit_params=fit_params, n_jobs=-1)
+                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['max_error'] = - neg_max_error  # scikit-learnの仕様に合わせ正負を逆に
             
-            #LeaveOneOutかどうかを判定
-            isLeaveOneOut = isinstance(cv, LeaveOneOut)
-            cv_num = 1 if isLeaveOneOut else cv.n_splits
             # 表示用のaxes作成
             # LeaveOneOutのとき、クロスバリデーションごとの図は作成せず
             if isLeaveOneOut:
@@ -327,7 +340,7 @@ class regplot():
             y_pred_all = []
             hue_all = []
             rank_col_all = []
-            for i, (train, test) in enumerate(cv.split(X, y_true)):
+            for i, (train, test) in enumerate(cv.split(X, y_true, **split_kws)):
                 # 表示用にテストデータと学習データ分割
                 X_train = X[train]
                 y_train = y_true[train]
@@ -609,9 +622,24 @@ class regplot():
             
         # クロスバリデーション実施時(分割ごとに別々にプロット＆指標算出)
         if cv is not None:
-            # 分割法未指定時、cv_numとseedに基づきランダムに分割
+            # 分割法未指定時、cv_numとseedに基づきKFoldでランダムに分割
             if isinstance(cv, numbers.Integral):
                 cv = KFold(n_splits=cv, shuffle=True, random_state=cv_seed)
+            #LeaveOneOutのときエラーを出す
+            if isinstance(cv, LeaveOneOut):
+                raise Exception('"regression_plot_1d" method does not support "LeaveOneOut" cross validation')
+            # GroupKFold、LeaveOneGroupOutのとき、hueをグルーピング対象に指定
+            split_kws={}
+            if isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
+                if hue is not None:
+                    split_kws['groups'] = data[hue].values                    
+                else:
+                    raise Exception('"GroupKFold" cross validation needs "hue" argument')
+            # LeaveOneGroupOutのとき、クロスバリデーション分割数をhueの数に指定
+            if isinstance(cv, LeaveOneGroupOut):
+                cv_num = len(set(data[hue].values))
+            else:
+                cv_num = cv.n_splits
 
             # スコア種類ごとにクロスバリデーションスコアの算出
             score_all_dict = {}
@@ -619,41 +647,32 @@ class regplot():
                 # cross_val_scoreでクロスバリデーション
                 if scoring == 'r2':
                     score_all_dict['r2'] = cross_val_score(model, X, y_true, cv=cv, scoring='r2',
-                                                           fit_params=fit_params, n_jobs=-1)
+                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
                 elif scoring == 'mae':
                     neg_mae = cross_val_score(model, X, y_true, cv=cv, scoring='neg_mean_absolute_error',
-                                                           fit_params=fit_params, n_jobs=-1)
+                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['mae'] = -neg_mae  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'rmse':
                     neg_rmse = cross_val_score(model, X, y_true, cv=cv, scoring='neg_root_mean_squared_error',
-                                                           fit_params=fit_params, n_jobs=-1)
+                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['rmse'] = -neg_rmse  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'rmsle':
                     neg_msle = cross_val_score(model, X, y_true, cv=cv, scoring='neg_mean_squared_log_error',
-                                                           fit_params=fit_params, n_jobs=-1)
+                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['rmsle'] = np.sqrt(-neg_msle)  # 正負を逆にしてルートをとる
                 elif scoring == 'max_error':
                     neg_max_error = cross_val_score(model, X, y_true, cv=cv, scoring='max_error',
-                                                           fit_params=fit_params, n_jobs=-1)
+                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['max_error'] = - neg_max_error  # scikit-learnの仕様に合わせ正負を逆に
             
-            #LeaveOneOutかどうかを判定
-            isLeaveOneOut = isinstance(cv, LeaveOneOut)
-            cv_num = 1 if isLeaveOneOut else cv.n_splits
             # 表示用のaxes作成
-            # LeaveOneOutのとき、クロスバリデーションごとの図は作成せず
-            if isLeaveOneOut:
-                if 'figsize' not in subplot_kws.keys():
-                    subplot_kws['figsize'] = (6, 6)
-                fig, axes = plt.subplots(1, 1, **subplot_kws)
-            # LeaveOneOut以外のとき、クロスバリデーションごとに図作成
-            else:
-                if 'figsize' not in subplot_kws.keys():
-                    subplot_kws['figsize'] = (6, (cv_num + 1) * 6)
-                fig, axes = plt.subplots(cv_num + 1, 1, **subplot_kws)
+            # クロスバリデーションごとに図作成
+            if 'figsize' not in subplot_kws.keys():
+                subplot_kws['figsize'] = (6, (cv_num + 1) * 6)
+            fig, axes = plt.subplots(cv_num + 1, 1, **subplot_kws)
 
             # クロスバリデーション
-            for i, (train, test) in enumerate(cv.split(X, y_true)):
+            for i, (train, test) in enumerate(cv.split(X, y_true, **split_kws)):
                 # 表示用にテストデータと学習データ分割
                 X_train = X[train]
                 y_train = y_true[train]
@@ -661,7 +680,7 @@ class regplot():
                 y_test = y_true[test]
                 # 色分け用データ取得(していないときは、クロスバリデーション番号を使用、LeaveOuneOutのときは番号分けない)
                 if hue is None:
-                    hue_test = np.full(1 ,'leave_one_out') if isLeaveOneOut else np.full(len(test) ,f'cv_{i}')
+                    hue_test = np.full(len(test) ,f'cv_{i}')
                     hue_name = 'cv_number'  # 色分け名を'cv_number'に指定
                 else:
                     hue_test = data[hue].values[test]
@@ -674,15 +693,14 @@ class regplot():
                         rank_col_test = data[rank_col].values[test]
                 # 学習と推論
                 model.fit(X_train, y_train, **fit_params)
-                # CV内結果をプロット(LeaveOneOutのときはプロットしない)
-                if not isLeaveOneOut:
-                    score_cv_dict = {k: v[i] for k, v in score_all_dict.items()}
-                    cls._model_plot_1d(model, X_test, y_test, hue_data=hue_test, hue_name=hue_name, ax=axes[i],
-                                linecolor=linecolor, rounddigit=rounddigit, score_dict=score_cv_dict)
-                    # 誤差上位を文字表示
-                    if rank_number is not None:
-                        cls._rank_display(y_test, model.predict(X_test), rank_number, rank_col, rank_col_test, x=X_test, ax=axes[i], rounddigit=rounddigit)
-                    axes[i].set_title(f'Cross Validation No{i}')
+                # CV内結果をプロット
+                score_cv_dict = {k: v[i] for k, v in score_all_dict.items()}
+                cls._model_plot_1d(model, X_test, y_test, hue_data=hue_test, hue_name=hue_name, ax=axes[i],
+                            linecolor=linecolor, rounddigit=rounddigit, score_dict=score_cv_dict)
+                # 誤差上位を文字表示
+                if rank_number is not None:
+                    cls._rank_display(y_test, model.predict(X_test), rank_number, rank_col, rank_col_test, x=X_test, ax=axes[i], rounddigit=rounddigit)
+                axes[i].set_title(f'Cross Validation No{i}')
 
             # 指標の統計値を計算
             if cv_stats == 'mean':
@@ -704,7 +722,7 @@ class regplot():
             hue_data = None if hue is None else data[hue]
             hue_name = None if hue is None else hue
             # 全体プロット
-            ax_all = axes if isLeaveOneOut else axes[cv_num]
+            ax_all = axes[cv_num]
             cls._model_plot_1d(model, X, y_true, hue_data=hue_data, hue_name=hue_name, ax=ax_all,
                                 linecolor=linecolor, rounddigit=rounddigit, score_dict=score_stats_dict)
             ax_all.set_title('All Cross Validations')
@@ -1111,11 +1129,27 @@ class regplot():
             
         # クロスバリデーション実施時(分割ごとに別々にプロット＆指標算出)
         if cv is not None:
-            # 分割法未指定時、cv_numとseedに基づきランダムに分割
+            # 分割法未指定時、cv_numとseedに基づきKFoldでランダムに分割
             if isinstance(cv, numbers.Integral):
                 cv = KFold(n_splits=cv, shuffle=True, random_state=cv_seed)
+            # LeaveOneOutのときエラーを出す
+            if isinstance(cv, LeaveOneOut):
+                raise Exception('"regression_heat_plot" method does not support "LeaveOneOut" cross validation')
+            # GroupKFold、LeaveOneGroupOutのとき、scatter_hueをグルーピング対象に指定
+            split_kws={}
+            if isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
+                if scatter_hue is not None:
+                    split_kws['groups'] = data[scatter_hue].values
+                else:
+                    raise Exception('"GroupKFold" cross validation needs "hue" argument')
+            # LeaveOneGroupOutのとき、クロスバリデーション分割数をscatter_hueの数に指定
+            if isinstance(cv, LeaveOneGroupOut):
+                cv_num = len(set(data[scatter_hue].values))
+            else:
+                cv_num = cv.n_splits
+
             # クロスバリデーション
-            for i, (train, test) in enumerate(cv.split(X, y_true)):
+            for i, (train, test) in enumerate(cv.split(X, y_true, **split_kws)):
                 # 表示対象以外のCVなら飛ばす
                 if i not in display_cv_indices:
                     continue
