@@ -377,6 +377,13 @@ class regplot():
                 score_stats_dict = {f'{k}_min': np.amin(v) for k, v in score_all_dict.items()}            
             elif cv_stats == 'max':
                 score_stats_dict = {f'{k}_max': np.amax(v) for k, v in score_all_dict.items()}
+            # 全体データを学習＆評価データとして評価指標算出
+            model.fit(X, y_true, **fit_params)
+            y_pred = model.predict(X)
+            score_dict = cls._make_score_dict(y_true, y_pred, scores)
+            # 学習データ指標を指標dictに追加
+            score_dict = {f'{k}_train': np.mean(v) for k, v in score_dict.items()}
+            score_stats_dict.update(score_dict)
             # 全体プロット
             ax_all = axes if isLeaveOneOut else axes[cv_num]
             cls._plot_pred_true(y_true_all, y_pred_all, hue_data=hue_all, hue_name=hue_name, ax=ax_all,
@@ -686,11 +693,11 @@ class regplot():
                 score_stats_dict = {f'{k}_min': np.amin(v) for k, v in score_all_dict.items()}
             elif cv_stats == 'max':
                 score_stats_dict = {f'{k}_max': np.amax(v) for k, v in score_all_dict.items()}
-            # 全体データで学習＆評価指標算出
+            # 全体データを学習＆評価データとして評価指標算出
             model.fit(X, y_true, **fit_params)
             y_pred = model.predict(X)
             score_dict = cls._make_score_dict(y_true, y_pred, scores)
-            # 全体データ指標を指標dictに追加
+            # 学習データ指標を指標dictに追加
             score_dict = {f'{k}_train': np.mean(v) for k, v in score_dict.items()}
             score_stats_dict.update(score_dict)
             # 全体色分け用データ取得
