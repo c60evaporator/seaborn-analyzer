@@ -984,7 +984,7 @@ class regplot():
 
     @classmethod
     def regression_heat_plot(cls, model, x: List[str], y: str, data: pd.DataFrame, x_heat: List[str] = None, scatter_hue=None,
-                             pair_sigmarange = 1.5, pair_sigmainterval = 0.5, heat_extendsigma = 0.5, value_extendsigma = 0.5, plot_scatter = 'true',
+                             pair_sigmarange = 1.5, pair_sigmainterval = 0.5, heat_extendsigma = 0.5, color_extendsigma = 0.5, plot_scatter = 'true',
                              rounddigit_rank=3, rounddigit_x1=2, rounddigit_x2=2, rounddigit_x3=2, rank_number=None, rank_col=None,
                              cv=None, cv_seed=42, display_cv_indices = 0,
                              model_params=None, fit_params=None, subplot_kws=None, heat_kws=None, scatter_kws=None):
@@ -1011,8 +1011,8 @@ class regplot():
             ヒートマップ非使用変数の1枚あたり表示範囲 (pair_sigmainterval=0.5なら、‥1σ~-0.5σ, 0.5σ~-0σ, 0σ~0.5σ, 0.5σ~1σ‥というようにヒートマップ分割)
         heat_extendsigma: float, optional
             ヒートマップ縦軸横軸の表示拡張範囲 (ヒートマップ使用変数の最大最小値 + extendsigmaが横軸範囲となる)
-        value_extendsigma: float, optional
-            ヒートマップの色分け最大最小値拡張範囲(y_trueの最大最小値 ± y_trueの標準偏差 × value_extendsigma)
+        color_extendsigma: float, optional
+            ヒートマップの色分け最大最小値拡張範囲(y_trueの最大最小値 ± y_trueの標準偏差 × color_extendsigma)
         plot_scatter: str, optional
             散布図の描画種類('error':誤差で色分け, 'true':真値で色分け, 'hue':引数hue指定列で色分け, None:散布図表示なし)
         rounddigit_rank: int, optional
@@ -1079,10 +1079,10 @@ class regplot():
                 x_heat_indices.append(x.index(colname))
         # ヒートマップ表示以外の列
         x_not_heat = [colname for colname in x if colname not in x_heat]        
-        # ヒートマップの色分け最大最小値(y_trueの最大最小値 ± y_trueの標準偏差 × value_extendsigma)
+        # ヒートマップの色分け最大最小値(y_trueの最大最小値 ± y_trueの標準偏差 × color_extendsigma)
         y_true_std = np.std(y_true)
-        vmin = np.min(y_true) - y_true_std * value_extendsigma
-        vmax = np.max(y_true) + y_true_std * value_extendsigma
+        vmin = np.min(y_true) - y_true_std * color_extendsigma
+        vmax = np.max(y_true) + y_true_std * color_extendsigma
 
         # 引数plot_scatter='hue'とscatter_hueが同時指定されていないとき、エラーを出す
         if scatter_hue is not None:
