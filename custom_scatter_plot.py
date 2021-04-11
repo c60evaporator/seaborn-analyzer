@@ -985,7 +985,7 @@ class regplot():
     @classmethod
     def regression_heat_plot(cls, model, x: List[str], y: str, data: pd.DataFrame, x_heat: List[str] = None, scatter_hue=None,
                              pair_sigmarange = 1.5, pair_sigmainterval = 0.5, heat_extendsigma = 0.5, value_extendsigma = 0.5, plot_scatter = 'true',
-                             rank_number=None, rank_col=None, rounddigit_rank=3, rounddigit_x1=2, rounddigit_x2=2, rounddigit_x3=2,
+                             rounddigit_rank=3, rounddigit_x1=2, rounddigit_x2=2, rounddigit_x3=2, rank_number=None, rank_col=None,
                              cv=None, cv_seed=42, display_cv_indices = 0,
                              model_params=None, fit_params=None, subplot_kws=None, heat_kws=None, scatter_kws=None):
         """
@@ -1003,7 +1003,7 @@ class regplot():
             フィッティング対象のデータ
         x_heat: List[str], optional
             説明変数のうち、ヒートマップ表示対象のカラム (Noneなら前から2カラム自動選択)
-        scatter_hue : str
+        scatter_hue : str, optional
             散布図色分け指定カラム (列名指定, plot_scatter='hue'のときのみ有効)
         pair_sigmarange: float, optional
             ヒートマップ非使用変数の分割範囲 (pair_sigmarange=2なら、-2σ~2σの範囲でpair_sigmaintervalに従いヒートマップ分割)
@@ -1014,11 +1014,7 @@ class regplot():
         value_extendsigma: float, optional
             ヒートマップの色分け最大最小値拡張範囲(y_trueの最大最小値 ± y_trueの標準偏差 × value_extendsigma)
         plot_scatter: str, optional
-            散布図の描画有無('error':誤差で色分け, 'true':真値で色分け, 'hue':引数hue指定列で色分け, None:散布図表示なし)
-        rank_number: int, optional
-            誤差上位何番目までを文字表示するか
-        rank_col: str, optional
-            誤差上位と一緒に表示するフィールド名 (NoneならIndexを使用)
+            散布図の描画種類('error':誤差で色分け, 'true':真値で色分け, 'hue':引数hue指定列で色分け, None:散布図表示なし)
         rounddigit_rank: int, optional
             表示指標の小数丸め桁数
         rounddigit_x1: int, optional
@@ -1027,6 +1023,10 @@ class regplot():
             ヒートマップ縦軸の小数丸め桁数
         rounddigit_x3: int, optional
             ヒートマップ非表示軸の小数丸め桁数
+        rank_number: int, optional
+            誤差上位何番目までを文字表示するか
+        rank_col: str, optional
+            誤差上位と一緒に表示するフィールド名 (NoneならIndexを使用)
         cv: int or KFold, optional
             クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)
         cv_seed: int, optional
