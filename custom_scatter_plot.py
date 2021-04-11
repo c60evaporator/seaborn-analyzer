@@ -1086,10 +1086,10 @@ class regplot():
 
         # 引数plot_scatter='hue'とscatter_hueが同時指定されていないとき、エラーを出す
         if scatter_hue is not None:
-            if plot_scatter != 'hue':
-                raise Exception('the "plot_scatter" argument must be "hue" when the argument "hue" is not None')
+            if plot_scatter != 'hue' and not isinstance(cv, GroupKFold) and not isinstance(cv, LeaveOneGroupOut):
+                raise Exception('the "plot_scatter" argument must be "hue" when the argument "scatter_hue" is not None')
         elif plot_scatter == 'hue':
-            raise Exception('the "hue" argument is required when the argument "plot_scatter" is "hue"')
+            raise Exception('the "scatter_hue" argument is required when the argument "plot_scatter" is "hue"')
         # 引数plot_scatter='hue'のとき、色分け対象列とカラーマップを紐づけ(色分けを全ての図で統一用)
         if plot_scatter == 'hue':
             hue_list = data[scatter_hue].values.tolist()
@@ -1167,7 +1167,7 @@ class regplot():
                 # 表示対象以外のCVなら飛ばす
                 if i not in display_cv_indices:
                     continue
-                print(f'cv_number={i}/{cv.n_splits}')
+                print(f'cv_number={i}/{cv_num}')
                 # 表示用にテストデータと学習データ分割
                 X_train = X[train]
                 y_train = y_true[train]
