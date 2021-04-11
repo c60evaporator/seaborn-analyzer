@@ -182,7 +182,7 @@ class regplot():
     @classmethod
     def regression_pred_true(cls, model, x: List[str], y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=3,
                              rank_number=None, rank_col=None, scores='mae', cv_stats='mean', cv=None, cv_seed=42,
-                             model_params=None, fit_params=None, subplot_kws={}):
+                             model_params=None, fit_params=None, subplot_kws=None):
 
         """
         回帰して予測値と実測値をプロットし、評価値を表示
@@ -251,6 +251,9 @@ class regplot():
         # 学習時パラメータがNoneなら空のdictを入力
         if fit_params is None:
             fit_params = {}
+        # subplot_kwsがNoneなら空のdictを入力
+        if subplot_kws is None:
+            subplot_kws = {}
         
         # クロスバリデーション有無で場合分け
         # クロスバリデーション未実施時(学習データからプロット＆指標算出)
@@ -528,7 +531,7 @@ class regplot():
     @classmethod
     def regression_plot_1d(cls, model, x: str, y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=3,
                            rank_number=None, rank_col=None, scores='mae', cv_stats='mean', cv=None, cv_seed=42,
-                           model_params=None, fit_params=None, subplot_kws={}):
+                           model_params=None, fit_params=None, subplot_kws=None):
         """
         1次元説明変数の任意の回帰曲線をプロット
 
@@ -594,6 +597,9 @@ class regplot():
         # 学習時パラメータがNoneなら空のdictを入力
         if fit_params is None:
             fit_params = {}
+        # subplot_kwsがNoneなら空のdictを入力
+        if subplot_kws is None:
+            subplot_kws = {}
         
         # クロスバリデーション有無で場合分け
         # クロスバリデーション未実施時(学習データからプロット＆指標算出)
@@ -982,7 +988,7 @@ class regplot():
                              pair_sigmarange = 1.5, pair_sigmainterval = 0.5, heat_extendsigma = 0.5, value_extendsigma = 0.5, plot_scatter = 'true',
                              rank_number=None, rank_col=None, rounddigit_rank=3, rounddigit_x1=2, rounddigit_x2=2, rounddigit_x3=2,
                              cv=None, cv_seed=42, display_cv_indices = 0,
-                             model_params=None, fit_params=None, subplot_kws={}, heat_kws={}, scatter_kws={}):
+                             model_params=None, fit_params=None, subplot_kws=None, heat_kws=None, scatter_kws=None):
         """
         2～4次元説明変数の回帰モデルをヒートマップで可視化
 
@@ -1099,6 +1105,15 @@ class regplot():
         # 学習時パラメータがNoneなら空のdictを入力
         if fit_params is None:
             fit_params = {}
+        # subplot_kwsがNoneなら空のdictを入力
+        if subplot_kws is None:
+            subplot_kws = {}
+        # heat_kwsがNoneなら空のdictを入力
+        if heat_kws is None:
+            heat_kws = {}
+        # scatter_kwsがNoneなら空のdictを入力
+        if scatter_kws is None:
+            scatter_kws = {}
         
         # クロスバリデーション有無で場合分け
         # クロスバリデーション未実施時(学習データからプロット＆指標算出)
