@@ -412,7 +412,7 @@ class regplot():
             return score_stats_dict
 
     @classmethod
-    def linear_plot(cls, x: str, y: str, data: pd.DataFrame, ax=None, hue=None, linecolor='red', linesplit=200,
+    def linear_plot(cls, x: str, y: str, data: pd.DataFrame, ax=None, hue=None, linecolor='red',
                     rounddigit=5, plot_scores=True):
         """
         1変数線形回帰してプロットし、p値と相関係数を表示
@@ -431,8 +431,6 @@ class regplot():
             色分け指定カラム (列名指定)
         linecolor : str
             回帰直線の色
-        linesplit : int
-            フィッティング線の分割数 (カクカクしたら増やす)
         rounddigit: int
             表示指標の小数丸め桁数
         plot_scores: bool
@@ -457,6 +455,7 @@ class regplot():
         lr.fit(X, y_true)
         xmin = np.amin(X)
         xmax = np.amax(X)
+        linesplit=200
         Xline = np.linspace(xmin, xmax, linesplit)
         Xline = Xline.reshape(len(Xline), 1)
         # 回帰線を描画
