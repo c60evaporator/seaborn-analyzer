@@ -53,8 +53,8 @@ from sklearn.metrics import r2_score, mean_absolute_error
 lr = LinearRegression()  # 線形回帰用クラス
 lr.fit(X, y)  # 線形回帰学習
 y_pred = lr.predict(X)  # 学習モデルから回帰して予測値を算出
-print(1000, 0, f'R2={r2_score(y, y_pred)}')  # R2_Scoreを表示
-print(1000, 0, f'MAE={mean_absolute_error(y, y_pred)}')  # MAEを表示
+print(f'R2={r2_score(y, y_pred)}')  # R2_Scoreを表示
+print(f'MAE={mean_absolute_error(y, y_pred)}')  # MAEを表示
 # %% 予測値 vs 実測値プロット
 import seaborn as sns
 sns.scatterplot(x=y, y=y_pred)
@@ -123,4 +123,43 @@ import seaborn as sns
 from sklearn.svm import SVR
 iris = sns.load_dataset("iris")
 regplot.regression_heat_plot(SVR(), x=['sepal_width', 'petal_width', 'petal_length'], y='sepal_length', data=iris, x_heat=['petal_length', 'petal_width'], pair_sigmarange=1.0)
+# %% linear_plotの参考図プロット用
+import seaborn as sns
+import matplotlib.pyplot as plt
+iris = sns.load_dataset("iris")
+from custom_scatter_plot import regplot
+regplot.linear_plot(x='petal_length', y='sepal_length', data=iris, plot_scores=False)
+# %% regression_pred_trueの参考図プロット用
+import seaborn as sns
+iris = sns.load_dataset("iris")
+from custom_scatter_plot import regplot
+from sklearn.svm import SVR
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import LeaveOneOut, GroupKFold, LeaveOneGroupOut
+from xgboost import XGBRegressor
+regplot.regression_pred_true(RandomForestRegressor(), x=['petal_width', 'petal_length'],
+                             y='sepal_length', data=iris,
+                             cv=2, subplot_kws={'figsize': (3, 9)})
+# %% regression_plot_1dの参考図プロット用
+import seaborn as sns
+iris = sns.load_dataset("iris")
+from custom_scatter_plot import regplot
+from sklearn.svm import SVR
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import GroupKFold, LeaveOneGroupOut, ShuffleSplit
+from xgboost import XGBRegressor
+regplot.regression_plot_1d(RandomForestRegressor(), x='petal_length', 
+                           y='sepal_length', data=iris,
+                           cv=2, subplot_kws={'figsize': (3, 9)})
+# %% regression_heat_plotの参考図プロット用
+import seaborn as sns
+iris = sns.load_dataset("iris")
+from custom_scatter_plot import regplot
+from sklearn.svm import SVR
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import ShuffleSplit, GroupKFold, LeaveOneGroupOut
+from xgboost import XGBRegressor
+regplot.regression_heat_plot(RandomForestRegressor(), x=['petal_width', 'petal_length'],
+                             y='sepal_length', data=iris,
+                             scatter_kws={'marker': 'v'})
 # %%
