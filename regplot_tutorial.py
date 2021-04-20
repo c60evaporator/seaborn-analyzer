@@ -162,4 +162,16 @@ from xgboost import XGBRegressor
 regplot.regression_heat_plot(RandomForestRegressor(), x=['petal_width', 'petal_length'],
                              y='sepal_length', data=iris,
                              scatter_kws={'marker': 'v'})
+# %% パイプライン
+import seaborn as sns
+iris = sns.load_dataset("iris")
+from custom_scatter_plot import regplot
+from sklearn.svm import SVR
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+
+pipe = Pipeline([("scaler", StandardScaler()), ("svr", SVR())])
+regplot.regression_heat_plot(pipe, x=['petal_width', 'petal_length'],
+                             y='sepal_length', data=iris)
+
 # %%
