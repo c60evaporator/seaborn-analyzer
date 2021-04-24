@@ -2,7 +2,7 @@
 from custom_scatter_plot import regplot
 import seaborn as sns
 iris = sns.load_dataset("iris")
-regplot.linear_plot(x='petal_length', y='sepal_length', data=iris, hue='species')
+regplot.linear_plot(x='petal_length', y='sepal_length', data=iris)
 
 #%% 概要の「機能2」（予測値と実測値のプロット）
 from custom_scatter_plot import regplot
@@ -174,4 +174,39 @@ pipe = Pipeline([("scaler", StandardScaler()), ("svr", SVR())])
 regplot.regression_heat_plot(pipe, x=['petal_width', 'petal_length'],
                              y='sepal_length', data=iris)
 
+# %% 特徴量重要度
+import seaborn as sns
+iris = sns.load_dataset("iris")
+from xgboost import XGBRegressor
+import matplotlib.pyplot as plt
+# モデルの学習
+model = XGBRegressor()
+features = ['sepal_width', 'petal_width', 'petal_length']
+X = iris[features].values
+y = iris['sepal_length'].values
+model.fit(X, y)
+# 特徴量重要度の取得と可視化
+importances = list(model.feature_importances_)
+plt.barh(features, importances)
+
+# %% 残差プロット
+import seaborn as sns
+iris = sns.load_dataset("iris")
+from sklearn.linear_model import LinearRegression
+import matplotlib.pyplot as plt
+import numpy as np
+# モデルの学習
+model = LinearRegression()
+features = ['petal_width', 'petal_length']
+X = iris[features].values
+y = iris['sepal_length'].values
+model.fit(X, y)
+# 残差プロット(横軸は目的変数予測値)
+y_pred = model.predict(X)
+error = y_pred - y
+plt.scatter(y_pred, error)
+plt.xlabel('y_pred')
+plt.ylabel('error')
+# 残差=0の補助線を引く
+plt.plot([np.amin(y_pred), np.amax(y_pred)], [0, 0], "red")
 # %%
