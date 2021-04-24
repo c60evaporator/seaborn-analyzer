@@ -984,8 +984,8 @@ class regplot():
 
     @classmethod
     def regression_heat_plot(cls, model, x: List[str], y: str, data: pd.DataFrame, x_heat: List[str] = None, scatter_hue=None,
-                             pair_sigmarange = 1.5, pair_sigmainterval = 0.5, heat_extendsigma = 0.5, color_extendsigma = 0.5, plot_scatter = 'true',
-                             rounddigit_rank=3, rounddigit_x1=2, rounddigit_x2=2, rounddigit_x3=2, rank_number=None, rank_col=None,
+                             pair_sigmarange = 1.5, pair_sigmainterval = 0.5, heat_extendsigma = 0.5, heat_division = 30, color_extendsigma = 0.5,
+                            plot_scatter = 'true', rounddigit_rank=3, rounddigit_x1=2, rounddigit_x2=2, rounddigit_x3=2, rank_number=None, rank_col=None,
                              cv=None, cv_seed=42, display_cv_indices = 0,
                              model_params=None, fit_params=None, subplot_kws=None, heat_kws=None, scatter_kws=None):
         """
@@ -1011,6 +1011,8 @@ class regplot():
             ヒートマップ非使用変数の1枚あたり表示範囲 (pair_sigmainterval=0.5なら、‥1σ~-0.5σ, 0.5σ~-0σ, 0σ~0.5σ, 0.5σ~1σ‥というようにヒートマップ分割)
         heat_extendsigma: float, optional
             ヒートマップ縦軸横軸の表示拡張範囲 (ヒートマップ使用変数の最大最小値 + extendsigmaが横軸範囲となる)
+        heat_division: int, optional
+            ヒートマップ縦軸横軸の解像度
         color_extendsigma: float, optional
             ヒートマップの色分け最大最小値拡張範囲(y_trueの最大最小値 ± y_trueの標準偏差 × color_extendsigma)
         plot_scatter: str, optional
@@ -1135,7 +1137,7 @@ class regplot():
             hue_name = scatter_hue if scatter_hue is not None and plot_scatter=='hue' else None
             # ヒートマップをプロット
             cls._reg_heat_plot(model, X, y_pred, y_true, x_heat, x_not_heat, x_heat_indices, hue_data, hue_name,
-                               pair_sigmarange = pair_sigmarange, pair_sigmainterval=pair_sigmainterval, heat_extendsigma=heat_extendsigma,
+                               pair_sigmarange = pair_sigmarange, pair_sigmainterval=pair_sigmainterval, heat_extendsigma=heat_extendsigma, heat_division=heat_division,
                                vmin=vmin, vmax=vmax, plot_scatter=plot_scatter, maxerror=maxerror,
                                rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_data, scatter_hue_dict=scatter_hue_dict,
                                rounddigit_rank=rounddigit_rank, rounddigit_x1=rounddigit_x1, rounddigit_x2=rounddigit_x2, rounddigit_x3=rounddigit_x3,
@@ -1191,7 +1193,7 @@ class regplot():
                 hue_name = scatter_hue if scatter_hue is not None and plot_scatter=='hue' else None
                 # ヒートマップをプロット
                 cls._reg_heat_plot(model, X_test, y_pred, y_test, x_heat, x_not_heat, x_heat_indices, hue_data, hue_name,
-                                   pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, heat_extendsigma=heat_extendsigma,
+                                   pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, heat_extendsigma=heat_extendsigma, heat_division=heat_division,
                                    vmin=vmin, vmax=vmax, plot_scatter = plot_scatter, maxerror=maxerror,
                                    rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_test, scatter_hue_dict=scatter_hue_dict,
                                    rounddigit_rank=rounddigit_rank, rounddigit_x1=rounddigit_x1, rounddigit_x2=rounddigit_x2, rounddigit_x3=rounddigit_x3,
