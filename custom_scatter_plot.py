@@ -777,6 +777,12 @@ class regplot():
         # グリッドデータをピボット化
         df_heat_pivot = pd.pivot_table(data=df_heat, values='y_pred', 
                                   columns=x_heat[0], index=x_heat[1], aggfunc=np.mean)
+        # 横軸の列数がheat_divisionに満たない時、分解能不足のためrounddigit_x1桁数を増やすようエラー表示
+        if len(df_heat_pivot.columns) < heat_division:
+            raise Exception(f'the "rounddigit_x1" argument must be bigger than {rounddigit_x1} because of the shortage of the "{x_heat[0]}" resolution')
+        # 縦軸の列数がheat_divisionに満たない時、分解能不足のためrounddigit_x2桁数を増やすようエラー表示
+        if len(df_heat_pivot) < heat_division:
+            raise Exception(f'the "rounddigit_x2" argument must be bigger than {rounddigit_x2} because of the shortage of the "{x_heat[1]}" resolution')
 
         # ヒートマップのカラーマップ指定ないとき、YlGnを指定
         if 'cmap' not in heat_kws.keys():
@@ -1132,7 +1138,7 @@ class regplot():
                 rank_col_data = None
             # 誤差最大値
             maxerror = np.max(np.abs(y_pred - y_true))
-            # 散布図色分け用データ取得(plot_scatter='hue'のときのみ有効))
+            # 散布図色分け用データ取得(plot_scatter='hue'のときのみ有効)
             hue_data = data[scatter_hue] if scatter_hue is not None and plot_scatter=='hue' else None
             hue_name = scatter_hue if scatter_hue is not None and plot_scatter=='hue' else None
             # ヒートマップをプロット
