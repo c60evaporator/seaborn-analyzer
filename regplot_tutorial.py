@@ -209,4 +209,24 @@ plt.xlabel('y_pred')
 plt.ylabel('error')
 # 残差=0の補助線を引く
 plt.plot([np.amin(y_pred), np.amax(y_pred)], [0, 0], "red")
+
+# %% 大阪都構想データで4次元プロット
+import pandas as pd
+from custom_scatter_plot import regplot
+from xgboost import XGBRegressor
+
+df = pd.read_csv(f'./osaka_metropolis_english.csv')
+regplot.regression_heat_plot(XGBRegressor(), x=['2_between_30to60', '3_male_ratio', '5_household_member', 'latitude'],
+                             y='approval_rate', data=df, x_heat=['2_between_30to60', '5_household_member'],
+                             pair_sigmarange = 0.5, pair_sigmainterval = 0.5,
+                             rank_number=3, rank_col='ward_before',
+                             rounddigit_x1=3,
+                             model_params={'learning_rate': 0.297,
+                                           'min_child_weight': 4,
+                                           'max_depth': 6,
+                                           'colsample_bytree': 0.545,
+                                           'subsample': 0.54},
+                             fit_params={'early_stopping_rounds': 20,
+                                         'eval_set': [(df[['2_between_30to60', '3_male_ratio', '5_household_member', 'latitude']].values, df['approval_rate'].values)],
+                                         'verbose': 1})
 # %%
