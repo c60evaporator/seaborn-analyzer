@@ -817,7 +817,7 @@ class regplot():
             if plot_scatter == 'hue':
                 scatter_data = pd.DataFrame(np.stack([x1_scatter, x2_scatter, data[hue_name]], 1), columns=['x1', 'x2', hue_name])
                 for name, group in scatter_data.groupby(hue_name):
-                    ax.scatter(group['x1'].values, group['x2'].values, label=name, c=scatter_hue_dict[name])
+                    ax.scatter(group['x1'].values, group['x2'].values, label=name, c=scatter_hue_dict[name], **scatter_kws)
                 ax.legend()
         
         # 誤差上位を文字表示
@@ -836,7 +836,7 @@ class regplot():
     @classmethod
     def _reg_heat_plot(cls, trained_model, X, y_pred, y_true, x_heat, x_not_heat, x_heat_indices, hue_data, hue_name,
                        pair_sigmarange=2.0, pair_sigmainterval=0.5, heat_extendsigma=0.5, heat_division=30, 
-                       vmin=None, vmax=None, plot_scatter=True, maxerror=None,
+                       vmin=None, vmax=None, plot_scatter='true', maxerror=None,
                        rank_number=None, rank_col=None, rank_col_data=None, scatter_hue_dict=None,
                        rounddigit_rank=None, rounddigit_x1=None, rounddigit_x2=None, rounddigit_x3=None,
                        cv_index=None, subplot_kws={}, heat_kws={}, scatter_kws={}):
@@ -974,7 +974,7 @@ class regplot():
                                       rounddigit_rank, rounddigit_x1, rounddigit_x2,
                                       heat_kws=heat_kws, scatter_kws=scatter_kws)
 
-                # グラフタイトルとして、ヒートマップ非使用変数の範囲を記載
+                # グラフタイトルとして、ヒートマップ非使用変数の範囲を記載（説明変数が3次元以上のとき）
                 if x_num == 3:
                     if i == 0:
                         ax.set_title(f'{x_not_heat[0]}=- {cls._round_digits(h_max * x3_std + x3_mean, rounddigit=rounddigit_x3)} (- {h_max}σ)')
@@ -991,7 +991,7 @@ class regplot():
     @classmethod
     def regression_heat_plot(cls, model, x: List[str], y: str, data: pd.DataFrame, x_heat: List[str] = None, scatter_hue=None,
                              pair_sigmarange = 1.5, pair_sigmainterval = 0.5, heat_extendsigma = 0.5, heat_division = 30, color_extendsigma = 0.5,
-                            plot_scatter = 'true', rounddigit_rank=3, rounddigit_x1=2, rounddigit_x2=2, rounddigit_x3=2, rank_number=None, rank_col=None,
+                             plot_scatter = 'true', rounddigit_rank=3, rounddigit_x1=2, rounddigit_x2=2, rounddigit_x3=2, rank_number=None, rank_col=None,
                              cv=None, cv_seed=42, display_cv_indices = 0,
                              model_params=None, fit_params=None, subplot_kws=None, heat_kws=None, scatter_kws=None):
         """
@@ -1148,6 +1148,428 @@ class regplot():
                                rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_data, scatter_hue_dict=scatter_hue_dict,
                                rounddigit_rank=rounddigit_rank, rounddigit_x1=rounddigit_x1, rounddigit_x2=rounddigit_x2, rounddigit_x3=rounddigit_x3,
                                cv_index=None, subplot_kws=subplot_kws, heat_kws=heat_kws, scatter_kws=scatter_kws)
+            
+        # クロスバリデーション実施時(分割ごとに別々にプロット＆指標算出)
+        if cv is not None:
+            # 分割法未指定時、cv_numとseedに基づきKFoldでランダムに分割
+            if isinstance(cv, numbers.Integral):
+                cv = KFold(n_splits=cv, shuffle=True, random_state=cv_seed)
+            # LeaveOneOutのときエラーを出す
+            if isinstance(cv, LeaveOneOut):
+                raise Exception('"regression_heat_plot" method does not support "LeaveOneOut" cross validation')
+            # GroupKFold、LeaveOneGroupOutのとき、scatter_hueをグルーピング対象に指定
+            split_kws={}
+            if isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
+                if scatter_hue is not None:
+                    split_kws['groups'] = data[scatter_hue].values
+                else:
+                    raise Exception('"GroupKFold" cross validation needs "hue" argument')
+            # LeaveOneGroupOutのとき、クロスバリデーション分割数をscatter_hueの数に指定
+            if isinstance(cv, LeaveOneGroupOut):
+                cv_num = len(set(data[scatter_hue].values))
+            else:
+                cv_num = cv.n_splits
+
+            # クロスバリデーション
+            for i, (train, test) in enumerate(cv.split(X, y_true, **split_kws)):
+                # 表示対象以外のCVなら飛ばす
+                if i not in display_cv_indices:
+                    continue
+                print(f'cv_number={i}/{cv_num}')
+                # 表示用にテストデータと学習データ分割
+                X_train = X[train]
+                y_train = y_true[train]
+                X_test = X[test]
+                y_test = y_true[test]
+                # 学習と推論
+                model.fit(X_train, y_train, **fit_params)
+                y_pred = model.predict(X_test)
+                # 誤差上位表示用データ取得
+                if rank_number is not None:
+                    if rank_col is None:  # 表示フィールド指定ないとき、Index使用
+                        rank_col_test = data.index.values[test]
+                    else:  # 表示フィールド指定あるとき
+                        rank_col_test = data[rank_col].values[test]
+                else:
+                    rank_col_test = None
+                # 誤差最大値
+                maxerror = np.max(np.abs(y_pred - y_test))
+                # 散布図色分け用データ取得(plot_scatter='hue'のときのみ有効))
+                hue_data = data[scatter_hue].values[test] if scatter_hue is not None and plot_scatter=='hue' else None
+                hue_name = scatter_hue if scatter_hue is not None and plot_scatter=='hue' else None
+                # ヒートマップをプロット
+                cls._reg_heat_plot(model, X_test, y_pred, y_test, x_heat, x_not_heat, x_heat_indices, hue_data, hue_name,
+                                   pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, heat_extendsigma=heat_extendsigma, heat_division=heat_division,
+                                   vmin=vmin, vmax=vmax, plot_scatter = plot_scatter, maxerror=maxerror,
+                                   rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_test, scatter_hue_dict=scatter_hue_dict,
+                                   rounddigit_rank=rounddigit_rank, rounddigit_x1=rounddigit_x1, rounddigit_x2=rounddigit_x2, rounddigit_x3=rounddigit_x3,
+                                   cv_index=i, subplot_kws=subplot_kws, heat_kws=heat_kws, scatter_kws=scatter_kws)
+
+
+class classplot():
+    # 散布図カラーマップ
+    SCATTER_HUECOLORS = ['green', 'red', 'mediumblue', 'brown', 'darkmagenta', 'darkorange', 'gold', 'grey']
+    # デフォルトでの決定境界図の透明度(alpha)
+    DEFAULT_SEPARATOR_ALPHA = 0.3
+
+    @classmethod
+    def _chart_plot_2d(cls, trained_model, x_chart, y_true_col, y_pred_col, data, x_chart_indices,
+                       x1_start, x1_end, x2_start, x2_end, other_x,
+                       chart_type, vmin, vmax, ax, plot_scatter,
+                       scatter_color_dict, scatter_marker_dict,
+                       contourf_kws={}, scatter_kws={}):
+        """
+        分類チャート（決定境界図 or クラス確率図）と各種散布図の表示
+        (class_separator_plotあるいはclass_prob_plotメソッドの描画処理部分)
+        """
+        # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
+        if ax == None:
+            ax=plt.gca()
+
+        # 図のサイズからグリッド数を取得
+        xnum, ynum = plt.gcf().dpi * plt.gcf().get_size_inches()
+        # チャート用グリッドデータを作成
+        xx = np.linspace(x1_start, x1_end, num=int(xnum))
+        yy = np.linspace(x2_start, x2_end, num=int(ynum))
+        X1, X2 = np.meshgrid(xx, yy)
+        X_grid = np.c_[X1.ravel(), X2.ravel()]
+        #df_chart = pd.DataFrame(X_grid, columns=x_chart)
+        # 推論用に全説明変数を保持したndarrayを作成 (チャート非使用変数は固定値other_xとして追加)
+        n_rows = X_grid.shape[0]
+        X_all = []
+        other_add_flg = False
+        for i in range(2 + len(other_x)):
+            if i == x_chart_indices[0]: # チャート使用変数(1個目)を追加
+                X_all.append(X_grid[:, 0].reshape(n_rows, 1))
+            elif i == x_chart_indices[1]: # チャート使用変数(2個目)を追加
+                X_all.append(X_grid[:, 1].reshape(n_rows, 1))
+            elif len(other_x) >= 1 and not other_add_flg:  # チャート非使用変数(1個目)を固定値として追加
+                X_all.append(np.full((n_rows, 1), other_x[0]))
+                other_add_flg = True
+            elif len(other_x) == 2:  # チャート非使用変数(2個目)を固定値として追加
+                X_all.append(np.full((n_rows, 1), other_x[1]))
+        X_all = np.hstack(X_all)
+        # グリッドデータに対して学習し、推定値を作成
+        y_pred_grid = trained_model.predict(X_all)
+        #df_chart['y_pred'] = pd.Series(y_pred_grid)
+        # 推定値をint型に変換
+        class_int_dict = dict(zip(scatter_color_dict.keys(), range(len(scatter_color_dict))))
+        y_pred_grid_int = np.vectorize(lambda x: class_int_dict[x])(y_pred_grid)
+        #df_chart['y_pred_int'] = df_chart['y_pred'].apply(lambda x: class_int_dict[x])
+
+        # グリッドデータ表示桁数を調整
+        #X1 = df_chart[x_chart[0]].map(lambda x: cls._round_digits(x, rounddigit=rounddigit_x1))
+        #X2 = df_chart[x_chart[1]].map(lambda x: cls._round_digits(x, rounddigit=rounddigit_x2))
+        # グリッドデータをピボット化
+        y_pred_pivot = y_pred_grid_int.reshape(X1.shape)
+
+        # contourf_kwsにcolors指定ないとき、scatter_color_dictの値を使用
+        if 'colors' not in contourf_kws.keys():
+            contourf_kws['colors'] = list(scatter_color_dict.values())
+        # contourf_kwsにalphat指定ないとき、DEFAULT_SEPARATOR_ALPHAを使用
+        if 'alpha' not in contourf_kws.keys():
+            contourf_kws['alpha'] = cls.DEFAULT_SEPARATOR_ALPHA
+        # 決定境界図をプロット
+        cset = ax.contourf(X1, X2, y_pred_pivot,
+                           levels=np.arange(y_pred_pivot.max() + 2) - 0.5,
+                           **contourf_kws)
+        ax.contour(X1, X2, y_pred_pivot, cset.levels,
+               colors='k',
+               linewidths=0.5,
+               antialiased=True)
+
+        # 散布図をプロット
+        if plot_scatter is not None:
+            # マーカの縁の色
+            if 'edgecolors' not in scatter_kws.keys():
+                scatter_kws['edgecolors'] = 'darkgrey'
+            # 軸範囲が0～heat_divisionになっているので、スケール変換
+            #x1_scatter = 0.5 + (data[x_chart[0]].values - x1_start) * (heat_division - 1) / (x1_end - x1_start)
+            #x2_scatter = 0.5 + (data[x_chart[1]].values - x2_start) * (heat_division - 1) / (x2_end - x2_start)
+            # 正誤を判定
+            data['error'] = data[y_true_col] == data[y_pred_col]
+            # 色分け
+            if plot_scatter == 'error':  # 正誤で色分け
+                cdict = {True:'blue', False:'red'}
+                for name, group in data.groupby('error'):
+                    ax.scatter(group[x_chart[0]].values, group[x_chart[1]].values,
+                               label=name, c=cdict[name],
+                               marker=scatter_marker_dict[name],
+                               **scatter_kws)
+            elif plot_scatter == 'class':  # クラスで色分け
+                for name, group in data.groupby(['error', y_true_col]):
+                    ax.scatter(group[x_chart[0]].values, group[x_chart[1]].values,
+                               label=f'{name[1]}   {name[0]}', c=scatter_color_dict[name[1]],
+                               marker=scatter_marker_dict[name[0]],
+                               **scatter_kws)
+            # 凡例表示
+            ax.legend()
+
+    @classmethod
+    def _class_chart_plot(cls, trained_model, X, y_pred, y_true, x_chart, x_not_chart, x_chart_indices,
+                       pair_sigmarange=2.0, pair_sigmainterval=0.5, chart_extendsigma=0.5,
+                       chart_type='separator', vmin=None, vmax=None, plot_scatter='class', 
+                       scatter_color_dict=None, scatter_marker_dict=None,
+                       rounddigit_x3=None,
+                       cv_index=None, subplot_kws={}, contourf_kws={}, scatter_kws={}):
+        """
+        分類チャート（決定境界図 or クラス確率図）表示の、説明変数の数に応じた分岐処理
+        (class_separator_plotあるいはclass_prob_plotメソッド処理のうち、説明変数の数に応じたデータ分割等を行う)
+        """
+        # 説明変数の数
+        x_num = X.shape[1]
+        # チャート（決定境界図 or クラス確率図）使用DataFrame
+        df_chart = pd.DataFrame(X[:, x_chart_indices], columns=x_chart)
+        # チャート非使用DataFrame
+        X_not_chart = X[:, [i for i in range(X.shape[1]) if i not in x_chart_indices]]
+        df_not_chart = pd.DataFrame(X_not_chart, columns=x_not_chart)
+        # 結合＆目的変数実測値と予測値追加
+        df_all = df_chart.join(df_not_chart)
+        df_all = df_all.join(pd.DataFrame(y_true, columns=['y_true']))
+        df_all = df_all.join(pd.DataFrame(y_pred, columns=['y_pred']))
+        # チャート非使用変数を標準化してDataFrameに追加
+        if x_num >= 3:
+            X_not_chart_norm = stats.zscore(df_not_chart)
+            df_all = df_all.join(pd.DataFrame(X_not_chart_norm, columns=[f'normalize_{c}' for c in df_not_chart]))
+
+        # チャートのX1軸およびX2軸の表示範囲(最大最小値 + extendsigma)
+        x1_min = np.min(X[:, x_chart_indices[0]])
+        x1_max = np.max(X[:, x_chart_indices[0]])
+        x1_std = np.std(X[:, x_chart_indices[0]])
+        x1_start = x1_min - x1_std * chart_extendsigma
+        x1_end = x1_max + x1_std * chart_extendsigma
+        x2_min = np.min(X[:, x_chart_indices[1]])
+        x2_max = np.max(X[:, x_chart_indices[1]])
+        x2_std = np.std(X[:, x_chart_indices[1]])
+        x2_start = x2_min - x2_std * chart_extendsigma
+        x2_end = x2_max + x2_std * chart_extendsigma
+
+        # プロットする図の数(sigmarange外「2枚」 + sigmarange内「int(pair_sigmarange / pair_sigmainterval) * 2枚」)
+        pair_n = int(pair_sigmarange / pair_sigmainterval) * 2 + 2
+        # チャート非使用変数をプロットする範囲の下限(標準化後)
+        pair_min = -(pair_n - 2) / 2 * pair_sigmainterval
+
+        # 説明変数が2次元のとき (図は1枚のみ)
+        if x_num == 2:
+            pair_w = 1
+            pair_h = 1
+        # 説明変数が3次元のとき (図はpair_n × 1枚)
+        elif x_num == 3:
+            pair_w = 1
+            pair_h = pair_n
+        # 説明変数が4次元のとき (図はpair_n × pair_n枚)
+        elif x_num == 4:
+            pair_w = pair_n
+            pair_h = pair_n
+
+        # figsize (全ての図全体のサイズ)指定
+        if 'figsize' not in subplot_kws.keys():
+            subplot_kws['figsize'] = (pair_w * 6, pair_h * 5)
+        # プロット用のaxes作成
+        fig, axes = plt.subplots(pair_h, pair_w, **subplot_kws)
+        if cv_index is not None:
+            fig.suptitle(f'CV No.{cv_index}')
+
+        # 図ごとにプロット
+        for i in range(pair_h):
+            for j in range(pair_w):
+                # pair縦軸変数(標準化後)の最小値
+                if i == 0:
+                    h_min = -float('inf')
+                    h_mean = pair_min - pair_sigmainterval / 2  # チャート非使用変数指定用の平均値
+                else:
+                    h_min = pair_min + (i - 1) * pair_sigmainterval
+                    h_mean = pair_min + (i - 0.5) * pair_sigmainterval  # チャート非使用変数指定用の平均値
+                # pair縦軸変数(標準化後)の最大値
+                if i == pair_h - 1:
+                    h_max = float('inf')
+                else:
+                    h_max = pair_min + i * pair_sigmainterval
+                # pair横軸変数(標準化後)の最小値
+                if j == 0:
+                    w_min = -float('inf')
+                    w_mean = pair_min - pair_sigmainterval / 2  # チャート非使用変数指定用の平均値
+                else:
+                    w_min = pair_min + (j - 1) * pair_sigmainterval
+                    w_mean = pair_min + (j - 0.5) * pair_sigmainterval  # チャート非使用変数指定用の平均値
+                # pair横軸変数(標準化後)の最大値
+                if j == pair_w - 1:
+                    w_max = float('inf')
+                else:
+                    w_max = pair_min + j * pair_sigmainterval
+
+                # 説明変数が2次元のとき (図は1枚のみ)
+                if x_num == 2:
+                    ax = axes
+                    df_pair = df_all.copy()
+                    other_x = []
+                # 説明変数が3次元のとき (図はpair_n × 1枚)
+                elif x_num == 3:
+                    ax = axes[i]
+                    # 縦軸変数範囲内のみのデータを抽出
+                    df_pair = df_all[(df_all[f'normalize_{x_not_chart[0]}'] >= h_min) & (df_all[f'normalize_{x_not_chart[0]}'] < h_max)]
+                    # 決定境界図非使用変数の標準化逆変換
+                    x3_mean = np.mean(x_not_chart[:, 0])
+                    x3_std = np.std(x_not_chart[:, 0])
+                    other_x = [h_mean * x3_std + x3_mean]
+                # 説明変数が4次元のとき (図はpair_n × pair_n枚)
+                elif x_num == 4:
+                    ax = axes[j, i]
+                    # 縦軸変数範囲内のみのデータを抽出
+                    df_pair = df_all[(df_all[f'normalize_{x_not_chart[0]}'] >= h_min) & (df_all[f'normalize_{x_not_chart[0]}'] < h_max)]
+                    # 横軸変数範囲内のみのデータを抽出
+                    df_pair = df_pair[(df_pair[f'normalize_{x_not_chart[1]}'] >= w_min) & (df_pair[f'normalize_{x_not_chart[1]}'] < w_max)]
+                    # チャート非使用変数の標準化逆変換
+                    x3_mean = np.mean(x_not_chart[:, 0])
+                    x3_std = np.std(x_not_chart[:, 0])
+                    x4_mean = np.mean(x_not_chart[:, 1])
+                    x4_std = np.std(x_not_chart[:, 1])
+                    other_x = [h_mean * x3_std + x3_mean, w_mean * x4_std + x4_mean]
+                
+                cls._chart_plot_2d(trained_model, x_chart, 'y_true', 'y_pred', df_pair, x_chart_indices,
+                                      x1_start, x1_end, x2_start, x2_end, other_x,
+                                      chart_type, vmin, vmax, ax, plot_scatter,
+                                      scatter_color_dict, scatter_marker_dict,
+                                      contourf_kws=contourf_kws, scatter_kws=scatter_kws)
+
+                # グラフタイトルとして、チャート非使用変数の範囲を記載（説明変数が3次元以上のとき）
+                if x_num == 3:
+                    if i == 0:
+                        ax.set_title(f'{x_not_chart[0]}=- {cls._round_digits(h_max * x3_std + x3_mean, rounddigit=rounddigit_x3)} (- {h_max}σ)')
+                    elif i == pair_h - 1:
+                        ax.set_title(f'{x_not_chart[0]}={cls._round_digits(h_min * x3_std + x3_mean, rounddigit=rounddigit_x3)} - ({h_min}σ -)')
+                    else:
+                        ax.set_title(f'{x_not_chart[0]}={cls._round_digits(h_min * x3_std + x3_mean, rounddigit=rounddigit_x3)} - {cls._round_digits(h_max * x3_std + x3_mean, rounddigit=rounddigit_x3)} ({h_min}σ - {h_max}σ)')
+                if x_num == 4:
+                    ax.set_title(f'{x_not_chart[0]}= {h_min}σ - {h_max}σ  {x_not_chart[1]}= {w_min}σ - {w_max}σ')
+
+    @classmethod
+    def class_separator_plot(cls, model, x: List[str], y: str, data: pd.DataFrame, x_chart: List[str] = None,
+                             pair_sigmarange = 1.5, pair_sigmainterval = 0.5, chart_extendsigma = 0.5,
+                             plot_scatter = 'class', rounddigit_x3=2,
+                             true_marker = 'o', false_marker = 'x',
+                             cv=None, cv_seed=42, display_cv_indices = 0,
+                             model_params=None, fit_params=None, subplot_kws=None, contourf_kws=None, scatter_kws=None):
+        """
+        2～4次元説明変数の分類決定境界可視化
+
+        Parameters
+        ----------
+        model:
+            使用する回帰モデル(scikit-learn API)
+        x: List[str]
+            説明変数カラム (列名指定)
+        y: str
+            目的変数カラム (列名指定)
+        data: pd.DataFrame
+            フィッティング対象のデータ
+        x_chart: List[str], optional
+            説明変数のうち、決定境界図表示対象のカラム (Noneなら前から2カラム自動選択)
+        pair_sigmarange: float, optional
+            決定境界図非使用変数の分割範囲 (pair_sigmarange=2なら、-2σ~2σの範囲でpair_sigmaintervalに従い決定境界図分割)
+        pair_sigmainterval: float, optional
+            決定境界図非使用変数の1枚あたり表示範囲 (pair_sigmainterval=0.5なら、‥1σ~-0.5σ, 0.5σ~-0σ, 0σ~0.5σ, 0.5σ~1σ‥というようにヒートマップ分割)
+        chart_extendsigma: float, optional
+            決定境界図縦軸横軸の表示拡張範囲 (決定境界図使用変数の最大最小値 + extendsigmaが横軸範囲となる)
+        plot_scatter: str, optional
+            散布図の描画種類('error':正誤で色分け, 'class':クラスで色分け, None:散布図表示なし)        
+        rounddigit_x3: int, optional
+            決定境界図非表示軸の小数丸め桁数
+        true_marker: str, optional
+            正解クラスの散布図プロット形状
+        false_marker: str, optional
+            不正解クラスの散布図プロット形状
+        cv: int or KFold, optional
+            クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)
+        cv_seed: int, optional
+            クロスバリデーションの乱数シード
+        display_cv_indices: int, optional
+            表示対象のクロスバリデーション番号 (指定したCV番号での回帰結果が表示される。リスト指定も可)
+        model_params: Dict, optional
+            回帰モデルに渡すパラメータ (チューニング後のパラメータがgood、Noneならデフォルト)
+        fit_params: Dict, optional
+            学習時のパラメータをdict指定 (例: XGBoostのearly_stopping_rounds)
+            Noneならデフォルト
+            Pipelineのときは{学習器名__パラメータ名:パラメータの値,‥}で指定する必要あり
+        subplot_kws: dict, optional
+            プロット用のplt.subplots()に渡す引数 (例：figsize)
+        contourf_kws: dict, optional
+            決定境界図用のax.contourf()に渡す引数
+        scatter_kws: dict, optional
+            散布図用のax.scatter()に渡す引数
+        """
+        # 説明変数xの次元が2～4以外ならエラーを出す
+        if len(x) < 2 or len(x) > 4:
+            raise Exception('length of x must be 2 to 4')
+        
+        # display_cv_indicesをList化
+        if isinstance(display_cv_indices, int):
+            display_cv_indices = [display_cv_indices]
+        elif not isinstance(x, list):
+            raise Exception('the "cv_display_num" argument must be int or List[int]')
+        
+        # xをndarray化
+        if isinstance(x, list):
+            X = data[x].values
+        else:
+            raise Exception('the "x" argument must be str or str')
+        # yをndarray化
+        if isinstance(y, str):
+            y_true = data[y].values
+        else:
+            raise Exception('the "y" argument must be str')
+        
+        # 決定境界図表示用の列を抽出
+        if x_chart == None:  # 列名指定していないとき、前から2列を抽出
+            x_chart = x[:2]
+            x_chart_indices = [0, 1]
+        else:  # 列名指定しているとき、該当列のXにおけるインデックス(0～3)を保持
+            if len(x_chart) != 2:
+                raise Exception('length of x_chart must be 2')
+            x_chart_indices = []
+            for colname in x_chart:
+                x_chart_indices.append(x.index(colname))
+        # 決定境界図表示以外の列
+        x_not_chart = [colname for colname in x if colname not in x_chart]        
+
+        # クラス名とカラーマップを紐づけ(色分けを全ての図で統一用)
+        class_list = data[y].values.tolist()
+        class_list = sorted(set(class_list), key=class_list.index)
+        scatter_color_dict = dict(zip(class_list, cls.SCATTER_HUECOLORS[0:len(class_list)]))
+        # 散布図マーカー形状をdict化
+        scatter_marker_dict = {True: true_marker, False: false_marker}
+
+        # 学習器パラメータがあれば適用
+        if model_params is not None:
+            model.set_params(**model_params)
+        # 学習時パラメータがNoneなら空のdictを入力
+        if fit_params is None:
+            fit_params = {}
+        # subplot_kwsがNoneなら空のdictを入力
+        if subplot_kws is None:
+            subplot_kws = {}
+        # contourf_kwsがNoneなら空のdictを入力
+        if contourf_kws is None:
+            contourf_kws = {}
+        # scatter_kwsがNoneなら空のdictを入力
+        if scatter_kws is None:
+            scatter_kws = {}
+        
+        # クロスバリデーション有無で場合分け
+        # クロスバリデーション未実施時(学習データから学習してプロット)
+        if cv is None:
+            # 学習と推論
+            model.fit(X, y_true, **fit_params)
+            y_pred = model.predict(X)
+            # 誤差最大値
+
+            # 決定境界図をプロット
+            cls._class_chart_plot(model, X, y_pred, y_true, x_chart, x_not_chart, x_chart_indices,
+                               pair_sigmarange = pair_sigmarange, pair_sigmainterval=pair_sigmainterval, chart_extendsigma=chart_extendsigma,
+                               chart_type='separator', vmin=None, vmax=None, plot_scatter=plot_scatter,
+                               scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict,
+                               rounddigit_x3=rounddigit_x3,
+                               cv_index=None, subplot_kws=subplot_kws, contourf_kws=contourf_kws, scatter_kws=scatter_kws)
             
         # クロスバリデーション実施時(分割ごとに別々にプロット＆指標算出)
         if cv is not None:
