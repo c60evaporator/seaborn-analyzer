@@ -1208,7 +1208,7 @@ class regplot():
 
 class classplot():
     # 散布図カラーマップ
-    SCATTER_HUECOLORS = ['green', 'red', 'mediumblue', 'brown', 'darkmagenta', 'darkorange', 'gold', 'grey']
+    SCATTER_COLORS = ['green', 'red', 'mediumblue', 'brown', 'darkmagenta', 'darkorange', 'gold', 'grey']
     # デフォルトでの決定境界図の透明度(alpha)
     DEFAULT_SEPARATOR_ALPHA = 0.3
 
@@ -1297,10 +1297,15 @@ class classplot():
                                marker=scatter_marker_dict[name],
                                **scatter_kws)
             elif plot_scatter == 'class':  # クラスで色分け
-                for name, group in data.groupby(['error', y_true_col]):
+                for name, group in data.groupby(y_true_col):
                     ax.scatter(group[x_chart[0]].values, group[x_chart[1]].values,
-                               label=f'{name[1]}   {name[0]}', c=scatter_color_dict[name[1]],
-                               marker=scatter_marker_dict[name[0]],
+                               label=name, c=scatter_color_dict[name],
+                               **scatter_kws)
+            elif plot_scatter == 'class_error':  # クラスと正誤で色分け
+                for name, group in data.groupby([y_true_col, 'error']):
+                    ax.scatter(group[x_chart[0]].values, group[x_chart[1]].values,
+                               label=f'{name[0]}   {name[1]}', c=scatter_color_dict[name[0]],
+                               marker=scatter_marker_dict[name[1]],
                                **scatter_kws)
             # 凡例表示
             ax.legend()
@@ -1446,8 +1451,8 @@ class classplot():
     @classmethod
     def class_separator_plot(cls, model, x: List[str], y: str, data: pd.DataFrame, x_chart: List[str] = None,
                              pair_sigmarange = 1.5, pair_sigmainterval = 0.5, chart_extendsigma = 0.5,
-                             plot_scatter = 'class', rounddigit_x3=2,
-                             true_marker = 'o', false_marker = 'x',
+                             plot_scatter = 'class_error', rounddigit_x3=2,
+                             scatter_colors = None, true_marker = 'o', false_marker = 'x',
                              cv=None, cv_seed=42, display_cv_indices = 0,
                              model_params=None, fit_params=None, subplot_kws=None, contourf_kws=None, scatter_kws=None):
         """
@@ -1475,6 +1480,8 @@ class classplot():
             散布図の描画種類('error':正誤で色分け, 'class':クラスで色分け, None:散布図表示なし)        
         rounddigit_x3: int, optional
             決定境界図非表示軸の小数丸め桁数
+        scatter_colors: List[str], optional
+            クラスごとのプロット色のリスト
         true_marker: str, optional
             正解クラスの散布図プロット形状
         false_marker: str, optional
@@ -1530,12 +1537,14 @@ class classplot():
             for colname in x_chart:
                 x_chart_indices.append(x.index(colname))
         # 決定境界図表示以外の列
-        x_not_chart = [colname for colname in x if colname not in x_chart]        
+        x_not_chart = [colname for colname in x if colname not in x_chart]
 
         # クラス名とカラーマップを紐づけ(色分けを全ての図で統一用)
+        if scatter_colors == None:
+            scatter_colors = cls.SCATTER_COLORS
         class_list = data[y].values.tolist()
         class_list = sorted(set(class_list), key=class_list.index)
-        scatter_color_dict = dict(zip(class_list, cls.SCATTER_HUECOLORS[0:len(class_list)]))
+        scatter_color_dict = dict(zip(class_list, scatter_colors[0:len(class_list)]))
         # 散布図マーカー形状をdict化
         scatter_marker_dict = {True: true_marker, False: false_marker}
 
