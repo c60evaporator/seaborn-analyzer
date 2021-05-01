@@ -1207,8 +1207,10 @@ class regplot():
 
 
 class classplot():
-    # 散布図カラーマップ
+    # 散布図カラーリスト
     SCATTER_COLORS = ['green', 'red', 'mediumblue', 'brown', 'darkmagenta', 'darkorange', 'gold', 'grey']
+    # クラス確率図カラーマップ
+    PROB_CMAP = ['Greens', 'Reds', 'Blues', 'YlOrBr', 'Purples', 'OrRd', 'Wistia', 'Greys']
     # デフォルトでの決定境界図の透明度(alpha)
     DEFAULT_SEPARATOR_ALPHA = 0.3
 
@@ -1453,7 +1455,7 @@ class classplot():
                              pair_sigmarange = 1.5, pair_sigmainterval = 0.5, chart_extendsigma = 0.5,
                              plot_scatter = 'class_error', rounddigit_x3=2,
                              scatter_colors = None, true_marker = 'o', false_marker = 'x',
-                             cv=None, cv_seed=42, display_cv_indices = 0,
+                             cv=None, cv_seed=42, cv_group=None, display_cv_indices = 0,
                              model_params=None, fit_params=None, subplot_kws=None, contourf_kws=None, scatter_kws=None):
         """
         2～4次元説明変数の分類決定境界可視化
@@ -1490,6 +1492,8 @@ class classplot():
             クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)
         cv_seed: int, optional
             クロスバリデーションの乱数シード
+        cv_group: str, optional
+            GroupKFold、LeaveOneGroupOutのグルーピング対象カラム (列名指定)
         display_cv_indices: int, optional
             表示対象のクロスバリデーション番号 (指定したCV番号での回帰結果が表示される。リスト指定も可)
         model_params: Dict, optional
@@ -1570,8 +1574,6 @@ class classplot():
             # 学習と推論
             model.fit(X, y_true, **fit_params)
             y_pred = model.predict(X)
-            # 誤差最大値
-
             # 決定境界図をプロット
             cls._class_chart_plot(model, X, y_pred, y_true, x_chart, x_not_chart, x_chart_indices,
                                pair_sigmarange = pair_sigmarange, pair_sigmainterval=pair_sigmainterval, chart_extendsigma=chart_extendsigma,
@@ -1588,16 +1590,16 @@ class classplot():
             # LeaveOneOutのときエラーを出す
             if isinstance(cv, LeaveOneOut):
                 raise Exception('"regression_heat_plot" method does not support "LeaveOneOut" cross validation')
-            # GroupKFold、LeaveOneGroupOutのとき、scatter_hueをグルーピング対象に指定
+            # GroupKFold、LeaveOneGroupOutのとき、y_trueをグルーピング対象に指定
             split_kws={}
             if isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
-                if scatter_hue is not None:
-                    split_kws['groups'] = data[scatter_hue].values
+                if cv_group is not None:
+                    split_kws['groups'] = data[cv_group].values
                 else:
-                    raise Exception('"GroupKFold" cross validation needs "hue" argument')
-            # LeaveOneGroupOutのとき、クロスバリデーション分割数をscatter_hueの数に指定
+                    raise Exception('"GroupKFold" cross validation needs "cv_group" argument')
+            # LeaveOneGroupOutのとき、クロスバリデーション分割数をcv_groupの数に指定
             if isinstance(cv, LeaveOneGroupOut):
-                cv_num = len(set(data[scatter_hue].values))
+                cv_num = len(set(data[cv_group].values))
             else:
                 cv_num = cv.n_splits
 
@@ -1615,23 +1617,10 @@ class classplot():
                 # 学習と推論
                 model.fit(X_train, y_train, **fit_params)
                 y_pred = model.predict(X_test)
-                # 誤差上位表示用データ取得
-                if rank_number is not None:
-                    if rank_col is None:  # 表示フィールド指定ないとき、Index使用
-                        rank_col_test = data.index.values[test]
-                    else:  # 表示フィールド指定あるとき
-                        rank_col_test = data[rank_col].values[test]
-                else:
-                    rank_col_test = None
-                # 誤差最大値
-                maxerror = np.max(np.abs(y_pred - y_test))
-                # 散布図色分け用データ取得(plot_scatter='hue'のときのみ有効))
-                hue_data = data[scatter_hue].values[test] if scatter_hue is not None and plot_scatter=='hue' else None
-                hue_name = scatter_hue if scatter_hue is not None and plot_scatter=='hue' else None
-                # ヒートマップをプロット
-                cls._reg_heat_plot(model, X_test, y_pred, y_test, x_heat, x_not_heat, x_heat_indices, hue_data, hue_name,
-                                   pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, heat_extendsigma=heat_extendsigma, heat_division=heat_division,
-                                   vmin=vmin, vmax=vmax, plot_scatter = plot_scatter, maxerror=maxerror,
-                                   rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_test, scatter_hue_dict=scatter_hue_dict,
-                                   rounddigit_rank=rounddigit_rank, rounddigit_x1=rounddigit_x1, rounddigit_x2=rounddigit_x2, rounddigit_x3=rounddigit_x3,
-                                   cv_index=i, subplot_kws=subplot_kws, heat_kws=heat_kws, scatter_kws=scatter_kws)
+                # 決定境界図をプロット
+                cls._class_chart_plot(model, X_test, y_pred, y_test, x_chart, x_not_chart, x_chart_indices,
+                                   pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, chart_extendsigma=chart_extendsigma,
+                                   chart_type='separator', vmin=None, vmax=None, plot_scatter = plot_scatter,
+                                   scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict,
+                                   rounddigit_x3=rounddigit_x3,
+                                   cv_index=i, subplot_kws=subplot_kws, contourf_kws=contourf_kws, scatter_kws=scatter_kws)
