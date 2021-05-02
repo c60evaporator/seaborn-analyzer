@@ -353,5 +353,5 @@ from custom_scatter_plot import classplot
 iris = sns.load_dataset("iris")
 features = ['petal_width', 'petal_length']
 model = SVC(probability=True)
-classplot.class_proba_plot(model, features, 'species', iris, proba_class='virginica')
+classplot.class_proba_plot(model, features, 'species', iris, proba_class='virginica', cv=2, display_cv_indices = [0, 1])
 # %%
