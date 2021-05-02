@@ -1211,7 +1211,7 @@ class classplot():
     # デフォルトでの決定境界図の透明度(alpha)
     DEFAULT_SEPARATOR_ALPHA = 0.3
     # デフォルトでのクラス確率図の等高線段階数
-    DEFAULT_PROBA_LEVELS = 15
+    DEFAULT_PROBA_LEVELS = 10
 
     def _round_digits(src: float, rounddigit: int = None, method='decimal'):
         """
@@ -1238,8 +1238,8 @@ class classplot():
     @classmethod
     def _chart_plot_2d(cls, trained_model, x_chart, y_true_col, y_pred_col, data, x_chart_indices,
                        x1_start, x1_end, x2_start, x2_end, other_x, chart_scale,
-                       proba_pred_col, proba_class_index, ax, plot_border, plot_scatter,
-                       scatter_color_dict, scatter_marker_dict,
+                       proba_pred_col, proba_class_indices, ax, plot_border, plot_scatter,
+                       scatter_color_dict, scatter_marker_dict, proba_cmap_dict,
                        contourf_kws={}, scatter_kws={}):
         """
         分類チャート（決定境界図 or クラス確率図）と各種散布図の表示
@@ -1290,12 +1290,17 @@ class classplot():
         # クラス確率図をプロット
         else:
             # グリッドデータに対してクラス確率算出
-            y_proba_grid = trained_model.predict_proba(X_all)[:, proba_class_index]
-            # グリッドデータをピボット化
-            y_proba_pivot = y_proba_grid.reshape(X1.shape)
-            # クラス確率図プロット
-            cset = ax.contourf(X1, X2, y_proba_pivot,
-                            **contourf_kws)
+            y_proba_grid = trained_model.predict_proba(X_all)[:, proba_class_indices]
+            # クラスごとに処理
+            for i, pci in enumerate(proba_class_indices):
+                # グリッドデータから該当クラスのみ抜き出してピボット化
+                y_proba_pivot = y_proba_grid[:, i].reshape(X1.shape)
+                # カラーマップをproba_cmap_dictの値から取得
+                cmap = list(proba_cmap_dict.values())[i]
+                # クラス確率図プロット
+                cset = ax.contourf(X1, X2, y_proba_pivot,
+                                   cmap=cmap,
+                                   **contourf_kws)
 
         # 境界線をプロット
         if plot_border:
@@ -1336,8 +1341,8 @@ class classplot():
     @classmethod
     def _class_chart_plot(cls, trained_model, X, y_pred, y_true, x_chart, x_not_chart, x_chart_indices,
                        pair_sigmarange=2.0, pair_sigmainterval=0.5, chart_extendsigma=0.5, chart_scale=1,
-                       proba_pred = None, proba_class_index = None, plot_border=True, plot_scatter='class', 
-                       scatter_color_dict=None, scatter_marker_dict=None,
+                       proba_pred = None, proba_class_indices = None, plot_border=True, plot_scatter='class', 
+                       scatter_color_dict=None, scatter_marker_dict=None, proba_cmap_dict=None,
                        rounddigit_x3=None,
                        cv_index=None, subplot_kws={}, contourf_kws={}, scatter_kws={}):
         """
@@ -1357,7 +1362,7 @@ class classplot():
         df_all = df_all.join(pd.DataFrame(y_pred, columns=['y_pred']))
         # クラス確率追加（クラス確率図プロット時のみ）
         if proba_pred is not None:
-            proba_pred_col = 'proba_pred'
+            proba_pred_col = list(proba_cmap_dict.keys())
             df_all = df_all.join(pd.DataFrame(proba_pred, columns=[proba_pred_col]))
         else:
             proba_pred_col = None
@@ -1462,8 +1467,8 @@ class classplot():
                 
                 cls._chart_plot_2d(trained_model, x_chart, 'y_true', 'y_pred', df_pair, x_chart_indices,
                                       x1_start, x1_end, x2_start, x2_end, other_x, chart_scale,
-                                      proba_pred_col, proba_class_index, ax, plot_border, plot_scatter,
-                                      scatter_color_dict, scatter_marker_dict,
+                                      proba_pred_col, proba_class_indices, ax, plot_border, plot_scatter,
+                                      scatter_color_dict, scatter_marker_dict, proba_cmap_dict,
                                       contourf_kws=contourf_kws, scatter_kws=scatter_kws)
 
                 # グラフタイトルとして、チャート非使用変数の範囲を記載（説明変数が3次元以上のとき）
@@ -1611,8 +1616,8 @@ class classplot():
             # 決定境界図をプロット
             cls._class_chart_plot(model, X, y_pred, y_true, x_chart, x_not_chart, x_chart_indices,
                                pair_sigmarange = pair_sigmarange, pair_sigmainterval=pair_sigmainterval, chart_extendsigma=chart_extendsigma, chart_scale=chart_scale,
-                               proba_pred = None, proba_class_index = None, plot_border = True, plot_scatter = plot_scatter,
-                               scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict,
+                               proba_pred = None, proba_class_indices = None, plot_border = True, plot_scatter = plot_scatter,
+                               scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict, proba_cmap_dict=None,
                                rounddigit_x3=rounddigit_x3,
                                cv_index=None, subplot_kws=subplot_kws, contourf_kws=contourf_kws, scatter_kws=scatter_kws)
             
@@ -1654,15 +1659,15 @@ class classplot():
                 # 決定境界図をプロット
                 cls._class_chart_plot(model, X_test, y_pred, y_test, x_chart, x_not_chart, x_chart_indices,
                                    pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, chart_extendsigma=chart_extendsigma, chart_scale=chart_scale,
-                                   proba_pred = None, proba_class_index = None, plot_border = True, plot_scatter = plot_scatter,
-                                   scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict,
+                                   proba_pred = None, proba_class_indices = None, plot_border = True, plot_scatter = plot_scatter,
+                                   scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict, proba_cmap_dict=None,
                                    rounddigit_x3=rounddigit_x3,
                                    cv_index=i, subplot_kws=subplot_kws, contourf_kws=contourf_kws, scatter_kws=scatter_kws)
 
     @classmethod
     def class_proba_plot(cls, model, x: List[str], y: str, data: pd.DataFrame, x_chart: List[str] = None,
                          pair_sigmarange = 1.5, pair_sigmainterval = 0.5, chart_extendsigma = 0.5, chart_scale = 1,
-                         plot_border = True, plot_scatter = 'class', rounddigit_x3 = 2, proba_class = None, proba_cmap = None,
+                         plot_border = True, plot_scatter = 'class', rounddigit_x3 = 2, proba_class = None, proba_cmap_dict = None,
                          scatter_colors = None, true_marker = 'o', false_marker = 'x',
                          cv=None, cv_seed=42, cv_group=None, display_cv_indices = 0,
                          model_params=None, fit_params=None, subplot_kws=None, contourf_kws=None, scatter_kws=None):
@@ -1695,10 +1700,10 @@ class classplot():
             散布図の描画種類('error':正誤で色分け, 'class':クラスで色分け, None:散布図表示なし)
         rounddigit_x3: int, optional
             クラス確率図非表示軸の小数丸め桁数
-        proba_class: str, optional
+        proba_class: str or List[str], optional
             確率表示対象のクラス名
-        proba_cmap: str, optional
-            クラス確率図のカラーマップ
+        proba_cmap_dict: dict[str, str], optional
+            クラス確率図のカラーマップ (キーがクラス名、値がカラーマップのdictで指定)
         scatter_colors: List[str], optional
             クラスごとのプロット色のリスト
         true_marker: str, optional
@@ -1775,28 +1780,38 @@ class classplot():
         # クラス確率図表示以外の列
         x_not_chart = [colname for colname in x if colname not in x_chart]
 
-        # クラス名と散布図色を紐づけ(色分けを全ての図で統一用)
+        # scatter_colors未指定のとき、デフォルト値を使用
         if scatter_colors is None:
             scatter_colors = cls.SCATTER_COLORS
+        # クラス名と散布図色を紐づけ(色分けを全ての図で統一用)
         class_list = data[y].values.tolist()
         class_list = sorted(set(class_list), key=class_list.index)
         scatter_color_dict = dict(zip(class_list, scatter_colors[0:len(class_list)]))
         # 散布図マーカー形状をdict化
         scatter_marker_dict = {True: true_marker, False: false_marker}
 
-        # 確率表示対象クラス名未指定のとき、最初のクラスを使用
+        # proba_class未指定のとき、最初のクラスを使用
         if proba_class is None:
             proba_class = class_list[0]
-        elif proba_class not in class_list:
-            raise Exception(f'"{proba_class}"" is not in the "{y}" column')
-        # 確率表示対象クラスのインデックスを取得
-        proba_class_index = class_list.index(proba_class)
-        # クラス名からカラーマップを紐づけ
-        if proba_cmap is None:
-            proba_cmap = cls.PROB_CMAP[proba_class_index]
-        # カラーマップをcontourf_kwsに追加
-        if 'cmap' not in contourf_kws.keys():
-            contourf_kws['cmap'] = proba_cmap
+        # proba_classをList化
+        if isinstance(proba_class, int) or isinstance(proba_class, str) or isinstance(proba_class, bool):
+            proba_class = [proba_class]
+        elif not isinstance(x, list):
+            raise Exception('the "proba_class" argument must be int, str, bool or List')
+        # List化したproba_classを走査してデータ上でのインデックスを取得
+        proba_class_indices = []
+        for pc in proba_class:
+            if pc not in class_list:  # 指定したproba_classがデータ上に存在しないとき、エラーを出す
+                raise Exception(f'"{proba_class}"" is not in the "{y}" column')
+            proba_class_indices.append(class_list.index(pc))
+        # proba_cmap_dict未指定のとき、デフォルト値を使用
+        if proba_cmap_dict is None:
+            proba_cmap_dict = dict(zip(proba_class,
+                                       [cls.PROB_CMAP[pci] for pci in proba_class_indices]))
+        # proba_cmap_dictがproba_classと一致していないとき、エラーを出す
+        if list(proba_cmap_dict.keys()) != proba_class:
+            raise Exception(f'the keys of the "proba_cmap_dict" argument must be equal to the argument "proba_class"')
+
         # contourf_kwsにalpha指定ないとき、DEFAULT_SEPARATOR_ALPHAを使用
         if 'alpha' not in contourf_kws.keys():
             contourf_kws['alpha'] = cls.DEFAULT_SEPARATOR_ALPHA
@@ -1811,14 +1826,14 @@ class classplot():
             model.fit(X, y_true, **fit_params)
             y_pred = model.predict(X)
             # クラス確率を推定
-            proba_pred = model.predict_proba(X)[:, proba_class_index]
+            proba_pred = model.predict_proba(X)[:, proba_class_indices]
             # TODO:クラス確率の順番が逆転した時の対策をメソッドとして実装する必要あり
             # https://qiita.com/rawHam/items/3bcb6a68a533f2b82a85
             # クラス確率図をプロット
             cls._class_chart_plot(model, X, y_pred, y_true, x_chart, x_not_chart, x_chart_indices,
                                pair_sigmarange = pair_sigmarange, pair_sigmainterval=pair_sigmainterval, chart_extendsigma=chart_extendsigma, chart_scale=chart_scale,
-                               proba_pred = proba_pred, proba_class_index = proba_class_index, plot_border = plot_border, plot_scatter = plot_scatter,
-                               scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict,
+                               proba_pred = proba_pred, proba_class_indices = proba_class_indices, plot_border = plot_border, plot_scatter = plot_scatter,
+                               scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict, proba_cmap_dict=proba_cmap_dict,
                                rounddigit_x3=rounddigit_x3,
                                cv_index=None, subplot_kws=subplot_kws, contourf_kws=contourf_kws, scatter_kws=scatter_kws)
             
@@ -1854,22 +1869,24 @@ class classplot():
                 y_train = y_true[train]
                 X_test = X[test]
                 y_test = y_true[test]
-                # 確率表示対象クラスのインデックスを再取得（存在しなければ飛ばす）
+                # proba_class_indicesを学習データから再取得（存在しなければ飛ばす）
                 class_list_train = y_train.tolist()
                 class_list_train = sorted(set(class_list_train), key=class_list_train.index)
-                if proba_class not in class_list_train:
-                    print(f'there is no "{y}={proba_class}" row in the train data')
+                proba_class_indices = [class_list_train.index(pc) for pc in proba_class if pc in class_list_train]
+                if len(proba_class_indices) == 0:
+                    print(f'there is no assigned "proba_class" in the train data')
                     continue
-                proba_class_index = class_list_train.index(proba_class)
+                # proba_cmap_dictも学習データから再取得
+                proba_cmap_dict = {k: v for k, v in proba_cmap_dict.items() if k in class_list_train}
                 # 学習と推論
                 model.fit(X_train, y_train, **fit_params)
                 y_pred = model.predict(X_test)
                 # クラス確率を推定
-                proba_pred = model.predict_proba(X_test)[:, proba_class_index]
+                proba_pred = model.predict_proba(X_test)[:, proba_class_indices]
                 # クラス確率図をプロット
                 cls._class_chart_plot(model, X_test, y_pred, y_test, x_chart, x_not_chart, x_chart_indices,
                                    pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, chart_extendsigma=chart_extendsigma, chart_scale=chart_scale,
-                                   proba_pred = proba_pred, proba_class_index = proba_class_index, plot_border = plot_border, plot_scatter = plot_scatter,
-                                   scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict,
+                                   proba_pred = proba_pred, proba_class_indices = proba_class_indices, plot_border = plot_border, plot_scatter = plot_scatter,
+                                   scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict, proba_cmap_dict=proba_cmap_dict,
                                    rounddigit_x3=rounddigit_x3,
                                    cv_index=i, subplot_kws=subplot_kws, contourf_kws=contourf_kws, scatter_kws=scatter_kws)
