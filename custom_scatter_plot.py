@@ -947,7 +947,7 @@ class regplot():
                 elif x_num == 3:
                     ax = axes[i]
                     # 縦軸変数範囲内のみのデータを抽出
-                    df_pair = df_all[(df_all[f'normalize_{x_not_heat[0]}'] >= h_min) & (df_all[f'normalize_{x_not_heat[0]}'] < h_max)]
+                    df_pair = df_all[(df_all[f'normalize_{x_not_heat[0]}'] >= h_min) & (df_all[f'normalize_{x_not_heat[0]}'] < h_max)].copy()
                     # ヒートマップ非使用変数の標準化逆変換
                     x3_mean = np.mean(X_not_heat[:, 0])
                     x3_std = np.std(X_not_heat[:, 0])
@@ -956,7 +956,7 @@ class regplot():
                 elif x_num == 4:
                     ax = axes[j, i]
                     # 縦軸変数範囲内のみのデータを抽出
-                    df_pair = df_all[(df_all[f'normalize_{x_not_heat[0]}'] >= h_min) & (df_all[f'normalize_{x_not_heat[0]}'] < h_max)]
+                    df_pair = df_all[(df_all[f'normalize_{x_not_heat[0]}'] >= h_min) & (df_all[f'normalize_{x_not_heat[0]}'] < h_max)].copy()
                     # 横軸変数範囲内のみのデータを抽出
                     df_pair = df_pair[(df_pair[f'normalize_{x_not_heat[1]}'] >= w_min) & (df_pair[f'normalize_{x_not_heat[1]}'] < w_max)]
                     # ヒートマップ非使用変数の標準化逆変換
@@ -1213,6 +1213,28 @@ class classplot():
     # デフォルトでのクラス確率図の等高線段階数
     DEFAULT_PROBA_LEVELS = 15
 
+    def _round_digits(src: float, rounddigit: int = None, method='decimal'):
+        """
+        指定桁数で小数を丸める
+
+        Parameters
+        ----------
+        src : float
+            丸め対象の数値
+        rounddigit : int
+            フィッティング線の表示範囲（標準偏差の何倍まで表示するか指定）
+        method : int
+            桁数決定手法（'decimal':小数点以下, 'sig':有効数字(Decimal指定), 'format':formatで有効桁数指定）
+        """
+        if method == 'decimal':
+            return round(src, rounddigit)
+        elif method == 'sig':
+            with decimal.localcontext() as ctx:
+                ctx.prec = rounddigit
+                return ctx.create_decimal(src)
+        elif method == 'format':
+            return '{:.{width}g}'.format(src, width=rounddigit)
+
     @classmethod
     def _chart_plot_2d(cls, trained_model, x_chart, y_true_col, y_pred_col, data, x_chart_indices,
                        x1_start, x1_end, x2_start, x2_end, other_x, chart_scale,
@@ -1288,7 +1310,7 @@ class classplot():
             if 'edgecolors' not in scatter_kws.keys():
                 scatter_kws['edgecolors'] = 'darkgrey'
             # 正誤を判定
-            data['error'] = data[y_true_col] == data[y_pred_col]
+            data['error'] = (data[y_true_col] == data[y_pred_col])
             # 色分け
             if plot_scatter == 'error':  # 正誤で色分け
                 cdict = {True:'blue', False:'red'}
@@ -1419,23 +1441,23 @@ class classplot():
                 elif x_num == 3:
                     ax = axes[i]
                     # 縦軸変数範囲内のみのデータを抽出
-                    df_pair = df_all[(df_all[f'normalize_{x_not_chart[0]}'] >= h_min) & (df_all[f'normalize_{x_not_chart[0]}'] < h_max)]
+                    df_pair = df_all[(df_all[f'normalize_{x_not_chart[0]}'] >= h_min) & (df_all[f'normalize_{x_not_chart[0]}'] < h_max)].copy()
                     # 決定境界図非使用変数の標準化逆変換
-                    x3_mean = np.mean(x_not_chart[:, 0])
-                    x3_std = np.std(x_not_chart[:, 0])
+                    x3_mean = np.mean(X_not_chart[:, 0])
+                    x3_std = np.std(X_not_chart[:, 0])
                     other_x = [h_mean * x3_std + x3_mean]
                 # 説明変数が4次元のとき (図はpair_n × pair_n枚)
                 elif x_num == 4:
                     ax = axes[j, i]
                     # 縦軸変数範囲内のみのデータを抽出
-                    df_pair = df_all[(df_all[f'normalize_{x_not_chart[0]}'] >= h_min) & (df_all[f'normalize_{x_not_chart[0]}'] < h_max)]
+                    df_pair = df_all[(df_all[f'normalize_{x_not_chart[0]}'] >= h_min) & (df_all[f'normalize_{x_not_chart[0]}'] < h_max)].copy()
                     # 横軸変数範囲内のみのデータを抽出
                     df_pair = df_pair[(df_pair[f'normalize_{x_not_chart[1]}'] >= w_min) & (df_pair[f'normalize_{x_not_chart[1]}'] < w_max)]
                     # チャート非使用変数の標準化逆変換
-                    x3_mean = np.mean(x_not_chart[:, 0])
-                    x3_std = np.std(x_not_chart[:, 0])
-                    x4_mean = np.mean(x_not_chart[:, 1])
-                    x4_std = np.std(x_not_chart[:, 1])
+                    x3_mean = np.mean(X_not_chart[:, 0])
+                    x3_std = np.std(X_not_chart[:, 0])
+                    x4_mean = np.mean(X_not_chart[:, 1])
+                    x4_std = np.std(X_not_chart[:, 1])
                     other_x = [h_mean * x3_std + x3_mean, w_mean * x4_std + x4_mean]
                 
                 cls._chart_plot_2d(trained_model, x_chart, 'y_true', 'y_pred', df_pair, x_chart_indices,
