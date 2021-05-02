@@ -1210,8 +1210,14 @@ class classplot():
     PROB_CMAP = ['Greens', 'Reds', 'Blues', 'YlOrBr', 'Purples', 'OrRd', 'Wistia', 'Greys']
     # デフォルトでの決定境界図の透明度(alpha)
     DEFAULT_SEPARATOR_ALPHA = 0.3
+    # デフォルトでのクラス確率図等高線モードの透明度(alpha)
+    DEFAULT_PROBA_CONTOURF_ALPHA = 0.5
+    # デフォルトでのクラス確率図透明度補正シグモイド関数のゲイン
+    DEFAULT_PROBA_CONTOURF_SIG_GAIN = 0.5
     # デフォルトでのクラス確率図の等高線段階数
-    DEFAULT_PROBA_LEVELS = 10
+    DEFAULT_PROBA_CONTOURF_LEVELS = 10
+    # デフォルトでのクラス確率図RGB画像モードの透明度(alpha)
+    DEFAULT_PROBA_RGB_ALPHA = 0.45
 
     def _round_digits(src: float, rounddigit: int = None, method='decimal'):
         """
@@ -1239,8 +1245,8 @@ class classplot():
     def _chart_plot_2d(cls, trained_model, x_chart, y_true_col, y_pred_col, data, x_chart_indices,
                        x1_start, x1_end, x2_start, x2_end, other_x, chart_scale,
                        proba_pred_col, proba_class_indices, ax, plot_border, plot_scatter,
-                       scatter_color_dict, scatter_marker_dict, proba_cmap_dict,
-                       contourf_kws={}, scatter_kws={}):
+                       scatter_color_dict, scatter_marker_dict, proba_cmap_dict, proba_type,
+                       contourf_kws={}, imshow_kws={}, scatter_kws={}):
         """
         分類チャート（決定境界図 or クラス確率図）と各種散布図の表示
         (class_separator_plotあるいはclass_prob_plotメソッドの描画処理部分)
@@ -1283,37 +1289,79 @@ class classplot():
         # 決定境界図をプロット
         if proba_pred_col is None:
             # 決定境界色分けプロット
-            cset = ax.contourf(X1, X2, y_pred_pivot,
-                            levels=np.arange(y_pred_pivot.max() + 2) - 0.5,
-                            **contourf_kws)
+            ax.contourf(X1, X2, y_pred_pivot,
+                        levels=np.arange(y_pred_pivot.max() + 2) - 0.5,
+                        **contourf_kws)
 
         # クラス確率図をプロット
         else:
+            # クラス数
+            nclass = len(proba_class_indices)
             # グリッドデータに対してクラス確率算出
             y_proba_grid = trained_model.predict_proba(X_all)[:, proba_class_indices]
-            # クラスごとに処理
-            for i, pci in enumerate(proba_class_indices):
-                # グリッドデータから該当クラスのみ抜き出してピボット化
-                y_proba_pivot = y_proba_grid[:, i].reshape(X1.shape)
-                # カラーマップをproba_cmap_dictの値から取得
-                cmap = list(proba_cmap_dict.values())[i]
-                # クラス確率図プロット
-                cset = ax.contourf(X1, X2, y_proba_pivot,
-                                   cmap=cmap,
-                                   **contourf_kws)
+
+            # contourfで等高線プロットするとき
+            if proba_type == 'contourf':
+                # alpha値を保持(描画終了後に更新前に戻すため)
+                src_alpha = contourf_kws['alpha']
+                # シグモイド関数(クラス数1のときalphaで、クラス数∞のとき1に漸近)でalphaを補正
+                contourf_kws['alpha'] = 2*(1-src_alpha)/(1+np.exp(-cls.DEFAULT_PROBA_CONTOURF_SIG_GAIN*(nclass-1)))+2*src_alpha-1
+                # クラスごとに処理
+                for i in range(nclass):
+                    # グリッドデータから該当クラスのみ抜き出してピボット化
+                    y_proba_pivot = y_proba_grid[:, i].reshape(X1.shape)
+                    # カラーマップをproba_cmap_dictの値から取得
+                    cmap = list(proba_cmap_dict.values())[i]
+                    # クラス確率図プロット
+                    ax.contourf(X1, X2, y_proba_pivot,
+                                cmap=cmap,
+                                **contourf_kws)
+                    # alpha値を更新(alpha/(1+alpha))
+                    old_alpha = contourf_kws['alpha']
+                    contourf_kws['alpha'] = old_alpha / (1 + old_alpha)
+                # alpha値を更新前に戻す
+                contourf_kws['alpha'] = src_alpha
+
+            # imshowでRGB画像プロットするとき
+            elif proba_type == 'imshow':
+                # いったんRGB各色ゼロで埋める
+                proba_g = np.zeros(X1.shape)  # 緑
+                proba_r = np.zeros(X1.shape)  # 赤
+                proba_b = np.zeros(X1.shape)  # 青
+                # RGBいずれかのカラーマップを持つクラスが存在すれば、そのクラスの確率を格納
+                for i, cmap in enumerate(proba_cmap_dict.values()):
+                    if cmap == 'Greens':
+                        proba_g = y_proba_grid[:, i].reshape(X1.shape)
+                    elif cmap == 'Reds':
+                        proba_r = y_proba_grid[:, i].reshape(X1.shape)
+                    elif cmap == 'Blues':
+                        proba_b = y_proba_grid[:, i].reshape(X1.shape)
+                    else:
+                        # imshowのとき、Greens, Reds, Blues以外のカラーマップを指定したらエラーを出す(4クラス以上は描画不可)
+                        raise Exception('only "Greens, Reds, Blues" cmap are allowd if the "proba_type" argument is "imshow"')
+                # RGBのデータを合体して上下反転
+                im_grid = np.flip(np.stack([proba_r, proba_g, proba_b], 2), axis=0)
+                # RGB画像をプロット
+                ax.imshow(im_grid,
+                          aspect="auto", extent=(x1_start, x1_end, x2_start, x2_end),
+                          **imshow_kws)
+            else:
+                raise Exception('the "proba_type" argument must be "contourf" or "imshow"')
+
 
         # 境界線をプロット
         if plot_border:
-            ax.contour(X1, X2, y_pred_pivot, cset.levels,
+            ax.contour(X1, X2, y_pred_pivot,
+                       levels=np.arange(y_pred_pivot.max() + 2) - 0.5,
                        colors='k',
                        linewidths=0.5,
                        antialiased=True)
 
         # 散布図をプロット
         if plot_scatter is not None:
-            # マーカの縁の色
+            # マーカの縁の色未指定のとき、dimgreyを指定
             if 'edgecolors' not in scatter_kws.keys():
-                scatter_kws['edgecolors'] = 'darkgrey'
+                scatter_kws['edgecolors'] = 'dimgrey'
             # 正誤を判定
             data['error'] = (data[y_true_col] == data[y_pred_col])
             # 色分け
@@ -1342,9 +1390,9 @@ class classplot():
     def _class_chart_plot(cls, trained_model, X, y_pred, y_true, x_chart, x_not_chart, x_chart_indices,
                        pair_sigmarange=2.0, pair_sigmainterval=0.5, chart_extendsigma=0.5, chart_scale=1,
                        proba_pred = None, proba_class_indices = None, plot_border=True, plot_scatter='class', 
-                       scatter_color_dict=None, scatter_marker_dict=None, proba_cmap_dict=None,
+                       scatter_color_dict=None, scatter_marker_dict=None, proba_cmap_dict=None,  proba_type=None,
                        rounddigit_x3=None,
-                       cv_index=None, subplot_kws={}, contourf_kws={}, scatter_kws={}):
+                       cv_index=None, subplot_kws=None, contourf_kws=None, imshow_kws=None, scatter_kws=None):
         """
         分類チャート（決定境界図 or クラス確率図）表示の、説明変数の数に応じた分岐処理
         (class_separator_plotあるいはclass_prob_plotメソッド処理のうち、説明変数の数に応じたデータ分割等を行う)
@@ -1468,8 +1516,8 @@ class classplot():
                 cls._chart_plot_2d(trained_model, x_chart, 'y_true', 'y_pred', df_pair, x_chart_indices,
                                       x1_start, x1_end, x2_start, x2_end, other_x, chart_scale,
                                       proba_pred_col, proba_class_indices, ax, plot_border, plot_scatter,
-                                      scatter_color_dict, scatter_marker_dict, proba_cmap_dict,
-                                      contourf_kws=contourf_kws, scatter_kws=scatter_kws)
+                                      scatter_color_dict, scatter_marker_dict, proba_cmap_dict,  proba_type,
+                                      contourf_kws=contourf_kws, imshow_kws=imshow_kws, scatter_kws=scatter_kws)
 
                 # グラフタイトルとして、チャート非使用変数の範囲を記載（説明変数が3次元以上のとき）
                 if x_num == 3:
@@ -1617,9 +1665,9 @@ class classplot():
             cls._class_chart_plot(model, X, y_pred, y_true, x_chart, x_not_chart, x_chart_indices,
                                pair_sigmarange = pair_sigmarange, pair_sigmainterval=pair_sigmainterval, chart_extendsigma=chart_extendsigma, chart_scale=chart_scale,
                                proba_pred = None, proba_class_indices = None, plot_border = True, plot_scatter = plot_scatter,
-                               scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict, proba_cmap_dict=None,
+                               scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict, proba_cmap_dict=None, proba_type=None,
                                rounddigit_x3=rounddigit_x3,
-                               cv_index=None, subplot_kws=subplot_kws, contourf_kws=contourf_kws, scatter_kws=scatter_kws)
+                               cv_index=None, subplot_kws=subplot_kws, contourf_kws=contourf_kws, imshow_kws=None, scatter_kws=scatter_kws)
             
         # クロスバリデーション実施時(分割ごとに別々にプロット＆指標算出)
         if cv is not None:
@@ -1660,17 +1708,18 @@ class classplot():
                 cls._class_chart_plot(model, X_test, y_pred, y_test, x_chart, x_not_chart, x_chart_indices,
                                    pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, chart_extendsigma=chart_extendsigma, chart_scale=chart_scale,
                                    proba_pred = None, proba_class_indices = None, plot_border = True, plot_scatter = plot_scatter,
-                                   scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict, proba_cmap_dict=None,
+                                   scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict, proba_cmap_dict=None, proba_type=None,
                                    rounddigit_x3=rounddigit_x3,
-                                   cv_index=i, subplot_kws=subplot_kws, contourf_kws=contourf_kws, scatter_kws=scatter_kws)
+                                   cv_index=i, subplot_kws=subplot_kws, contourf_kws=contourf_kws, imshow_kws=None, scatter_kws=scatter_kws)
 
     @classmethod
     def class_proba_plot(cls, model, x: List[str], y: str, data: pd.DataFrame, x_chart: List[str] = None,
                          pair_sigmarange = 1.5, pair_sigmainterval = 0.5, chart_extendsigma = 0.5, chart_scale = 1,
-                         plot_border = True, plot_scatter = 'class', rounddigit_x3 = 2, proba_class = None, proba_cmap_dict = None,
+                         plot_border = True, plot_scatter = 'class', rounddigit_x3 = 2,
+                         proba_class = None, proba_cmap_dict = None, proba_type = 'contourf',
                          scatter_colors = None, true_marker = 'o', false_marker = 'x',
                          cv=None, cv_seed=42, cv_group=None, display_cv_indices = 0,
-                         model_params=None, fit_params=None, subplot_kws=None, contourf_kws=None, scatter_kws=None):
+                         model_params=None, fit_params=None, subplot_kws=None, contourf_kws=None, imshow_kws=None, scatter_kws=None):
         """
         2～4次元説明変数のクラス確率図可視化
 
@@ -1704,6 +1753,8 @@ class classplot():
             確率表示対象のクラス名
         proba_cmap_dict: dict[str, str], optional
             クラス確率図のカラーマップ (キーがクラス名、値がカラーマップのdictで指定)
+        proba_type: str, optional
+            クラス確率図の描画種類 ('contourf':ax.contourfでプロット, 'imshow':ax.imshowでプロット(3クラスまで))
         scatter_colors: List[str], optional
             クラスごとのプロット色のリスト
         true_marker: str, optional
@@ -1727,7 +1778,9 @@ class classplot():
         subplot_kws: dict, optional
             プロット用のplt.subplots()に渡す引数 (例：figsize)
         contourf_kws: dict, optional
-            クラス確率図用のax.contourf()に渡す引数
+            クラス確率図(等高線)用のax.contourf()に渡す引数
+        imshow_kws: dict, optional
+            クラス確率図(RGB画像)用のax.imshow()に渡す引数
         scatter_kws: dict, optional
             散布図用のax.scatter()に渡す引数
         """
@@ -1752,6 +1805,9 @@ class classplot():
         # contourf_kwsがNoneなら空のdictを入力
         if contourf_kws is None:
             contourf_kws = {}
+        # imshow_kwsがNoneなら空のdictを入力
+        if imshow_kws is None:
+            imshow_kws = {}
         # scatter_kwsがNoneなら空のdictを入力
         if scatter_kws is None:
             scatter_kws = {}
@@ -1790,9 +1846,9 @@ class classplot():
         # 散布図マーカー形状をdict化
         scatter_marker_dict = {True: true_marker, False: false_marker}
 
-        # proba_class未指定のとき、最初のクラスを使用
+        # proba_class未指定のとき、全てのクラスを使用
         if proba_class is None:
-            proba_class = class_list[0]
+            proba_class = [c for c in class_list]
         # proba_classをList化
         if isinstance(proba_class, int) or isinstance(proba_class, str) or isinstance(proba_class, bool):
             proba_class = [proba_class]
@@ -1812,12 +1868,15 @@ class classplot():
         if list(proba_cmap_dict.keys()) != proba_class:
             raise Exception(f'the keys of the "proba_cmap_dict" argument must be equal to the argument "proba_class"')
 
-        # contourf_kwsにalpha指定ないとき、DEFAULT_SEPARATOR_ALPHAを使用
+        # contourf_kwsにalpha指定ないとき、DEFAULT_PROBA_CONTOURF_ALPHAを使用
         if 'alpha' not in contourf_kws.keys():
-            contourf_kws['alpha'] = cls.DEFAULT_SEPARATOR_ALPHA
-        # contourf_kwsにlevels指定ないとき、DEFAULT_PROBA_LEBELSを使用
+            contourf_kws['alpha'] = cls.DEFAULT_PROBA_CONTOURF_ALPHA
+        # contourf_kwsにlevels指定ないとき、DDEFAULT_PROBA_CONTOURF_LEVELSを使用
         if 'levels' not in contourf_kws.keys():
-            contourf_kws['levels'] = cls.DEFAULT_PROBA_LEVELS
+            contourf_kws['levels'] = cls.DEFAULT_PROBA_CONTOURF_LEVELS
+        # imshow_kwsにalpha指定ないとき、DEFAULT_PROBA_RGB_ALPHAを使用
+        if 'alpha' not in imshow_kws.keys():
+            imshow_kws['alpha'] = cls.DEFAULT_PROBA_RGB_ALPHA
         
         # クロスバリデーション有無で場合分け
         # クロスバリデーション未実施時(学習データから学習してプロット)
@@ -1833,9 +1892,9 @@ class classplot():
             cls._class_chart_plot(model, X, y_pred, y_true, x_chart, x_not_chart, x_chart_indices,
                                pair_sigmarange = pair_sigmarange, pair_sigmainterval=pair_sigmainterval, chart_extendsigma=chart_extendsigma, chart_scale=chart_scale,
                                proba_pred = proba_pred, proba_class_indices = proba_class_indices, plot_border = plot_border, plot_scatter = plot_scatter,
-                               scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict, proba_cmap_dict=proba_cmap_dict,
+                               scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict, proba_cmap_dict=proba_cmap_dict, proba_type = proba_type,
                                rounddigit_x3=rounddigit_x3,
-                               cv_index=None, subplot_kws=subplot_kws, contourf_kws=contourf_kws, scatter_kws=scatter_kws)
+                               cv_index=None, subplot_kws=subplot_kws, contourf_kws=contourf_kws, imshow_kws=imshow_kws, scatter_kws=scatter_kws)
             
         # クロスバリデーション実施時(分割ごとに別々にプロット＆指標算出)
         if cv is not None:
@@ -1887,6 +1946,6 @@ class classplot():
                 cls._class_chart_plot(model, X_test, y_pred, y_test, x_chart, x_not_chart, x_chart_indices,
                                    pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, chart_extendsigma=chart_extendsigma, chart_scale=chart_scale,
                                    proba_pred = proba_pred, proba_class_indices = proba_class_indices, plot_border = plot_border, plot_scatter = plot_scatter,
-                                   scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict, proba_cmap_dict=proba_cmap_dict,
+                                   scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict, proba_cmap_dict=proba_cmap_dict, proba_type = proba_type,
                                    rounddigit_x3=rounddigit_x3,
-                                   cv_index=i, subplot_kws=subplot_kws, contourf_kws=contourf_kws, scatter_kws=scatter_kws)
+                                   cv_index=i, subplot_kws=subplot_kws, contourf_kws=contourf_kws, imshow_kws=imshow_kws, scatter_kws=scatter_kws)
