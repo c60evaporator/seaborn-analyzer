@@ -99,10 +99,10 @@ class regplot():
             表示指標の小数丸め桁数
         """
         # 描画用axがNoneのとき、matplotlib.pyplotを使用
-        if ax == None:
+        if ax is None:
             ax=plt
 
-        if rank_col == None:
+        if rank_col is None:
             rank_col = 'index'
         y_error = y_pred - y_true
         y_error_abs = np.abs(y_error)
@@ -125,7 +125,7 @@ class regplot():
         data = pd.DataFrame(data, columns=[x_name, y_name])
         # 色分け指定しているとき、色分け用のフィールドを追加
         if hue_data is not None:
-            if hue_name == None:
+            if hue_name is None:
                 hue_name = 'hue'
             data[hue_name] = pd.Series(hue_data)
         # 散布図プロット
@@ -162,7 +162,7 @@ class regplot():
         cls._scatterplot_ndarray(y_true, 'y_true', y_pred, 'y_pred', hue_data, hue_name, ax)
 
         # 描画用axがNoneのとき、matplotlib.pyplotを使用
-        if ax == None:
+        if ax is None:
             ax=plt
         # score_dictがNoneのとき、空のDictを加瀬宇
         if score_dict is None:
@@ -508,7 +508,7 @@ class regplot():
         cls._scatterplot_ndarray(np.ravel(X), 'X', y_true, 'Y', hue_data, hue_name, ax)
 
         # 描画用axがNoneのとき、matplotlib.pyplotを使用
-        if ax == None:
+        if ax is None:
             ax=plt
         # score_dictがNoneのとき、空のDictを入力
         if score_dict is None:
@@ -744,7 +744,7 @@ class regplot():
         (regression_heat_plotメソッドの描画処理部分)
         """
         # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
-        if ax == None:
+        if ax is None:
             ax=plt.gca()
 
         # ヒートマップ用グリッドデータを作成
@@ -1076,7 +1076,7 @@ class regplot():
             raise Exception('the "y" argument must be str')
         
         # ヒートマップ表示用の列を抽出
-        if x_heat == None:  # 列名指定していないとき、前から2列を抽出
+        if x_heat is None:  # 列名指定していないとき、前から2列を抽出
             x_heat = x[:2]
             x_heat_indices = [0, 1]
         else:  # 列名指定しているとき、該当列のXにおけるインデックス(0～3)を保持
@@ -1213,11 +1213,13 @@ class classplot():
     PROB_CMAP = ['Greens', 'Reds', 'Blues', 'YlOrBr', 'Purples', 'OrRd', 'Wistia', 'Greys']
     # デフォルトでの決定境界図の透明度(alpha)
     DEFAULT_SEPARATOR_ALPHA = 0.3
+    # デフォルトでのクラス確率図の等高線段階数
+    DEFAULT_PROBA_LEVELS = 15
 
     @classmethod
     def _chart_plot_2d(cls, trained_model, x_chart, y_true_col, y_pred_col, data, x_chart_indices,
-                       x1_start, x1_end, x2_start, x2_end, other_x,
-                       chart_type, vmin, vmax, ax, plot_scatter,
+                       x1_start, x1_end, x2_start, x2_end, other_x, chart_scale,
+                       proba_pred_col, proba_class_index, ax, plot_border, plot_scatter,
                        scatter_color_dict, scatter_marker_dict,
                        contourf_kws={}, scatter_kws={}):
         """
@@ -1225,17 +1227,16 @@ class classplot():
         (class_separator_plotあるいはclass_prob_plotメソッドの描画処理部分)
         """
         # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
-        if ax == None:
+        if ax is None:
             ax=plt.gca()
 
         # 図のサイズからグリッド数を取得
         xnum, ynum = plt.gcf().dpi * plt.gcf().get_size_inches()
         # チャート用グリッドデータを作成
-        xx = np.linspace(x1_start, x1_end, num=int(xnum))
-        yy = np.linspace(x2_start, x2_end, num=int(ynum))
+        xx = np.linspace(x1_start, x1_end, num=int(xnum/chart_scale))
+        yy = np.linspace(x2_start, x2_end, num=int(ynum/chart_scale))
         X1, X2 = np.meshgrid(xx, yy)
         X_grid = np.c_[X1.ravel(), X2.ravel()]
-        #df_chart = pd.DataFrame(X_grid, columns=x_chart)
         # 推論用に全説明変数を保持したndarrayを作成 (チャート非使用変数は固定値other_xとして追加)
         n_rows = X_grid.shape[0]
         X_all = []
@@ -1251,43 +1252,44 @@ class classplot():
             elif len(other_x) == 2:  # チャート非使用変数(2個目)を固定値として追加
                 X_all.append(np.full((n_rows, 1), other_x[1]))
         X_all = np.hstack(X_all)
-        # グリッドデータに対して学習し、推定値を作成
+
+        # グリッドデータに対して推論し、推定値を作成
         y_pred_grid = trained_model.predict(X_all)
-        #df_chart['y_pred'] = pd.Series(y_pred_grid)
         # 推定値をint型に変換
         class_int_dict = dict(zip(scatter_color_dict.keys(), range(len(scatter_color_dict))))
         y_pred_grid_int = np.vectorize(lambda x: class_int_dict[x])(y_pred_grid)
-        #df_chart['y_pred_int'] = df_chart['y_pred'].apply(lambda x: class_int_dict[x])
-
-        # グリッドデータ表示桁数を調整
-        #X1 = df_chart[x_chart[0]].map(lambda x: cls._round_digits(x, rounddigit=rounddigit_x1))
-        #X2 = df_chart[x_chart[1]].map(lambda x: cls._round_digits(x, rounddigit=rounddigit_x2))
         # グリッドデータをピボット化
         y_pred_pivot = y_pred_grid_int.reshape(X1.shape)
 
-        # contourf_kwsにcolors指定ないとき、scatter_color_dictの値を使用
-        if 'colors' not in contourf_kws.keys():
-            contourf_kws['colors'] = list(scatter_color_dict.values())
-        # contourf_kwsにalphat指定ないとき、DEFAULT_SEPARATOR_ALPHAを使用
-        if 'alpha' not in contourf_kws.keys():
-            contourf_kws['alpha'] = cls.DEFAULT_SEPARATOR_ALPHA
         # 決定境界図をプロット
-        cset = ax.contourf(X1, X2, y_pred_pivot,
-                           levels=np.arange(y_pred_pivot.max() + 2) - 0.5,
-                           **contourf_kws)
-        ax.contour(X1, X2, y_pred_pivot, cset.levels,
-               colors='k',
-               linewidths=0.5,
-               antialiased=True)
+        if proba_pred_col is None:
+            # 決定境界色分けプロット
+            cset = ax.contourf(X1, X2, y_pred_pivot,
+                            levels=np.arange(y_pred_pivot.max() + 2) - 0.5,
+                            **contourf_kws)
+
+        # クラス確率図をプロット
+        else:
+            # グリッドデータに対してクラス確率算出
+            y_proba_grid = trained_model.predict_proba(X_all)[:, proba_class_index]
+            # グリッドデータをピボット化
+            y_proba_pivot = y_proba_grid.reshape(X1.shape)
+            # クラス確率図プロット
+            cset = ax.contourf(X1, X2, y_proba_pivot,
+                            **contourf_kws)
+
+        # 境界線をプロット
+        if plot_border:
+            ax.contour(X1, X2, y_pred_pivot, cset.levels,
+                       colors='k',
+                       linewidths=0.5,
+                       antialiased=True)
 
         # 散布図をプロット
         if plot_scatter is not None:
             # マーカの縁の色
             if 'edgecolors' not in scatter_kws.keys():
                 scatter_kws['edgecolors'] = 'darkgrey'
-            # 軸範囲が0～heat_divisionになっているので、スケール変換
-            #x1_scatter = 0.5 + (data[x_chart[0]].values - x1_start) * (heat_division - 1) / (x1_end - x1_start)
-            #x2_scatter = 0.5 + (data[x_chart[1]].values - x2_start) * (heat_division - 1) / (x2_end - x2_start)
             # 正誤を判定
             data['error'] = data[y_true_col] == data[y_pred_col]
             # 色分け
@@ -1314,8 +1316,8 @@ class classplot():
 
     @classmethod
     def _class_chart_plot(cls, trained_model, X, y_pred, y_true, x_chart, x_not_chart, x_chart_indices,
-                       pair_sigmarange=2.0, pair_sigmainterval=0.5, chart_extendsigma=0.5,
-                       chart_type='separator', vmin=None, vmax=None, plot_scatter='class', 
+                       pair_sigmarange=2.0, pair_sigmainterval=0.5, chart_extendsigma=0.5, chart_scale=1,
+                       proba_pred = None, proba_class_index = None, plot_border=True, plot_scatter='class', 
                        scatter_color_dict=None, scatter_marker_dict=None,
                        rounddigit_x3=None,
                        cv_index=None, subplot_kws={}, contourf_kws={}, scatter_kws={}):
@@ -1334,6 +1336,12 @@ class classplot():
         df_all = df_chart.join(df_not_chart)
         df_all = df_all.join(pd.DataFrame(y_true, columns=['y_true']))
         df_all = df_all.join(pd.DataFrame(y_pred, columns=['y_pred']))
+        # クラス確率追加（クラス確率図プロット時のみ）
+        if proba_pred is not None:
+            proba_pred_col = 'proba_pred'
+            df_all = df_all.join(pd.DataFrame(proba_pred, columns=[proba_pred_col]))
+        else:
+            proba_pred_col = None
         # チャート非使用変数を標準化してDataFrameに追加
         if x_num >= 3:
             X_not_chart_norm = stats.zscore(df_not_chart)
@@ -1434,8 +1442,8 @@ class classplot():
                     other_x = [h_mean * x3_std + x3_mean, w_mean * x4_std + x4_mean]
                 
                 cls._chart_plot_2d(trained_model, x_chart, 'y_true', 'y_pred', df_pair, x_chart_indices,
-                                      x1_start, x1_end, x2_start, x2_end, other_x,
-                                      chart_type, vmin, vmax, ax, plot_scatter,
+                                      x1_start, x1_end, x2_start, x2_end, other_x, chart_scale,
+                                      proba_pred_col, proba_class_index, ax, plot_border, plot_scatter,
                                       scatter_color_dict, scatter_marker_dict,
                                       contourf_kws=contourf_kws, scatter_kws=scatter_kws)
 
@@ -1452,8 +1460,8 @@ class classplot():
 
     @classmethod
     def class_separator_plot(cls, model, x: List[str], y: str, data: pd.DataFrame, x_chart: List[str] = None,
-                             pair_sigmarange = 1.5, pair_sigmainterval = 0.5, chart_extendsigma = 0.5,
-                             plot_scatter = 'class_error', rounddigit_x3=2,
+                             pair_sigmarange = 1.5, pair_sigmainterval = 0.5, chart_extendsigma = 0.5, chart_scale = 1,
+                             plot_scatter = 'class_error', rounddigit_x3 = 2,
                              scatter_colors = None, true_marker = 'o', false_marker = 'x',
                              cv=None, cv_seed=42, cv_group=None, display_cv_indices = 0,
                              model_params=None, fit_params=None, subplot_kws=None, contourf_kws=None, scatter_kws=None):
@@ -1478,6 +1486,8 @@ class classplot():
             決定境界図非使用変数の1枚あたり表示範囲 (pair_sigmainterval=0.5なら、‥1σ~-0.5σ, 0.5σ~-0σ, 0σ~0.5σ, 0.5σ~1σ‥というようにヒートマップ分割)
         chart_extendsigma: float, optional
             決定境界図縦軸横軸の表示拡張範囲 (決定境界図使用変数の最大最小値 + extendsigmaが横軸範囲となる)
+        chart_scale: int, optional
+            決定境界図の表示倍率 (cv指定時等で表示が遅い時は大きくする)
         plot_scatter: str, optional
             散布図の描画種類('error':正誤で色分け, 'class':クラスで色分け, None:散布図表示なし)        
         rounddigit_x3: int, optional
@@ -1518,40 +1528,6 @@ class classplot():
             display_cv_indices = [display_cv_indices]
         elif not isinstance(x, list):
             raise Exception('the "cv_display_num" argument must be int or List[int]')
-        
-        # xをndarray化
-        if isinstance(x, list):
-            X = data[x].values
-        else:
-            raise Exception('the "x" argument must be str or str')
-        # yをndarray化
-        if isinstance(y, str):
-            y_true = data[y].values
-        else:
-            raise Exception('the "y" argument must be str')
-        
-        # 決定境界図表示用の列を抽出
-        if x_chart == None:  # 列名指定していないとき、前から2列を抽出
-            x_chart = x[:2]
-            x_chart_indices = [0, 1]
-        else:  # 列名指定しているとき、該当列のXにおけるインデックス(0～3)を保持
-            if len(x_chart) != 2:
-                raise Exception('length of x_chart must be 2')
-            x_chart_indices = []
-            for colname in x_chart:
-                x_chart_indices.append(x.index(colname))
-        # 決定境界図表示以外の列
-        x_not_chart = [colname for colname in x if colname not in x_chart]
-
-        # クラス名とカラーマップを紐づけ(色分けを全ての図で統一用)
-        if scatter_colors == None:
-            scatter_colors = cls.SCATTER_COLORS
-        class_list = data[y].values.tolist()
-        class_list = sorted(set(class_list), key=class_list.index)
-        scatter_color_dict = dict(zip(class_list, scatter_colors[0:len(class_list)]))
-        # 散布図マーカー形状をdict化
-        scatter_marker_dict = {True: true_marker, False: false_marker}
-
         # 学習器パラメータがあれば適用
         if model_params is not None:
             model.set_params(**model_params)
@@ -1568,6 +1544,45 @@ class classplot():
         if scatter_kws is None:
             scatter_kws = {}
         
+        # xをndarray化
+        if isinstance(x, list):
+            X = data[x].values
+        else:
+            raise Exception('the "x" argument must be str or str')
+        # yをndarray化
+        if isinstance(y, str):
+            y_true = data[y].values
+        else:
+            raise Exception('the "y" argument must be str')
+        
+        # 決定境界図表示用の列を抽出
+        if x_chart is None:  # 列名指定していないとき、前から2列を抽出
+            x_chart = x[:2]
+            x_chart_indices = [0, 1]
+        else:  # 列名指定しているとき、該当列のXにおけるインデックス(0～3)を保持
+            if len(x_chart) != 2:
+                raise Exception('length of x_chart must be 2')
+            x_chart_indices = []
+            for colname in x_chart:
+                x_chart_indices.append(x.index(colname))
+        # 決定境界図表示以外の列
+        x_not_chart = [colname for colname in x if colname not in x_chart]
+
+        # クラス名と散布図色を紐づけ(色分けを全ての図で統一用)
+        if scatter_colors is None:
+            scatter_colors = cls.SCATTER_COLORS
+        class_list = data[y].values.tolist()
+        class_list = sorted(set(class_list), key=class_list.index)
+        scatter_color_dict = dict(zip(class_list, scatter_colors[0:len(class_list)]))
+        # 散布図マーカー形状をdict化
+        scatter_marker_dict = {True: true_marker, False: false_marker}
+        # contourf_kwsにcolors指定ないとき、scatter_color_dictの値を使用
+        if 'colors' not in contourf_kws.keys():
+            contourf_kws['colors'] = list(scatter_color_dict.values())
+        # contourf_kwsにalphat指定ないとき、DEFAULT_SEPARATOR_ALPHAを使用
+        if 'alpha' not in contourf_kws.keys():
+            contourf_kws['alpha'] = cls.DEFAULT_SEPARATOR_ALPHA
+        
         # クロスバリデーション有無で場合分け
         # クロスバリデーション未実施時(学習データから学習してプロット)
         if cv is None:
@@ -1576,8 +1591,8 @@ class classplot():
             y_pred = model.predict(X)
             # 決定境界図をプロット
             cls._class_chart_plot(model, X, y_pred, y_true, x_chart, x_not_chart, x_chart_indices,
-                               pair_sigmarange = pair_sigmarange, pair_sigmainterval=pair_sigmainterval, chart_extendsigma=chart_extendsigma,
-                               chart_type='separator', vmin=None, vmax=None, plot_scatter=plot_scatter,
+                               pair_sigmarange = pair_sigmarange, pair_sigmainterval=pair_sigmainterval, chart_extendsigma=chart_extendsigma, chart_scale=chart_scale,
+                               proba_pred = None, proba_class_index = None, plot_border = True, plot_scatter = plot_scatter,
                                scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict,
                                rounddigit_x3=rounddigit_x3,
                                cv_index=None, subplot_kws=subplot_kws, contourf_kws=contourf_kws, scatter_kws=scatter_kws)
@@ -1619,8 +1634,223 @@ class classplot():
                 y_pred = model.predict(X_test)
                 # 決定境界図をプロット
                 cls._class_chart_plot(model, X_test, y_pred, y_test, x_chart, x_not_chart, x_chart_indices,
-                                   pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, chart_extendsigma=chart_extendsigma,
-                                   chart_type='separator', vmin=None, vmax=None, plot_scatter = plot_scatter,
+                                   pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, chart_extendsigma=chart_extendsigma, chart_scale=chart_scale,
+                                   proba_pred = None, proba_class_index = None, plot_border = True, plot_scatter = plot_scatter,
+                                   scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict,
+                                   rounddigit_x3=rounddigit_x3,
+                                   cv_index=i, subplot_kws=subplot_kws, contourf_kws=contourf_kws, scatter_kws=scatter_kws)
+
+    @classmethod
+    def class_proba_plot(cls, model, x: List[str], y: str, data: pd.DataFrame, x_chart: List[str] = None,
+                         pair_sigmarange = 1.5, pair_sigmainterval = 0.5, chart_extendsigma = 0.5, chart_scale = 1,
+                         plot_border = True, plot_scatter = 'class', rounddigit_x3 = 2, proba_class = None, proba_cmap = None,
+                         scatter_colors = None, true_marker = 'o', false_marker = 'x',
+                         cv=None, cv_seed=42, cv_group=None, display_cv_indices = 0,
+                         model_params=None, fit_params=None, subplot_kws=None, contourf_kws=None, scatter_kws=None):
+        """
+        2～4次元説明変数のクラス確率図可視化
+
+        Parameters
+        ----------
+        model:
+            使用する回帰モデル(scikit-learn API)
+        x: List[str]
+            説明変数カラム (列名指定)
+        y: str
+            目的変数カラム (列名指定)
+        data: pd.DataFrame
+            フィッティング対象のデータ
+        x_chart: List[str], optional
+            説明変数のうち、クラス確率図表示対象のカラム (Noneなら前から2カラム自動選択)
+        pair_sigmarange: float, optional
+            クラス確率図非使用変数の分割範囲 (pair_sigmarange=2なら、-2σ~2σの範囲でpair_sigmaintervalに従い決定境界図分割)
+        pair_sigmainterval: float, optional
+            クラス確率図非使用変数の1枚あたり表示範囲 (pair_sigmainterval=0.5なら、‥1σ~-0.5σ, 0.5σ~-0σ, 0σ~0.5σ, 0.5σ~1σ‥というようにヒートマップ分割)
+        chart_extendsigma: float, optional
+            クラス確率図縦軸横軸の表示拡張範囲 (クラス確率図使用変数の最大最小値 + extendsigmaが横軸範囲となる)
+        chart_scale: int, optional
+            決定境界図の表示倍率 (cv指定時等で表示が遅い時は大きくする)
+        plot_border: bool, optional
+            クラス境界線の描画有無
+        plot_scatter: str, optional
+            散布図の描画種類('error':正誤で色分け, 'class':クラスで色分け, None:散布図表示なし)
+        rounddigit_x3: int, optional
+            クラス確率図非表示軸の小数丸め桁数
+        proba_class: str, optional
+            確率表示対象のクラス名
+        proba_cmap: str, optional
+            クラス確率図のカラーマップ
+        scatter_colors: List[str], optional
+            クラスごとのプロット色のリスト
+        true_marker: str, optional
+            正解クラスの散布図プロット形状
+        false_marker: str, optional
+            不正解クラスの散布図プロット形状
+        cv: int or KFold, optional
+            クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)
+        cv_seed: int, optional
+            クロスバリデーションの乱数シード
+        cv_group: str, optional
+            GroupKFold、LeaveOneGroupOutのグルーピング対象カラム (列名指定)
+        display_cv_indices: int, optional
+            表示対象のクロスバリデーション番号 (指定したCV番号での回帰結果が表示される。リスト指定も可)
+        model_params: Dict, optional
+            回帰モデルに渡すパラメータ (チューニング後のパラメータがgood、Noneならデフォルト)
+        fit_params: Dict, optional
+            学習時のパラメータをdict指定 (例: XGBoostのearly_stopping_rounds)
+            Noneならデフォルト
+            Pipelineのときは{学習器名__パラメータ名:パラメータの値,‥}で指定する必要あり
+        subplot_kws: dict, optional
+            プロット用のplt.subplots()に渡す引数 (例：figsize)
+        contourf_kws: dict, optional
+            クラス確率図用のax.contourf()に渡す引数
+        scatter_kws: dict, optional
+            散布図用のax.scatter()に渡す引数
+        """
+        # 説明変数xの次元が2～4以外ならエラーを出す
+        if len(x) < 2 or len(x) > 4:
+            raise Exception('length of x must be 2 to 4')
+        
+        # display_cv_indicesをList化
+        if isinstance(display_cv_indices, int):
+            display_cv_indices = [display_cv_indices]
+        elif not isinstance(x, list):
+            raise Exception('the "cv_display_num" argument must be int or List[int]')
+        # 学習器パラメータがあれば適用
+        if model_params is not None:
+            model.set_params(**model_params)
+        # 学習時パラメータがNoneなら空のdictを入力
+        if fit_params is None:
+            fit_params = {}
+        # subplot_kwsがNoneなら空のdictを入力
+        if subplot_kws is None:
+            subplot_kws = {}
+        # contourf_kwsがNoneなら空のdictを入力
+        if contourf_kws is None:
+            contourf_kws = {}
+        # scatter_kwsがNoneなら空のdictを入力
+        if scatter_kws is None:
+            scatter_kws = {}
+
+        # xをndarray化
+        if isinstance(x, list):
+            X = data[x].values
+        else:
+            raise Exception('the "x" argument must be str or str')
+        # yをndarray化
+        if isinstance(y, str):
+            y_true = data[y].values
+        else:
+            raise Exception('the "y" argument must be str')
+
+        # クラス確率図表示用の列を抽出
+        if x_chart is None:  # 列名指定していないとき、前から2列を抽出
+            x_chart = x[:2]
+            x_chart_indices = [0, 1]
+        else:  # 列名指定しているとき、該当列のXにおけるインデックス(0～3)を保持
+            if len(x_chart) != 2:
+                raise Exception('length of x_chart must be 2')
+            x_chart_indices = []
+            for colname in x_chart:
+                x_chart_indices.append(x.index(colname))
+        # クラス確率図表示以外の列
+        x_not_chart = [colname for colname in x if colname not in x_chart]
+
+        # クラス名と散布図色を紐づけ(色分けを全ての図で統一用)
+        if scatter_colors is None:
+            scatter_colors = cls.SCATTER_COLORS
+        class_list = data[y].values.tolist()
+        class_list = sorted(set(class_list), key=class_list.index)
+        scatter_color_dict = dict(zip(class_list, scatter_colors[0:len(class_list)]))
+        # 散布図マーカー形状をdict化
+        scatter_marker_dict = {True: true_marker, False: false_marker}
+
+        # 確率表示対象クラス名未指定のとき、最初のクラスを使用
+        if proba_class is None:
+            proba_class = class_list[0]
+        elif proba_class not in class_list:
+            raise Exception(f'"{proba_class}"" is not in the "{y}" column')
+        # 確率表示対象クラスのインデックスを取得
+        proba_class_index = class_list.index(proba_class)
+        # クラス名からカラーマップを紐づけ
+        if proba_cmap is None:
+            proba_cmap = cls.PROB_CMAP[proba_class_index]
+        # カラーマップをcontourf_kwsに追加
+        if 'cmap' not in contourf_kws.keys():
+            contourf_kws['cmap'] = proba_cmap
+        # contourf_kwsにalpha指定ないとき、DEFAULT_SEPARATOR_ALPHAを使用
+        if 'alpha' not in contourf_kws.keys():
+            contourf_kws['alpha'] = cls.DEFAULT_SEPARATOR_ALPHA
+        # contourf_kwsにlevels指定ないとき、DEFAULT_PROBA_LEBELSを使用
+        if 'levels' not in contourf_kws.keys():
+            contourf_kws['levels'] = cls.DEFAULT_PROBA_LEVELS
+        
+        # クロスバリデーション有無で場合分け
+        # クロスバリデーション未実施時(学習データから学習してプロット)
+        if cv is None:
+            # 学習と推論
+            model.fit(X, y_true, **fit_params)
+            y_pred = model.predict(X)
+            # クラス確率を推定
+            proba_pred = model.predict_proba(X)[:, proba_class_index]
+            # TODO:クラス確率の順番が逆転した時の対策をメソッドとして実装する必要あり
+            # https://qiita.com/rawHam/items/3bcb6a68a533f2b82a85
+            # クラス確率図をプロット
+            cls._class_chart_plot(model, X, y_pred, y_true, x_chart, x_not_chart, x_chart_indices,
+                               pair_sigmarange = pair_sigmarange, pair_sigmainterval=pair_sigmainterval, chart_extendsigma=chart_extendsigma, chart_scale=chart_scale,
+                               proba_pred = proba_pred, proba_class_index = proba_class_index, plot_border = plot_border, plot_scatter = plot_scatter,
+                               scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict,
+                               rounddigit_x3=rounddigit_x3,
+                               cv_index=None, subplot_kws=subplot_kws, contourf_kws=contourf_kws, scatter_kws=scatter_kws)
+            
+        # クロスバリデーション実施時(分割ごとに別々にプロット＆指標算出)
+        if cv is not None:
+            # 分割法未指定時、cv_numとseedに基づきKFoldでランダムに分割
+            if isinstance(cv, numbers.Integral):
+                cv = KFold(n_splits=cv, shuffle=True, random_state=cv_seed)
+            # LeaveOneOutのときエラーを出す
+            if isinstance(cv, LeaveOneOut):
+                raise Exception('"regression_heat_plot" method does not support "LeaveOneOut" cross validation')
+            # GroupKFold、LeaveOneGroupOutのとき、y_trueをグルーピング対象に指定
+            split_kws={}
+            if isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
+                if cv_group is not None:
+                    split_kws['groups'] = data[cv_group].values
+                else:
+                    raise Exception('"GroupKFold" cross validation needs "cv_group" argument')
+            # LeaveOneGroupOutのとき、クロスバリデーション分割数をcv_groupの数に指定
+            if isinstance(cv, LeaveOneGroupOut):
+                cv_num = len(set(data[cv_group].values))
+            else:
+                cv_num = cv.n_splits
+
+            # クロスバリデーション
+            for i, (train, test) in enumerate(cv.split(X, y_true, **split_kws)):
+                # 表示対象以外のCVなら飛ばす
+                if i not in display_cv_indices:
+                    continue
+                print(f'cv_number={i}/{cv_num}')
+                # 表示用にテストデータと学習データ分割
+                X_train = X[train]
+                y_train = y_true[train]
+                X_test = X[test]
+                y_test = y_true[test]
+                # 確率表示対象クラスのインデックスを再取得（存在しなければ飛ばす）
+                class_list_train = y_train.tolist()
+                class_list_train = sorted(set(class_list_train), key=class_list_train.index)
+                if proba_class not in class_list_train:
+                    print(f'there is no "{y}={proba_class}" row in the train data')
+                    continue
+                proba_class_index = class_list_train.index(proba_class)
+                # 学習と推論
+                model.fit(X_train, y_train, **fit_params)
+                y_pred = model.predict(X_test)
+                # クラス確率を推定
+                proba_pred = model.predict_proba(X_test)[:, proba_class_index]
+                # クラス確率図をプロット
+                cls._class_chart_plot(model, X_test, y_pred, y_test, x_chart, x_not_chart, x_chart_indices,
+                                   pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, chart_extendsigma=chart_extendsigma, chart_scale=chart_scale,
+                                   proba_pred = proba_pred, proba_class_index = proba_class_index, plot_border = plot_border, plot_scatter = plot_scatter,
                                    scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict,
                                    rounddigit_x3=rounddigit_x3,
                                    cv_index=i, subplot_kws=subplot_kws, contourf_kws=contourf_kws, scatter_kws=scatter_kws)
