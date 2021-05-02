@@ -9,14 +9,14 @@ from custom_scatter_plot import regplot
 import seaborn as sns
 from sklearn.svm import SVR
 iris = sns.load_dataset("iris")
-regplot.regression_pred_true(SVR(), x='petal_length', y='sepal_length', data=iris, plot_stats='median', rank_number=3, cv=2)
+regplot.regression_pred_true(SVR(), x='petal_length', y='sepal_length', data=iris, cv_stats='median', rank_number=3, cv=2)
 
 # %% 概要の「機能3」（1次元説明変数回帰モデルの可視化）
 from custom_scatter_plot import regplot
 import seaborn as sns
 from sklearn.svm import SVR
 iris = sns.load_dataset("iris")
-regplot.regression_plot_1d(SVR(), x='petal_length', y='sepal_length', data=iris, plot_stats='median', cv=2)
+regplot.regression_plot_1d(SVR(), x='petal_length', y='sepal_length', data=iris, cv_stats='median', cv=2)
 
 # %% 概要の「機能4」（2～4次元説明変数回帰モデルの可視化）
 import pandas as pd

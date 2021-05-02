@@ -736,7 +736,7 @@ class regplot():
                           x1_start, x1_end, x2_start, x2_end, heat_division, other_x,
                           vmin, vmax, ax, plot_scatter, maxerror, rank_dict, scatter_hue_dict,
                           rounddigit_rank, rounddigit_x1, rounddigit_x2,
-                          heat_kws={}, scatter_kws={}):
+                          heat_kws=None, scatter_kws=None):
         """
         回帰予測値ヒートマップと各種散布図の表示
         (regression_heat_plotメソッドの描画処理部分)
@@ -837,7 +837,7 @@ class regplot():
                        vmin=None, vmax=None, plot_scatter='true', maxerror=None,
                        rank_number=None, rank_col=None, rank_col_data=None, scatter_hue_dict=None,
                        rounddigit_rank=None, rounddigit_x1=None, rounddigit_x2=None, rounddigit_x3=None,
-                       cv_index=None, subplot_kws={}, heat_kws={}, scatter_kws={}):
+                       cv_index=None, subplot_kws=None, heat_kws=None, scatter_kws=None):
         """
         回帰予測値ヒートマップ表示の、説明変数の数に応じた分岐処理
         (regression_heat_plotメソッド処理のうち、説明変数の数に応じたデータ分割等を行う)
@@ -1246,7 +1246,7 @@ class classplot():
                        x1_start, x1_end, x2_start, x2_end, other_x, chart_scale,
                        proba_pred_col, proba_class_indices, ax, plot_border, plot_scatter,
                        scatter_color_dict, scatter_marker_dict, proba_cmap_dict, proba_type,
-                       contourf_kws={}, imshow_kws={}, scatter_kws={}):
+                       contourf_kws=None, imshow_kws=None, scatter_kws=None):
         """
         分類チャート（決定境界図 or クラス確率図）と各種散布図の表示
         (class_separator_plotあるいはclass_prob_plotメソッドの描画処理部分)
