@@ -224,6 +224,23 @@ class regplot():
         subplot_kws : Dict[str, float]
             プロット用のplt.subplots()に渡す引数 (例：figsize)
         """
+        # scoresの型をListに統一
+        if scores is None:
+            scores = []
+        elif isinstance(scores, str):
+            scores = [scores]
+        elif not isinstance(scores, list):
+            raise Exception('the "scores" argument must be str or list[str]')
+        # 学習器パラメータがあれば適用
+        if model_params is not None:
+            model.set_params(**model_params)
+        # 学習時パラメータがNoneなら空のdictを入力
+        if fit_params is None:
+            fit_params = {}
+        # subplot_kwsがNoneなら空のdictを入力
+        if subplot_kws is None:
+            subplot_kws = {}
+
         # xをndarray化
         if isinstance(x, list):
             X = data[x].values
@@ -236,24 +253,6 @@ class regplot():
             y_true = data[y].values
         else:
             raise Exception('the "y" argument must be str')
-
-        # scoresの型をListに統一
-        if scores is None:
-            scores = []
-        elif isinstance(scores, str):
-            scores = [scores]
-        elif not isinstance(scores, list):
-            raise Exception('the "scores" argument must be str or list[str]')
-        
-        # 学習器パラメータがあれば適用
-        if model_params is not None:
-            model.set_params(**model_params)
-        # 学習時パラメータがNoneなら空のdictを入力
-        if fit_params is None:
-            fit_params = {}
-        # subplot_kwsがNoneなら空のdictを入力
-        if subplot_kws is None:
-            subplot_kws = {}
         
         # クロスバリデーション有無で場合分け
         # クロスバリデーション未実施時(学習データからプロット＆指標算出)
@@ -571,6 +570,23 @@ class regplot():
         subplot_kws : Dict[str, float]
             プロット用のplt.subplots()に渡す引数 (例：figsize)
         """
+        # scoresの型をListに統一
+        if scores is None:
+            scores = []
+        elif isinstance(scores, str):
+            scores = [scores]
+        elif not isinstance(scores, list):
+            raise Exception('the "scores" argument must be str or list[str]')
+        # 学習器パラメータがあれば適用
+        if model_params is not None:
+            model.set_params(**model_params)
+        # 学習時パラメータがNoneなら空のdictを入力
+        if fit_params is None:
+            fit_params = {}
+        # subplot_kwsがNoneなら空のdictを入力
+        if subplot_kws is None:
+            subplot_kws = {}
+        
         # xをndarray化
         if isinstance(x, str):
             X = data[[x]].values
@@ -581,24 +597,6 @@ class regplot():
             y_true = data[y].values
         else:
             raise Exception('the "y" argument must be str')
-
-        # scoresの型をListに統一
-        if scores is None:
-            scores = []
-        elif isinstance(scores, str):
-            scores = [scores]
-        elif not isinstance(scores, list):
-            raise Exception('the "scores" argument must be str or list[str]')
-        
-        # 学習器パラメータがあれば適用
-        if model_params is not None:
-            model.set_params(**model_params)
-        # 学習時パラメータがNoneなら空のdictを入力
-        if fit_params is None:
-            fit_params = {}
-        # subplot_kwsがNoneなら空のdictを入力
-        if subplot_kws is None:
-            subplot_kws = {}
         
         # クロスバリデーション有無で場合分け
         # クロスバリデーション未実施時(学習データからプロット＆指標算出)
@@ -1063,7 +1061,22 @@ class regplot():
             display_cv_indices = [display_cv_indices]
         elif not isinstance(x, list):
             raise Exception('the "cv_display_num" argument must be int or List[int]')
-        
+        # 学習器パラメータがあれば適用
+        if model_params is not None:
+            model.set_params(**model_params)
+        # 学習時パラメータがNoneなら空のdictを入力
+        if fit_params is None:
+            fit_params = {}
+        # subplot_kwsがNoneなら空のdictを入力
+        if subplot_kws is None:
+            subplot_kws = {}
+        # heat_kwsがNoneなら空のdictを入力
+        if heat_kws is None:
+            heat_kws = {}
+        # scatter_kwsがNoneなら空のdictを入力
+        if scatter_kws is None:
+            scatter_kws = {}
+            
         # xをndarray化
         if isinstance(x, list):
             X = data[x].values
@@ -1105,22 +1118,6 @@ class regplot():
             scatter_hue_dict = dict(zip(hue_list, cls.HEAT_SCATTER_HUECOLORS[0:len(hue_list)]))
         else:
             scatter_hue_dict = None
-
-        # 学習器パラメータがあれば適用
-        if model_params is not None:
-            model.set_params(**model_params)
-        # 学習時パラメータがNoneなら空のdictを入力
-        if fit_params is None:
-            fit_params = {}
-        # subplot_kwsがNoneなら空のdictを入力
-        if subplot_kws is None:
-            subplot_kws = {}
-        # heat_kwsがNoneなら空のdictを入力
-        if heat_kws is None:
-            heat_kws = {}
-        # scatter_kwsがNoneなら空のdictを入力
-        if scatter_kws is None:
-            scatter_kws = {}
         
         # クロスバリデーション有無で場合分け
         # クロスバリデーション未実施時(学習データからプロット＆指標算出)
