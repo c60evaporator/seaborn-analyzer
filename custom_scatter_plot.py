@@ -1348,7 +1348,6 @@ class classplot():
             else:
                 raise Exception('the "proba_type" argument must be "contourf" or "imshow"')
 
-
         # 境界線をプロット
         if plot_border:
             ax.contour(X1, X2, y_pred_pivot,
@@ -1385,6 +1384,10 @@ class classplot():
                                **scatter_kws)
             # 凡例表示
             ax.legend()
+
+        # 軸ラベルを追加
+        ax.set_xlabel(x_chart[0])
+        ax.set_ylabel(x_chart[1])
 
     @classmethod
     def _class_chart_plot(cls, trained_model, X, y_pred, y_true, x_chart, x_not_chart, x_chart_indices,
