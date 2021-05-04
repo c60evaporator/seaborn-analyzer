@@ -1533,6 +1533,9 @@ class classplot():
                 if x_num == 4:
                     ax.set_title(f'{x_not_chart[0]}= {h_min}σ - {h_max}σ  {x_not_chart[1]}= {w_min}σ - {w_max}σ')
 
+        # 字が重なるのでtight_layoutにする
+        plt.tight_layout()
+
     @classmethod
     def class_separator_plot(cls, model, x: List[str], y: str, data: pd.DataFrame, x_chart: List[str] = None,
                              pair_sigmarange = 1.5, pair_sigmainterval = 0.5, chart_extendsigma = 0.5, chart_scale = 1,
