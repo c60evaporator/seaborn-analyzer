@@ -1321,7 +1321,20 @@ class classplot():
                     contourf_kws['alpha'] = old_alpha / (1 + old_alpha)
                 # alpha値を更新前に戻す
                 contourf_kws['alpha'] = src_alpha
-
+            
+            # contourで等高線プロット（塗りつぶしなし）するとき
+            if proba_type == 'contour':
+                # クラスごとに処理
+                for i in range(nclass):
+                    # グリッドデータから該当クラスのみ抜き出してピボット化
+                    y_proba_pivot = y_proba_grid[:, i].reshape(X1.shape)
+                    # 線の色をscatter_color_dictの値から取得
+                    cmap = list(proba_cmap_dict.values())[i]
+                    #c=list(scatter_color_dict.values())[proba_class_indices[i]]
+                    ax.contour(X1, X2, y_proba_pivot,
+                               cmap=cmap,
+                               **contourf_kws)
+            
             # imshowでRGB画像プロットするとき
             elif proba_type == 'imshow':
                 # いったんRGB各色ゼロで埋める
