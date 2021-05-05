@@ -47,10 +47,10 @@ ax.scatter3D(X[:, 0], X[:, 1], y)
 ax.set_xlabel('altitude [m]')
 ax.set_ylabel('latitude [°]')
 ax.set_zlabel('temperature [°C]')
-# %% 線形回帰してr2_score
+# %% 線形回帰して性能評価指標算出
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score, mean_absolute_error
-lr = LinearRegression()  # 線形回帰用クラス
+lr = LinearRegression()  # 線形回帰用インスタンス
 lr.fit(X, y)  # 線形回帰学習
 y_pred = lr.predict(X)  # 学習モデルから回帰して予測値を算出
 print(f'R2={r2_score(y, y_pred)}')  # R2_Scoreを表示
