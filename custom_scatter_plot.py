@@ -1300,7 +1300,7 @@ class classplot():
             # グリッドデータに対してクラス確率算出
             y_proba_grid = trained_model.predict_proba(X_all)[:, proba_class_indices]
 
-            # contourfで等高線プロットするとき
+            # contourfで等高線プロット（塗りつぶしあり）するとき
             if proba_type == 'contourf':
                 # alpha値を保持(描画終了後に更新前に戻すため)
                 src_alpha = contourf_kws['alpha']
@@ -1458,7 +1458,7 @@ class classplot():
         # プロット用のaxes作成
         fig, axes = plt.subplots(pair_h, pair_w, **subplot_kws)
         if cv_index is not None:
-            fig.suptitle(f'CV No.{cv_index}')
+            fig.suptitle(f'CV {cv_index}')
 
         # 図ごとにプロット
         for i in range(pair_h):
@@ -1567,7 +1567,8 @@ class classplot():
         chart_scale: int, optional
             決定境界図の表示倍率 (cv指定時等で表示が遅い時は大きくする)
         plot_scatter: str, optional
-            散布図の描画種類('error':正誤で色分け, 'class':クラスで色分け, None:散布図表示なし)        
+            散布図の描画種類('error':正誤で形状分け, 'class':クラスで色分け,
+                            'class_error':正誤で形状分け＆クラスで色分け , None:散布図表示なし)
         rounddigit_x3: int, optional
             決定境界図非表示軸の小数丸め桁数
         scatter_colors: List[str], optional
@@ -1702,6 +1703,11 @@ class classplot():
                 if i not in display_cv_indices:
                     continue
                 print(f'cv_number={i}/{cv_num}')
+                # グラフタイトル(CV番号を指定。グルーピング系CVのときはグループ名を指定)
+                if isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
+                    cv_index = f'No.{i}  {cv_group}={data[cv_group].values[test][0]}'
+                else:
+                    cv_index = f'No.{i}'
                 # 表示用にテストデータと学習データ分割
                 X_train = X[train]
                 y_train = y_true[train]
@@ -1716,7 +1722,7 @@ class classplot():
                                    proba_pred = None, proba_class_indices = None, plot_border = True, plot_scatter = plot_scatter,
                                    scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict, proba_cmap_dict=None, proba_type=None,
                                    rounddigit_x3=rounddigit_x3,
-                                   cv_index=i, subplot_kws=subplot_kws, contourf_kws=contourf_kws, imshow_kws=None, scatter_kws=scatter_kws)
+                                   cv_index=cv_index, subplot_kws=subplot_kws, contourf_kws=contourf_kws, imshow_kws=None, scatter_kws=scatter_kws)
 
     @classmethod
     def class_proba_plot(cls, model, x: List[str], y: str, data: pd.DataFrame, x_chart: List[str] = None,
@@ -1752,7 +1758,8 @@ class classplot():
         plot_border: bool, optional
             クラス境界線の描画有無
         plot_scatter: str, optional
-            散布図の描画種類('error':正誤で色分け, 'class':クラスで色分け, None:散布図表示なし)
+            散布図の描画種類('error':正誤で形状分け, 'class':クラスで色分け,
+                            'class_error':正誤で形状分け＆クラスで色分け , None:散布図表示なし)
         rounddigit_x3: int, optional
             クラス確率図非表示軸の小数丸め桁数
         proba_class: str or List[str], optional
@@ -1929,6 +1936,11 @@ class classplot():
                 if i not in display_cv_indices:
                     continue
                 print(f'cv_number={i}/{cv_num}')
+                # グラフタイトル(CV番号を指定。グルーピング系CVのときはグループ名を指定)
+                if isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
+                    cv_index = f'No.{i}  {cv_group}={data[cv_group].values[test][0]}'
+                else:
+                    cv_index = f'No.{i}'
                 # 表示用にテストデータと学習データ分割
                 X_train = X[train]
                 y_train = y_true[train]
@@ -1954,4 +1966,4 @@ class classplot():
                                    proba_pred = proba_pred, proba_class_indices = proba_class_indices, plot_border = plot_border, plot_scatter = plot_scatter,
                                    scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict, proba_cmap_dict=proba_cmap_dict, proba_type = proba_type,
                                    rounddigit_x3=rounddigit_x3,
-                                   cv_index=i, subplot_kws=subplot_kws, contourf_kws=contourf_kws, imshow_kws=imshow_kws, scatter_kws=scatter_kws)
+                                   cv_index=cv_index, subplot_kws=subplot_kws, contourf_kws=contourf_kws, imshow_kws=imshow_kws, scatter_kws=scatter_kws)
