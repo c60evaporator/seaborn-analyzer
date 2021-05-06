@@ -296,7 +296,7 @@ iris = sns.load_dataset("iris")
 from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-
+from custom_scatter_plot import classplot
 pipe = Pipeline([("scaler", StandardScaler()), ("svc", SVC())])  # 標準化＋SVMパイプライン
 classplot.class_separator_plot(pipe, x=['petal_width', 'petal_length'],
                                y='species', data=iris)
