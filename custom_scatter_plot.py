@@ -1323,7 +1323,7 @@ class classplot():
                 contourf_kws['alpha'] = src_alpha
             
             # contourで等高線プロット（塗りつぶしなし）するとき
-            if proba_type == 'contour':
+            elif proba_type == 'contour':
                 # クラスごとに処理
                 for i in range(nclass):
                     # グリッドデータから該当クラスのみ抜き出してピボット化
@@ -1359,7 +1359,7 @@ class classplot():
                           aspect="auto", extent=(x1_start, x1_end, x2_start, x2_end),
                           **imshow_kws)
             else:
-                raise Exception('the "proba_type" argument must be "contourf" or "imshow"')
+                raise Exception('the "proba_type" argument must be "contourf", "contour" or "imshow"')
 
         # 境界線をプロット
         if plot_border:
