@@ -67,6 +67,10 @@ Scikit-Learn APIに対応した回帰・分類モデルが表示対象となり�
 #### class_proba_plotメソッド実行例
 ![image](https://user-images.githubusercontent.com/59557625/117276085-a1a35f80-ae99-11eb-8368-cdd1cfa78346.png)
 
+### classplotクラス使用法
+こちらの記事にまとめました
+https://qiita.com/c60evaporator/items/43866a42e09daebb5cc0
+
 ## regplotクラス内のメソッド一覧
 |メソッド名|機能|
 |---|---|
