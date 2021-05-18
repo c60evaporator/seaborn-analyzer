@@ -98,9 +98,9 @@ class regplot():
         rounddigit: int
             表示指標の小数丸め桁数
         """
-        # 描画用axがNoneのとき、matplotlib.pyplotを使用
+        # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
         if ax is None:
-            ax=plt
+            ax=plt.gca()
 
         if rank_col is None:
             rank_col = 'index'
@@ -116,7 +116,7 @@ class regplot():
                 ax.text(x[i], y_true[i], rank_text, verticalalignment='center', horizontalalignment='left')
     
     @classmethod
-    def _scatterplot_ndarray(cls, x, x_name, y, y_name, hue_data, hue_name, ax):
+    def _scatterplot_ndarray(cls, x, x_name, y, y_name, hue_data, hue_name, ax, scatter_kws):
         """
         np.ndarrayを入力として散布図表示(scatterplot)
         """
@@ -129,11 +129,11 @@ class regplot():
                 hue_name = 'hue'
             data[hue_name] = pd.Series(hue_data)
         # 散布図プロット
-        sns.scatterplot(x=x_name, y=y_name, data=data, ax=ax, hue=hue_name)
+        sns.scatterplot(x=x_name, y=y_name, data=data, ax=ax, hue=hue_name, **scatter_kws)
 
     @classmethod
     def _plot_pred_true(cls, y_true, y_pred, hue_data=None, hue_name=None, ax=None, linecolor='red', linesplit=200, rounddigit=None,
-                        score_dict=None):
+                        score_dict=None, scatter_kws=None):
         """
         予測値と実測値を、回帰評価指標とともにプロット
 
@@ -158,15 +158,18 @@ class regplot():
         score_dict : Dict[str, float]
             算出した評価指標一覧
         """
-        # 散布図プロット
-        cls._scatterplot_ndarray(y_true, 'y_true', y_pred, 'y_pred', hue_data, hue_name, ax)
-
-        # 描画用axがNoneのとき、matplotlib.pyplotを使用
+        # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
         if ax is None:
-            ax=plt
+            ax=plt.gca()
         # score_dictがNoneのとき、空のDictを加瀬宇
         if score_dict is None:
             score_dict = {}
+        # scatter_kwsがNoneなら空のdictを入力
+        if scatter_kws is None:
+            scatter_kws = {}
+        
+        # 散布図プロット
+        cls._scatterplot_ndarray(y_true, 'y_true', y_pred, 'y_pred', hue_data, hue_name, ax, scatter_kws)
 
         # 予測値=実測値の線を作成
         true_min = np.amin(y_true)
@@ -182,7 +185,7 @@ class regplot():
     @classmethod
     def regression_pred_true(cls, model, x: List[str], y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=3,
                              rank_number=None, rank_col=None, scores='mae', cv_stats='mean', cv=None, cv_seed=42,
-                             model_params=None, fit_params=None, subplot_kws=None):
+                             model_params=None, fit_params=None, subplot_kws=None, scatter_kws=None):
 
         """
         回帰して予測値と実測値をプロットし、評価値を表示
@@ -223,6 +226,8 @@ class regplot():
             Pipelineのときは{学習器名__パラメータ名:パラメータの値,‥}で指定する必要あり
         subplot_kws : Dict[str, float]
             プロット用のplt.subplots()に渡す引数 (例：figsize)
+        scatter_kws: dict, optional
+            散布図用のsns.scatterplot()に渡す引数
         """
         # scoresの型をListに統一
         if scores is None:
@@ -240,6 +245,9 @@ class regplot():
         # subplot_kwsがNoneなら空のdictを入力
         if subplot_kws is None:
             subplot_kws = {}
+        # scatter_kwsがNoneなら空のdictを入力
+        if scatter_kws is None:
+            scatter_kws = {}
 
         # xをndarray化
         if isinstance(x, list):
@@ -273,7 +281,7 @@ class regplot():
                     rank_col_data = data[rank_col].values
             # 予測値と実測値プロット
             cls._plot_pred_true(y_true, y_pred, hue_data=hue_data, hue_name=hue_name,
-                                linecolor=linecolor, rounddigit=rounddigit, score_dict=score_dict)
+                                linecolor=linecolor, rounddigit=rounddigit, score_dict=score_dict, scatter_kws=scatter_kws)
             # 誤差上位を文字表示
             if rank_number is not None:
                 cls._rank_display(y_true, y_pred, rank_number, rank_col, rank_col_data, rounddigit=rounddigit)
@@ -370,7 +378,8 @@ class regplot():
                 if not isLeaveOneOut:
                     score_cv_dict = {k: v[i] for k, v in score_all_dict.items()}
                     cls._plot_pred_true(y_test, y_pred, hue_data=hue_test, hue_name=hue_name, ax=axes[i],
-                                    linecolor=linecolor, rounddigit=rounddigit, score_dict=score_cv_dict)
+                                        linecolor=linecolor, rounddigit=rounddigit, score_dict=score_cv_dict,
+                                        scatter_kws=scatter_kws)
                     axes[i].set_title(f'Cross Validation No{i}')
                 # 全体プロット用データに追加
                 y_true_all.append(y_test)
@@ -402,7 +411,8 @@ class regplot():
             # 全体プロット
             ax_all = axes if isLeaveOneOut else axes[cv_num]
             cls._plot_pred_true(y_true_all, y_pred_all, hue_data=hue_all, hue_name=hue_name, ax=ax_all,
-                               linecolor=linecolor, rounddigit=rounddigit, score_dict=score_stats_dict)
+                               linecolor=linecolor, rounddigit=rounddigit, score_dict=score_stats_dict,
+                               scatter_kws=scatter_kws)
             ax_all.set_title('All Cross Validations')
             # 誤差上位を文字表示
             if rank_number is not None:
@@ -482,7 +492,7 @@ class regplot():
 
     @classmethod
     def _model_plot_1d(cls, trained_model, X, y_true, hue_data=None, hue_name=None, ax=None, linecolor='red', linesplit=1000, rounddigit=None,
-                       score_dict=None):
+                       score_dict=None, scatter_kws=None):
         """
         1次説明変数回帰曲線を、回帰評価指標とともにプロット
 
@@ -508,16 +518,21 @@ class regplot():
             表示指標の小数丸め桁数
         score_dict : Dict[str, float]
             算出した評価指標一覧
+        scatter_kws: dict, optional
+            散布図用のsns.scatterplot()に渡す引数
         """
-        # 散布図プロット
-        cls._scatterplot_ndarray(np.ravel(X), 'X', y_true, 'Y', hue_data, hue_name, ax)
-
-        # 描画用axがNoneのとき、matplotlib.pyplotを使用
+        # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
         if ax is None:
-            ax=plt
+            ax=plt.gca()
         # score_dictがNoneのとき、空のDictを入力
         if score_dict is None:
             score_dict = {}
+        # scatter_kwsがNoneなら空のdictを入力
+        if scatter_kws is None:
+            scatter_kws = {}
+        
+        # 散布図プロット
+        cls._scatterplot_ndarray(np.ravel(X), 'X', y_true, 'Y', hue_data, hue_name, ax, scatter_kws)
 
         # 回帰モデルの線を作成
         xmin = np.amin(X)
@@ -535,7 +550,7 @@ class regplot():
     @classmethod
     def regression_plot_1d(cls, model, x: str, y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=3,
                            rank_number=None, rank_col=None, scores='mae', cv_stats='mean', cv=None, cv_seed=42,
-                           model_params=None, fit_params=None, subplot_kws=None):
+                           model_params=None, fit_params=None, subplot_kws=None, scatter_kws=None):
         """
         1次元説明変数の任意の回帰曲線をプロット
 
@@ -575,6 +590,8 @@ class regplot():
             Pipelineのときは{学習器名__パラメータ名:パラメータの値,‥}で指定する必要あり
         subplot_kws : Dict[str, float]
             プロット用のplt.subplots()に渡す引数 (例：figsize)
+        scatter_kws: dict, optional
+            散布図用のsns.scatterplot()に渡す引数
         """
         # scoresの型をListに統一
         if scores is None:
@@ -592,6 +609,9 @@ class regplot():
         # subplot_kwsがNoneなら空のdictを入力
         if subplot_kws is None:
             subplot_kws = {}
+        # scatter_kwsがNoneなら空のdictを入力
+        if scatter_kws is None:
+            scatter_kws = {}
         
         # xをndarray化
         if isinstance(x, str):
@@ -623,7 +643,7 @@ class regplot():
                     rank_col_data = data[rank_col].values
             # 回帰線プロット
             cls._model_plot_1d(model, X, y_true, hue_data=hue_data, hue_name=hue_name,
-                                linecolor=linecolor, rounddigit=rounddigit, score_dict=score_dict)
+                               linecolor=linecolor, rounddigit=rounddigit, score_dict=score_dict, scatter_kws=scatter_kws)
             # 誤差上位を文字表示
             if rank_number is not None:
                 cls._rank_display(y_true, y_pred, rank_number, rank_col, rank_col_data, x=X, rounddigit=rounddigit)
@@ -705,7 +725,7 @@ class regplot():
                 # CV内結果をプロット
                 score_cv_dict = {k: v[i] for k, v in score_all_dict.items()}
                 cls._model_plot_1d(model, X_test, y_test, hue_data=hue_test, hue_name=hue_name, ax=axes[i],
-                            linecolor=linecolor, rounddigit=rounddigit, score_dict=score_cv_dict)
+                                   linecolor=linecolor, rounddigit=rounddigit, score_dict=score_cv_dict, scatter_kws=scatter_kws)
                 # 誤差上位を文字表示
                 if rank_number is not None:
                     cls._rank_display(y_test, model.predict(X_test), rank_number, rank_col, rank_col_test, x=X_test, ax=axes[i], rounddigit=rounddigit)
@@ -733,7 +753,7 @@ class regplot():
             # 全体プロット
             ax_all = axes[cv_num]
             cls._model_plot_1d(model, X, y_true, hue_data=hue_data, hue_name=hue_name, ax=ax_all,
-                                linecolor=linecolor, rounddigit=rounddigit, score_dict=score_stats_dict)
+                               linecolor=linecolor, rounddigit=rounddigit, score_dict=score_stats_dict, scatter_kws=scatter_kws)
             ax_all.set_title('All Cross Validations')
             return score_stats_dict
 
