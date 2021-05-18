@@ -412,7 +412,7 @@ class regplot():
 
     @classmethod
     def linear_plot(cls, x: str, y: str, data: pd.DataFrame, ax=None, hue=None, linecolor='red',
-                    rounddigit=5, plot_scores=True):
+                    rounddigit=5, plot_scores=True, scatter_kws=None):
         """
         1変数線形回帰してプロットし、p値と相関係数を表示
 
@@ -434,7 +434,13 @@ class regplot():
             表示指標の小数丸め桁数
         plot_scores: bool
             回帰式、ピアソンの相関係数およびp値の表示有無 (Trueなら表示あり)
+        scatter_kws: dict, optional
+            散布図用のsns.scatterplot()に渡す引数
         """
+        # scatter_kwsがNoneなら空のdictを入力
+        if scatter_kws is None:
+            scatter_kws = {}
+
         # xをndarray化
         if isinstance(x, str):
             X = data[[x]].values
@@ -447,7 +453,7 @@ class regplot():
             raise Exception('the "y" argument must be str')
 
         # まずは散布図プロット
-        ax = sns.scatterplot(x=x, y=y, data=data, ax=ax, hue=hue)
+        ax = sns.scatterplot(x=x, y=y, data=data, ax=ax, hue=hue, **scatter_kws)
 
         # 線形回帰モデル作成
         lr = LinearRegression()
