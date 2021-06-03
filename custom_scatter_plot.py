@@ -300,7 +300,7 @@ class regplot():
                 if hue is not None:
                     split_kws['groups'] = data[hue].values
                 else:
-                    raise Exception('"GroupKFold" cross validation needs "hue" argument')
+                    raise Exception('"GroupKFold" and "LeaveOneGroupOut" cross validations need "hue" argument')
             # LeaveOneGroupOutのとき、クロスバリデーション分割数をhueの数に指定
             if isinstance(cv, LeaveOneGroupOut):
                 cv_num = len(set(data[hue].values))
@@ -663,7 +663,7 @@ class regplot():
                 if hue is not None:
                     split_kws['groups'] = data[hue].values                    
                 else:
-                    raise Exception('"GroupKFold" cross validation needs "hue" argument')
+                    raise Exception('"GroupKFold" and "LeaveOneGroupOut" cross validations need "hue" argument')
             # LeaveOneGroupOutのとき、クロスバリデーション分割数をhueの数に指定
             if isinstance(cv, LeaveOneGroupOut):
                 cv_num = len(set(data[hue].values))
@@ -1186,7 +1186,7 @@ class regplot():
                 if scatter_hue is not None:
                     split_kws['groups'] = data[scatter_hue].values
                 else:
-                    raise Exception('"GroupKFold" cross validation needs "hue" argument')
+                    raise Exception('"GroupKFold" and "LeaveOneGroupOut" cross validations need "scatter_hue" argument')
             # LeaveOneGroupOutのとき、クロスバリデーション分割数をscatter_hueの数に指定
             if isinstance(cv, LeaveOneGroupOut):
                 cv_num = len(set(data[scatter_hue].values))
@@ -1723,13 +1723,13 @@ class classplot():
             # LeaveOneOutのときエラーを出す
             if isinstance(cv, LeaveOneOut):
                 raise Exception('"regression_heat_plot" method does not support "LeaveOneOut" cross validation')
-            # GroupKFold、LeaveOneGroupOutのとき、y_trueをグルーピング対象に指定
+            # GroupKFold、LeaveOneGroupOutのとき、cv_groupをグルーピング対象に指定
             split_kws={}
             if isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
                 if cv_group is not None:
                     split_kws['groups'] = data[cv_group].values
                 else:
-                    raise Exception('"GroupKFold" cross validation needs "cv_group" argument')
+                    raise Exception('"GroupKFold" and "LeaveOneGroupOut" cross validations need "cv_group" argument')
             # LeaveOneGroupOutのとき、クロスバリデーション分割数をcv_groupの数に指定
             if isinstance(cv, LeaveOneGroupOut):
                 cv_num = len(set(data[cv_group].values))
@@ -1956,13 +1956,13 @@ class classplot():
             # LeaveOneOutのときエラーを出す
             if isinstance(cv, LeaveOneOut):
                 raise Exception('"regression_heat_plot" method does not support "LeaveOneOut" cross validation')
-            # GroupKFold、LeaveOneGroupOutのとき、y_trueをグルーピング対象に指定
+            # GroupKFold、LeaveOneGroupOutのとき、cv_groupをグルーピング対象に指定
             split_kws={}
             if isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
                 if cv_group is not None:
                     split_kws['groups'] = data[cv_group].values
                 else:
-                    raise Exception('"GroupKFold" cross validation needs "cv_group" argument')
+                    raise Exception('"GroupKFold" and "LeaveOneGroupOut" cross validations need "cv_group" argument')
             # LeaveOneGroupOutのとき、クロスバリデーション分割数をcv_groupの数に指定
             if isinstance(cv, LeaveOneGroupOut):
                 cv_num = len(set(data[cv_group].values))
