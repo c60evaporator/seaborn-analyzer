@@ -4,13 +4,13 @@
 
 from setuptools import setup
 
-DESCRIPTION = "seaborn_analyzer: data visualization of regression, classification and distribution"
-NAME = 'seaborn_analyzer'
+DESCRIPTION = "seaborn-analyzer: data visualization of regression, classification and distribution"
+NAME = 'seaborn-analyzer'
 AUTHOR = 'Kenta Nakamura'
 AUTHOR_EMAIL = 'c60evaporator@gmail.com'
-URL = 'https://github.com/c60evaporator/seaborn_analyzer'
+URL = 'https://github.com/c60evaporator/seaborn-analyzer'
 LICENSE = 'BSD 3-Clause'
-DOWNLOAD_URL = 'https://github.com/c60evaporator/seaborn_analyzer'
+DOWNLOAD_URL = 'https://github.com/c60evaporator/seaborn-analyzer'
 VERSION = '0.1.1'
 PYTHON_REQUIRES = ">=3.6"
 
@@ -55,11 +55,11 @@ LONG_DESCRIPTION = """
 A data visualization tool of regression, classification and distribution.
 Contact
 =============
-If you have any questions or comments about seaborn_analyzer,
+If you have any questions or comments about seaborn-analyzer,
 please feel free to contact me via
 eMail: c60evaporator@gmail.com
 or Twitter: https://twitter.com/c60evaporator
-This project is hosted at https://github.com/c60evaporator/seaborn_analyzer
+This project is hosted at https://github.com/c60evaporator/seaborn-analyzer
 """
 
 setup(name=NAME,
