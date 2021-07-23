@@ -1,4 +1,13 @@
 # seaborn_analyzer
+**Data analysis tool using Seaborn library.**
+
+This documentation is currently Japanese language only.
+
+If there is a request for English version documantation, we will make it.
+
+Therefore, please let us know if you have any requests for us.
+
+# 概要
 seabornを利用して、各種データの可視化および評価指標の算出を実施します。
 以下のモジュールからなります
 |パッケージ名|概要|使用法|
