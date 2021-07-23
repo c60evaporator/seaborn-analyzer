@@ -11,7 +11,7 @@ AUTHOR_EMAIL = 'c60evaporator@gmail.com'
 URL = 'https://github.com/c60evaporator/seaborn-analyzer'
 LICENSE = 'BSD 3-Clause'
 DOWNLOAD_URL = 'https://github.com/c60evaporator/seaborn-analyzer'
-VERSION = '0.1.1'
+VERSION = '0.1.2'
 PYTHON_REQUIRES = ">=3.6"
 
 INSTALL_REQUIRES = [
