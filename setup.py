@@ -48,7 +48,7 @@ CLASSIFIERS = [
     'Topic :: Scientific/Engineering :: Visualization',
     'Topic :: Scientific/Engineering :: Artificial Intelligence',
     'Topic :: Multimedia :: Graphics',
-    'Framework :: Matplotlib :: Seaborn',
+    'Framework :: Matplotlib',
 ]
 
 LONG_DESCRIPTION = """
