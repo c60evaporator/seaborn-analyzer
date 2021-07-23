@@ -1,4 +1,4 @@
-# seaborn_analyzer
+# seaborn-analyzer
 **A data analysis and visualization tool using Seaborn library.**
 
 This documentation is currently Japanese language only.
