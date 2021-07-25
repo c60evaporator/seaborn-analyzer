@@ -37,7 +37,7 @@ cp.pairanalyzer(titanic, hue='survived')
 
 # インストール方法
 ```
-pip install seaborn-analyzer
+$ pip install seaborn-analyzer
 ```
 <br>
 
@@ -62,7 +62,7 @@ seabornを利用して、各種データの可視化および評価指標の算�
 散布図行列と相関係数行列を同時に表示します。
 1個のクラス「CustomPairPlot」からなります
 
-**CustomPairPlotクラス内のメソッド一覧**
+**・CustomPairPlotクラス内のメソッド一覧**
 |メソッド名|機能|
 |---|---|
 |pairanalyzer|散布図行列と相関係数行列を同時に表示します|
@@ -108,7 +108,7 @@ https://qiita.com/c60evaporator/items/20f11b6ee965cec48570
 ## histクラス (custom_hist_plot.py)
 ヒストグラム表示および各種分布のフィッティングを実行します。
 
-**histクラス内のメソッド一覧**
+**・histクラス内のメソッド一覧**
 |メソッド名|機能|
 |---|---|
 |plot_normality|正規性検定とQQプロット|
@@ -127,7 +127,7 @@ hist.plot_normality(df, x='LSTAT', norm_hist=False, rounddigit=5)
 #### 引数一覧
 |引数名|必須引数orオプション|型|デフォルト値|内容|
 |---|---|---|---|---|
-|data|必須|pd.DataFrame or pd.Series or pd.ndarray|-|入力データ|
+|data|必須|pd.DataFrame, pd.Series, or pd.ndarray|-|入力データ|
 |x|オプション|str|None|ヒストグラム作成対象のカラム名 (dataがpd.DataFrameのときは必須)|
 |hue|オプション|str|None|色分けに指定するカラム名 (Noneなら色分けなし)|
 |binwidth|オプション|float|None|ビンの幅 (binsと共存不可)|
@@ -158,7 +158,7 @@ df_scores
 #### 引数一覧
 |引数名|必須引数orオプション|型|デフォルト値|内容|
 |---|---|---|---|---|
-|data|必須|pd.DataFrame or pd.Series or pd.ndarray|-|入力データ|
+|data|必須|pd.DataFrame, pd.Series, or pd.ndarray|-|入力データ|
 |x|オプション|str|None|ヒストグラム作成対象のカラム名 (dataがpd.DataFrameのときは必須)|
 |hue|オプション|str|None|色分けに指定するカラム名 (Noneなら色分けなし)|
 |binwidth|オプション|float|None|ビンの幅 (binsと共存不可)|
@@ -181,9 +181,10 @@ https://qiita.com/c60evaporator/items/fc531aff0cdbafac0f42
 <br>
 
 ## classplotクラス
-分類の決定境界およびクラス確率の表示を実行します。
+分類の決定境界およびクラス確率の表示を実行します。<br>
 Scikit-Learn APIに対応した分類モデル (例: XGBoostパッケージのXGBoostClassifierクラス)が表示対象となります
-**classplotクラス内のメソッド一覧**
+
+**・classplotクラス内のメソッド一覧**
 |メソッド名|機能|
 |---|---|
 |class_separator_plot|決定境界プロット|
@@ -203,23 +204,33 @@ classplot.class_separator_plot(model, ['petal_width', 'petal_length'], 'species'
 #### 引数一覧
 |引数名|必須引数orオプション|型|デフォルト値|内容|
 |---|---|---|---|---|
-|data|必須|pd.DataFrame or pd.Series or pd.ndarray|-|入力データ|
-|x|オプション|str|None|ヒストグラム作成対象のカラム名 (dataがpd.DataFrameのときは必須)|
-|hue|オプション|str|None|色分けに指定するカラム名 (Noneなら色分けなし)|
-|binwidth|オプション|float|None|ビンの幅 (binsと共存不可)|
-|bins|オプション|int|'auto'|ビンの数 (bin_widthと共存不可、'auto'なら[スタージェスの公式](https://numpy.org/devdocs/reference/generated/numpy.histogram_bin_edges.html)で自動決定)|
-|norm_hist|オプション|bool|False|ヒストグラムを面積1となるよう正規化するか？|
-|sigmarange|オプション|float|4|フィッティング線の表示範囲 (標準偏差の何倍まで表示するか指定)|
-|linesplit|オプション|float|200|フィッティング線の分割数 (カクカクしたら増やす)
-|dist|オプション|str or List[str]|'norm'|分布の種類 ('norm', 'lognorm', 'gamma', 't', 'expon', 'uniform', 'chi2', 'weibull')|
-|ax|オプション|matplotlib.axes._ subplots.Axes|None|表示対象のax (Noneならmatplotlib.pyplot.plotで1枚ごとにプロット)|
-|linecolor|オプション|str or List[str]|'red'|フィッティング線の[色指定](https://matplotlib.org/stable/gallery/color/named_colors.html) (Listで複数指定可)|
-|floc|オプション|float|None|フィッティング時のX方向オフセット (Noneなら指定なし(weibullとexponは0))|
-|hist_kws|オプション|Dict|{}|[matplotlib.axes.Axes.histに渡す引数](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.hist.html)|
+|model|必須|Scikit-learn API|-|表示対象の回帰モデル|
+|x|必須|List[str]|-|説明変数に指定するカラム名|
+|y|必須|str|-|目的変数に指定するカラム名|
+|data|必須|pd.DataFrame|-|入力データ|
+|x_chart|オプション|List[str]|None|説明変数のうちグラフ表示対象のカラム名|
+|pair_sigmarange|オプション|float|1.5|グラフ非使用変数の分割範囲|
+|pair_sigmainterval|オプション|float|0.5|グラフ非使用変数の1枚あたり表示範囲|
+|chart_extendsigma|オプション|float|0.5|グラフ縦軸横軸の表示拡張範囲|
+|chart_scale|オプション|int|1|グラフの描画倍率|
+|plot_scatter|オプション|str|'true'|散布図の描画種類|
+|rounddigit_x3|オプション|int|2|グラフ非使用軸の小数丸め桁数|
+|scatter_colors|オプション|List[str]|None|クラスごとのプロット色のリスト|
+|true_marker|オプション|str|None|正解クラスの散布図プロット形状|
+|false_marker|オプション|str|None|不正解クラスの散布図プロット形状|
+|cv|オプション|int or sklearn.model_selection.* |None|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
+|cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
+|cv_group|オプション|str|None|GroupKFold,LeaveOneGroupOutのグルーピング対象カラム名|
+|display_cv_indices|オプション|int|0|表示対象のクロスバリデーション番号|
+|model_params|オプション|Dict|None|分類モデルに渡すパラメータ|
+|fit_params|オプション|Dict|None|学習時のパラメータ|
+|subplot_kws|オプション|Dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
+|contourf_kws|オプション|Dict|None|グラフ表示用の[matplotlib.pyplot.contourf](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.contourf.html)に渡す引数|
+|scatter_kws|オプション|Dict|None|散布図用の[matplotlib.pyplot.scatter](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.scatter.html)に渡す引数|
 <br>
 
 ### class_proba_plotメソッド
-####実行例
+#### 実行例
 ```python
 import seaborn as sns
 from sklearn.svm import SVC
@@ -233,19 +244,34 @@ classplot.class_proba_plot(model, ['petal_width', 'petal_length'], 'species', ir
 #### 引数一覧
 |引数名|必須引数orオプション|型|デフォルト値|内容|
 |---|---|---|---|---|
-|data|必須|pd.DataFrame or pd.Series or pd.ndarray|-|入力データ|
-|x|オプション|str|None|ヒストグラム作成対象のカラム名 (dataがpd.DataFrameのときは必須)|
-|hue|オプション|str|None|色分けに指定するカラム名 (Noneなら色分けなし)|
-|binwidth|オプション|float|None|ビンの幅 (binsと共存不可)|
-|bins|オプション|int|'auto'|ビンの数 (bin_widthと共存不可、'auto'なら[スタージェスの公式](https://numpy.org/devdocs/reference/generated/numpy.histogram_bin_edges.html)で自動決定)|
-|norm_hist|オプション|bool|False|ヒストグラムを面積1となるよう正規化するか？|
-|sigmarange|オプション|float|4|フィッティング線の表示範囲 (標準偏差の何倍まで表示するか指定)|
-|linesplit|オプション|float|200|フィッティング線の分割数 (カクカクしたら増やす)
-|dist|オプション|str or List[str]|'norm'|分布の種類 ('norm', 'lognorm', 'gamma', 't', 'expon', 'uniform', 'chi2', 'weibull')|
-|ax|オプション|matplotlib.axes._ subplots.Axes|None|表示対象のax (Noneならmatplotlib.pyplot.plotで1枚ごとにプロット)|
-|linecolor|オプション|str or List[str]|'red'|フィッティング線の[色指定](https://matplotlib.org/stable/gallery/color/named_colors.html) (Listで複数指定可)|
-|floc|オプション|float|None|フィッティング時のX方向オフセット (Noneなら指定なし(weibullとexponは0))|
-|hist_kws|オプション|Dict|{}|[matplotlib.axes.Axes.histに渡す引数](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.hist.html)|
+|model|必須|Scikit-learn API|-|表示対象の回帰モデル|
+|x|必須|List[str]|-|説明変数に指定するカラム名|
+|y|必須|str|-|目的変数に指定するカラム名|
+|data|必須|pd.DataFrame|-|入力データ|
+|x_chart|オプション|List[str]|None|説明変数のうちグラフ表示対象のカラム名|
+|pair_sigmarange|オプション|float|1.5|グラフ非使用変数の分割範囲|
+|pair_sigmainterval|オプション|float|0.5|グラフ非使用変数の1枚あたり表示範囲|
+|chart_extendsigma|オプション|float|0.5|グラフ縦軸横軸の表示拡張範囲|
+|chart_scale|オプション|int|1|グラフの描画倍率|
+|plot_scatter|オプション|str|'true'|散布図の描画種類|
+|rounddigit_x3|オプション|int|2|グラフ非使用軸の小数丸め桁数|
+|scatter_colors|オプション|List[str]|None|クラスごとのプロット色のリスト|
+|true_marker|オプション|str|None|正解クラスの散布図プロット形状|
+|false_marker|オプション|str|None|不正解クラスの散布図プロット形状|
+|cv|オプション|int or sklearn.model_selection.* |None|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
+|cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
+|cv_group|オプション|str|None|GroupKFold, LeaveOneGroupOutのグルーピング対象カラム名|
+|display_cv_indices|オプション|int|0|表示対象のクロスバリデーション番号|
+|model_params|オプション|Dict|None|分類モデルに渡すパラメータ|
+|fit_params|オプション|Dict|None|学習時のパラメータ|
+|subplot_kws|オプション|Dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
+|contourf_kws|オプション|Dict|None|proba_type='contour'のとき[matplotlib.pyplot.contourf](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.contourf.html)、 proba_type='contour'のとき[contour](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.contour.html))に渡す引数|
+|scatter_kws|オプション|Dict|None|散布図用の[matplotlib.pyplot.scatter](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.scatter.html)に渡す引数|
+|plot_border|オプション|bool|True|決定境界線の描画有無|
+|proba_class|オプション|str or List[str]|None|確率表示対象のクラス名|
+|proba_cmap_dict|オプション|Dict[str, str]|None|クラス確率図のカラーマップ(クラス名と[colormap](https://matplotlib.org/stable/tutorials/colors/colormaps.html)をDict指定)|
+|proba_type|オプション|str|'contourf'|クラス確率図の描画種類<br>(等高線'contourf', 'contour', or RGB画像'imshow')|
+|imshow_kws|オプション|Dict|None|proba_type='imshow'のとき[matplotlib.pyplot.imshow](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.imshow.html)に渡す引数|
 <br>
 
 ### classplotクラス使用法詳細
@@ -256,9 +282,10 @@ https://qiita.com/c60evaporator/items/43866a42e09daebb5cc0
 <br>
 
 ## regplotクラス
-相関・回帰分析の散布図・ヒートマップ表示を実行します。
+相関・回帰分析の散布図・ヒートマップ表示を実行します。<br>
 Scikit-Learn APIに対応した回帰モデル (例: XGBoostパッケージのXGBoostRegressorクラス)が表示対象となります
-**regplotクラス内のメソッド一覧**
+
+**・regplotクラス内のメソッド一覧**
 |メソッド名|機能|
 |---|---|
 |linear_plot|ピアソン相関係数とP値を散布図と共に表示|
@@ -278,19 +305,15 @@ regplot.linear_plot(x='petal_length', y='sepal_length', data=iris)
 #### 引数一覧
 |引数名|必須引数orオプション|型|デフォルト値|内容|
 |---|---|---|---|---|
-|data|必須|pd.DataFrame or pd.Series or pd.ndarray|-|入力データ|
-|x|オプション|str|None|ヒストグラム作成対象のカラム名 (dataがpd.DataFrameのときは必須)|
-|hue|オプション|str|None|色分けに指定するカラム名 (Noneなら色分けなし)|
-|binwidth|オプション|float|None|ビンの幅 (binsと共存不可)|
-|bins|オプション|int|'auto'|ビンの数 (bin_widthと共存不可、'auto'なら[スタージェスの公式](https://numpy.org/devdocs/reference/generated/numpy.histogram_bin_edges.html)で自動決定)|
-|norm_hist|オプション|bool|False|ヒストグラムを面積1となるよう正規化するか？|
-|sigmarange|オプション|float|4|フィッティング線の表示範囲 (標準偏差の何倍まで表示するか指定)|
-|linesplit|オプション|float|200|フィッティング線の分割数 (カクカクしたら増やす)
-|dist|オプション|str or List[str]|'norm'|分布の種類 ('norm', 'lognorm', 'gamma', 't', 'expon', 'uniform', 'chi2', 'weibull')|
-|ax|オプション|matplotlib.axes._ subplots.Axes|None|表示対象のax (Noneならmatplotlib.pyplot.plotで1枚ごとにプロット)|
-|linecolor|オプション|str or List[str]|'red'|フィッティング線の[色指定](https://matplotlib.org/stable/gallery/color/named_colors.html) (Listで複数指定可)|
-|floc|オプション|float|None|フィッティング時のX方向オフセット (Noneなら指定なし(weibullとexponは0))|
-|hist_kws|オプション|Dict|{}|[matplotlib.axes.Axes.histに渡す引数](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.hist.html)|
+|x|必須|str|-|横軸に指定するカラム名|
+|y|必須|str|-|縦軸に指定するカラム名|
+|data|必須|pd.DataFrame|-|入力データ|
+|ax|オプション|matplotlib.axes._ subplots.Axes|None|表示対象のAxes (Noneならmatplotlib.pyplot.plotで1枚ごとにプロット)|
+|hue|オプション|str|None|色分けに指定するカラム名|
+|linecolor|オプション|str|'red'|回帰直線の[色](https://matplotlib.org/stable/gallery/color/named_colors.html)|
+|rounddigit|オプション|int|5|表示指標の小数丸め桁数|
+|plot_scores|オプション|bool|True|回帰式、ピアソンの相関係数およびp値の表示有無|
+|scatter_kws|オプション|Dict|None|[seaborn.scatterplot](https://seaborn.pydata.org/generated/seaborn.scatterplot.html)に渡す引数|
 <br>
 
 ### regression_pred_trueメソッド
@@ -307,19 +330,23 @@ regplot.regression_pred_true(LinearRegression(), x=['altitude', 'latitude'], y='
 #### 引数一覧
 |引数名|必須引数orオプション|型|デフォルト値|内容|
 |---|---|---|---|---|
-|data|必須|pd.DataFrame or pd.Series or pd.ndarray|-|入力データ|
-|x|オプション|str|None|ヒストグラム作成対象のカラム名 (dataがpd.DataFrameのときは必須)|
-|hue|オプション|str|None|色分けに指定するカラム名 (Noneなら色分けなし)|
-|binwidth|オプション|float|None|ビンの幅 (binsと共存不可)|
-|bins|オプション|int|'auto'|ビンの数 (bin_widthと共存不可、'auto'なら[スタージェスの公式](https://numpy.org/devdocs/reference/generated/numpy.histogram_bin_edges.html)で自動決定)|
-|norm_hist|オプション|bool|False|ヒストグラムを面積1となるよう正規化するか？|
-|sigmarange|オプション|float|4|フィッティング線の表示範囲 (標準偏差の何倍まで表示するか指定)|
-|linesplit|オプション|float|200|フィッティング線の分割数 (カクカクしたら増やす)
-|dist|オプション|str or List[str]|'norm'|分布の種類 ('norm', 'lognorm', 'gamma', 't', 'expon', 'uniform', 'chi2', 'weibull')|
-|ax|オプション|matplotlib.axes._ subplots.Axes|None|表示対象のax (Noneならmatplotlib.pyplot.plotで1枚ごとにプロット)|
-|linecolor|オプション|str or List[str]|'red'|フィッティング線の[色指定](https://matplotlib.org/stable/gallery/color/named_colors.html) (Listで複数指定可)|
-|floc|オプション|float|None|フィッティング時のX方向オフセット (Noneなら指定なし(weibullとexponは0))|
-|hist_kws|オプション|Dict|{}|[matplotlib.axes.Axes.histに渡す引数](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.hist.html)|
+|model|必須|Scikit-learn API|-|表示対象の回帰モデル|
+|x|必須|List[str]|-|説明変数に指定するカラム名のリスト|
+|y|必須|str|-|目的変数に指定するカラム名|
+|data|必須|pd.DataFrame|-|入力データ|
+|hue|オプション|str|None|色分けに指定するカラム名|
+|linecolor|オプション|str|'red'|予測値=実測値の[線の色](https://matplotlib.org/stable/gallery/color/named_colors.html)|
+|rounddigit|オプション|int|3|表示指標の小数丸め桁数|
+|rank_number|オプション|int|None|誤差上位何番目までを文字表示するか|
+|rank_col|オプション|str|None|誤差上位と一緒に表示するフィールド名|
+|scores|オプション|str or List[str]|'mae'|文字表示する評価指標を指定 ('r2', 'mae', 'rmse', 'rmsle', or 'max_error')|
+|cv_stats|オプション|str|'mean'|クロスバリデーション時に表示する評価指標統計値 ('mean', 'median', 'max', or 'min')|
+|cv|オプション|int or sklearn.model_selection.* |None|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
+|cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
+|model_params|オプション|Dict|None|回帰モデルに渡すパラメータ|
+|fit_params|オプション|Dict|None|学習時のパラメータをDict指定|
+|subplot_kws|オプション|Dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
+|scatter_kws|オプション|Dict|None|[seaborn.scatterplot](https://seaborn.pydata.org/generated/seaborn.scatterplot.html)に渡す引数|
 <br>
 
 ### regression_plot_1dメソッド
@@ -335,19 +362,23 @@ regplot.regression_plot_1d(SVR(), x='petal_length', y='sepal_length', data=iris)
 #### 引数一覧
 |引数名|必須引数orオプション|型|デフォルト値|内容|
 |---|---|---|---|---|
-|data|必須|pd.DataFrame or pd.Series or pd.ndarray|-|入力データ|
-|x|オプション|str|None|ヒストグラム作成対象のカラム名 (dataがpd.DataFrameのときは必須)|
-|hue|オプション|str|None|色分けに指定するカラム名 (Noneなら色分けなし)|
-|binwidth|オプション|float|None|ビンの幅 (binsと共存不可)|
-|bins|オプション|int|'auto'|ビンの数 (bin_widthと共存不可、'auto'なら[スタージェスの公式](https://numpy.org/devdocs/reference/generated/numpy.histogram_bin_edges.html)で自動決定)|
-|norm_hist|オプション|bool|False|ヒストグラムを面積1となるよう正規化するか？|
-|sigmarange|オプション|float|4|フィッティング線の表示範囲 (標準偏差の何倍まで表示するか指定)|
-|linesplit|オプション|float|200|フィッティング線の分割数 (カクカクしたら増やす)
-|dist|オプション|str or List[str]|'norm'|分布の種類 ('norm', 'lognorm', 'gamma', 't', 'expon', 'uniform', 'chi2', 'weibull')|
-|ax|オプション|matplotlib.axes._ subplots.Axes|None|表示対象のax (Noneならmatplotlib.pyplot.plotで1枚ごとにプロット)|
-|linecolor|オプション|str or List[str]|'red'|フィッティング線の[色指定](https://matplotlib.org/stable/gallery/color/named_colors.html) (Listで複数指定可)|
-|floc|オプション|float|None|フィッティング時のX方向オフセット (Noneなら指定なし(weibullとexponは0))|
-|hist_kws|オプション|Dict|{}|[matplotlib.axes.Axes.histに渡す引数](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.hist.html)|
+|model|必須|Scikit-learn API|-|表示対象の回帰モデル|
+|x|必須|str|-|説明変数に指定するカラム名|
+|y|必須|str|-|目的変数に指定するカラム名|
+|data|必須|pd.DataFrame|-|入力するデータ（Pandasのデータフレーム）|
+|hue|オプション|str|None|色分けに指定するカラム名|
+|linecolor|オプション|str|'red'|予測値=実測値の[線の色](https://matplotlib.org/stable/gallery/color/named_colors.html)|
+|rounddigit|オプション|int|3|表示指標の小数丸め桁数|
+|rank_number|オプション|int|None|誤差上位何番目までを文字表示するか|
+|rank_col|オプション|str|None|誤差上位と一緒に表示するフィールド名|
+|scores|オプション|str or List[str]|'mae'|文字表示する評価指標を指定 ('r2', 'mae', 'rmse', 'rmsle', or 'max_error')|
+|cv_stats|オプション|str|'mean'|クロスバリデーション時に表示する評価指標統計値 ('mean', 'median', 'max', or 'min')|
+|cv|オプション|int or sklearn.model_selection.* |None|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
+|cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
+|model_params|オプション|Dict|None|回帰モデルに渡すパラメータ|
+|fit_params|オプション|Dict|None|学習時のパラメータをDict指定|
+|subplot_kws|オプション|Dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
+|scatter_kws|オプション|Dict|None|[seaborn.scatterplot](https://seaborn.pydata.org/generated/seaborn.scatterplot.html)に渡す引数|
 <br>
 
 ### regression_heat_plotメソッド
@@ -363,19 +394,32 @@ regplot.regression_heat_plot(LinearRegression(), x=['altitude', 'latitude'], y='
 #### 引数一覧
 |引数名|必須引数orオプション|型|デフォルト値|内容|
 |---|---|---|---|---|
-|data|必須|pd.DataFrame or pd.Series or pd.ndarray|-|入力データ|
-|x|オプション|str|None|ヒストグラム作成対象のカラム名 (dataがpd.DataFrameのときは必須)|
-|hue|オプション|str|None|色分けに指定するカラム名 (Noneなら色分けなし)|
-|binwidth|オプション|float|None|ビンの幅 (binsと共存不可)|
-|bins|オプション|int|'auto'|ビンの数 (bin_widthと共存不可、'auto'なら[スタージェスの公式](https://numpy.org/devdocs/reference/generated/numpy.histogram_bin_edges.html)で自動決定)|
-|norm_hist|オプション|bool|False|ヒストグラムを面積1となるよう正規化するか？|
-|sigmarange|オプション|float|4|フィッティング線の表示範囲 (標準偏差の何倍まで表示するか指定)|
-|linesplit|オプション|float|200|フィッティング線の分割数 (カクカクしたら増やす)
-|dist|オプション|str or List[str]|'norm'|分布の種類 ('norm', 'lognorm', 'gamma', 't', 'expon', 'uniform', 'chi2', 'weibull')|
-|ax|オプション|matplotlib.axes._ subplots.Axes|None|表示対象のax (Noneならmatplotlib.pyplot.plotで1枚ごとにプロット)|
-|linecolor|オプション|str or List[str]|'red'|フィッティング線の[色指定](https://matplotlib.org/stable/gallery/color/named_colors.html) (Listで複数指定可)|
-|floc|オプション|float|None|フィッティング時のX方向オフセット (Noneなら指定なし(weibullとexponは0))|
-|hist_kws|オプション|Dict|{}|[matplotlib.axes.Axes.histに渡す引数](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.hist.html)|
+|model|必須|Scikit-learn API|-|表示対象の回帰モデル|
+|x|必須|List[str]|-|説明変数に指定するカラム名のリスト|
+|y|必須|str|-|目的変数に指定するカラム名|
+|data|必須|pd.DataFrame|-|入力データ|
+|x_heat|オプション|List[str]|None|説明変数のうちヒートマップ表示対象のカラム名|
+|scatter_hue|オプション|str|None|散布図色分け指定カラム名 (plot_scatter='hue'時のみ有効)|
+|pair_sigmarange|オプション|float|1.5|ヒートマップ非使用変数の分割範囲|
+|pair_sigmainterval|オプション|float|0.5|ヒートマップ非使用変数の1枚あたり表示範囲|
+|heat_extendsigma|オプション|float|0.5|ヒートマップ縦軸横軸の表示拡張範囲|
+|heat_division|オプション|int|30|ヒートマップ縦軸横軸の解像度|
+|value_extendsigma|オプション|float|0.5|ヒートマップの色分け最大最小値拡張範囲|
+|plot_scatter|オプション|str|'true'|散布図の描画種類|
+|rounddigit_rank|オプション|int|3|誤差上位表示の小数丸め桁数|
+|rounddigit_x1|オプション|int|2|ヒートマップ横軸の小数丸め桁数|
+|rounddigit_x2|オプション|int|2|ヒートマップ縦軸の小数丸め桁数|
+|rounddigit_x3|オプション|int|2|ヒートマップ非使用軸の小数丸め桁数|
+|rank_number|オプション|int|None|誤差上位何番目までを文字表示するか|
+|rank_col|オプション|str|None|誤差上位と一緒に表示するフィールド名|
+|cv|オプション|int or sklearn.model_selection.* |None|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
+|cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
+|display_cv_indices|オプション|int|0|表示対象のクロスバリデーション番号|
+|model_params|オプション|Dict|None|回帰モデルに渡すパラメータ|
+|fit_params|オプション|Dict|None|学習時のパラメータをDict指定|
+|subplot_kws|オプション|Dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
+|heat_kws|オプション|Dict|None|ヒートマップ用の[seaborn.heatmap](https://seaborn.pydata.org/generated/seaborn.heatmap.html)に渡す引数|
+|scatter_kws|オプション|Dict|None|散布図用の[matplotlib.pyplot.scatter](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.scatter.html)に渡す引数|
 <br>
 
 ### regplotクラス使用法詳細
