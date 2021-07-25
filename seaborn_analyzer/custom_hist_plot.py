@@ -114,31 +114,31 @@ class hist():
 
         Parameters
         ----------
-        data : pd.DataFrame or pd.Series or pd.ndarray
+        data : pd.DataFrame, pd.Series, or pd.ndarray
             フィッティング対象のデータ
-        x : str
+        x : str, optional
             ヒストグラム作成対象の変数カラム (列名指定、dataがDataFrameのときのみ指定可)
-        hue : str
+        hue : str, optional
             色分け指定カラム (列名指定、dataがDataFrameのときのみ指定可)
-        dist : str or List[str]
+        dist : str or List[str], optional
             分布の種類 ("norm", "lognorm", "gamma", "t", "expon", "uniform", "chi2", "weibull")
-        ax : matplotlib.axes._subplots.Axes
-            表示対象のax (Noneならplt.plotで1枚ごとにプロット)
-        binwidth : float
+        ax : matplotlib.axes._subplots.Axes, optional
+            表示対象のax (Noneならmatplotlib.pyplot.plotで1枚ごとにプロット)
+        binwidth : float, optional
             ビンの幅 (binsと共存不可)
-        bins : int
+        bins : int, optional
             ビンの数 (bin_widthと共存不可、'auto'とするとスタージェスの公式で自動決定)
-        norm_hist : bool
+        norm_hist : bool, optional
             ヒストグラムを面積1となるよう正規化するか？
-        floc : float
+        floc : float, optional
             フィッティング時のX方向オフセット (Noneなら指定なし(weibullとexponは0))
-        sigmarange : float
+        sigmarange : float, optional
             フィッティング線の表示範囲 (標準偏差の何倍まで表示するか指定)
-        linecolor : str or List[str]
+        linecolor : str or List[str], optional
             フィッティング線の色指定 (複数分布フィッティング時は、List指定)
-        linesplit : int
+        linesplit : int, optional
             フィッティング線の分割数 (カクカクしたら増やす)
-        hist_kws : Dict
+        hist_kws : Dict, optional
             ヒストグラム表示(seaborn.histplot)の引数
         """
 
@@ -335,28 +335,28 @@ class hist():
 
         Parameters
         ----------
-        data : pd.DataFrame or pd.Series or pd.ndarray
+        data : pd.DataFrame, pd.Series, or pd.ndarray
             フィッティング対象のデータ
-        x : str
+        x : str, optional
             ヒストグラム作成対象の変数カラム (列名指定、dataがDataFrameのときのみ指定可)
-        hue : str
+        hue : str, optional
             色分け指定カラム (列名指定、dataがDataFrameのときのみ指定可)
-        binwidth : float
+        binwidth : float, optional
             ビンの幅 (binsと共存不可)
-        bins : int
+        bins : int, optional
             ビンの数 (bin_widthと共存不可、'auto'とするとスタージェスの公式で自動決定)
-        norm_hist : bool
+        norm_hist : bool, optional
             ヒストグラムを面積1となるよう正規化するか？
-        sigmarange : float
+        sigmarange : float, optional
             フィッティング線の表示範囲 (標準偏差の何倍まで表示するか指定)
-        linesplit : int
+        linesplit : int, optional
             フィッティング線の分割数 (カクカクしたら増やす)
-        rounddigit: int
+        rounddigit: int, optional
             表示指標の小数丸め桁数
-        hist_kws : Dict
+        hist_kws : Dict, optional
             ヒストグラム表示(matplotlib.axes.Axes.hist())の引数
-        subplot_kws : Dict
-            プロット用のplt.subplots()に渡す引数 (例：figsize)
+        subplot_kws : Dict, optional
+            プロット用のmatplotlib.pyplot.subplots()に渡す引数 (例：figsize)
         """
 
         # 描画用のsubplots作成

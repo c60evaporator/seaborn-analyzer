@@ -94,7 +94,7 @@ class regplot():
         x : np.ndarray
             説明変数の値 (Noneなら横軸y_true縦軸y_pred、Noneでなければ横軸x縦軸y_true)
         ax : matplotlib.axes._subplots.Axes
-            表示対象のax（Noneならplt.plotで1枚ごとにプロット）
+            表示対象のax（Noneならmatplotlib.pyplot.plotで1枚ごとにプロット）
         rounddigit: int
             表示指標の小数丸め桁数
         """
@@ -148,7 +148,7 @@ class regplot():
         hue_name : str
             色分け用の列名
         ax : matplotlib.axes._subplots.Axes
-            表示対象のax (Noneならplt.plotで1枚ごとにプロット)
+            表示対象のax (Noneならmatplotlib.pyplot.plotで1枚ごとにプロット)
         linecolor : str
             予測値=実測値の線の色
         linesplit : int
@@ -200,33 +200,33 @@ class regplot():
             目的変数カラム (列名指定)
         data : pd.DataFrame
             フィッティング対象のデータ
-        hue : str
+        hue : str, optional
             色分け指定カラム (列名指定)
-        linecolor : str
+        linecolor : str, optional
             予測値=実測値の線の色
-        rounddigit: int
+        rounddigit: int, optional
             表示指標の小数丸め桁数
-        rank_number : int
+        rank_number : int, optional
             誤差上位何番目までを文字表示するか
-        rank_col : List[str]
+        rank_col : List[str], optional
             誤差上位と一緒に表示するフィールド名 (NoneならIndexを使用)
-        scores : str or list[str]
-            算出する評価指標 ('r2', 'mae','rmse', 'rmsle', 'max_error')
-        cv_stats : Dict
-            クロスバリデーション時に表示する統計値 ('mean', 'median', 'max', 'min')
-        cv : None or int or KFold
+        scores : str or List[str], optional
+            算出する評価指標 ('r2', 'mae', 'rmse', 'rmsle', or 'max_error')
+        cv_stats : str, optional
+            クロスバリデーション時に表示する統計値 ('mean', 'median', 'max', or 'min')
+        cv : int or sklearn.model_selection.*, optional
             クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)
-        cv_seed : int
+        cv_seed : int, optional
             クロスバリデーションの乱数シード
-        model_params : Dict[str, float]
+        model_params : Dict, optional
             回帰モデルに渡すパラメータ (チューニング後のパラメータがgood、Noneならデフォルト)
-        fit_params : Dict[str, float]
+        fit_params : Dict, optional
             学習時のパラメータをdict指定 (例: XGBoostのearly_stopping_rounds)
             Noneならデフォルト
             Pipelineのときは{学習器名__パラメータ名:パラメータの値,‥}で指定する必要あり
-        subplot_kws : Dict[str, float]
-            プロット用のplt.subplots()に渡す引数 (例：figsize)
-        scatter_kws: dict, optional
+        subplot_kws : Dict, optional
+            プロット用のmatplotlib.pyplot.subplots()に渡す引数 (例：figsize)
+        scatter_kws: Dict, optional
             散布図用のsns.scatterplot()に渡す引数
         """
         # scoresの型をListに統一
@@ -434,17 +434,17 @@ class regplot():
             目的変数カラム (列名指定)
         data : pd.DataFrame
             フィッティング対象のデータ
-        ax : matplotlib.axes._subplots.Axes
-            表示対象のaxes (Noneならplt.plotで1枚ごとにプロット)
-        hue : str
+        ax : matplotlib.axes._subplots.Axes, optional
+            表示対象のaxes (Noneならmatplotlib.pyplot.plotで1枚ごとにプロット)
+        hue : str, optional
             色分け指定カラム (列名指定)
-        linecolor : str
+        linecolor : str, optional
             回帰直線の色
-        rounddigit: int
+        rounddigit: int, optional
             表示指標の小数丸め桁数
-        plot_scores: bool
+        plot_scores: bool, optional
             回帰式、ピアソンの相関係数およびp値の表示有無 (Trueなら表示あり)
-        scatter_kws: dict, optional
+        scatter_kws: Dict, optional
             散布図用のsns.scatterplot()に渡す引数
         """
         # scatter_kwsがNoneなら空のdictを入力
@@ -518,7 +518,7 @@ class regplot():
             表示指標の小数丸め桁数
         score_dict : Dict[str, float]
             算出した評価指標一覧
-        scatter_kws: dict, optional
+        scatter_kws: Dict, optional
             散布図用のsns.scatterplot()に渡す引数
         """
         # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
@@ -564,33 +564,33 @@ class regplot():
             目的変数カラム (列名指定)
         data : pd.DataFrame
             フィッティング対象のデータ
-        hue : str
+        hue : str, optional
             色分け指定カラム (列名指定)
-        linecolor : str
+        linecolor : str, optional
             予測値=実測値の線の色
-        rounddigit: int
+        rounddigit: int, optional
             表示指標の小数丸め桁数
-        rank_number : int
+        rank_number : int, optional
             誤差上位何番目までを文字表示するか
-        rank_col : List[str]
+        rank_col : List[str], optional
             誤差上位と一緒に表示するフィールド名 (NoneならIndexを使用)
-        scores : str or list[str]
-            算出する評価指標 ('r2', 'mae', 'rmse', 'rmsle', 'max_error')
-        cv_stats : Dict
-            クロスバリデーション時に表示する統計値 ('mean', 'median', 'max', 'min')
-        cv : None or int or KFold
+        scores : str or List[str], optional
+            算出する評価指標 ('r2', 'mae', 'rmse', 'rmsle', or 'max_error')
+        cv_stats : str, optional
+            クロスバリデーション時に表示する統計値 ('mean', 'median', 'max', or 'min')
+        cv : int or sklearn.model_selection.*, optional
             クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)
-        cv_seed : int
+        cv_seed : int, optional
             クロスバリデーションの乱数シード
         model_params: Dict, optional
             回帰モデルに渡すパラメータ (チューニング後のパラメータがgood、Noneならデフォルト)
-        fit_params : Dict[str, float]
+        fit_params : Dict, optional
             学習時のパラメータをdict指定 (例: XGBoostのearly_stopping_rounds)
             Noneならデフォルト
             Pipelineのときは{学習器名__パラメータ名:パラメータの値,‥}で指定する必要あり
-        subplot_kws : Dict[str, float]
-            プロット用のplt.subplots()に渡す引数 (例：figsize)
-        scatter_kws: dict, optional
+        subplot_kws : Dict, optional
+            プロット用のmatplotlib.pyplot.subplots()に渡す引数 (例：figsize)
+        scatter_kws: Dict, optional
             散布図用のsns.scatterplot()に渡す引数
         """
         # scoresの型をListに統一
@@ -1059,7 +1059,7 @@ class regplot():
             誤差上位何番目までを文字表示するか
         rank_col: str, optional
             誤差上位と一緒に表示するフィールド名 (NoneならIndexを使用)
-        cv: int or KFold, optional
+        cv: int or sklearn.model_selection.*, optional
             クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)
         cv_seed: int, optional
             クロスバリデーションの乱数シード
@@ -1072,7 +1072,7 @@ class regplot():
             Noneならデフォルト
             Pipelineのときは{学習器名__パラメータ名:パラメータの値,‥}で指定する必要あり
         subplot_kws: dict, optional
-            プロット用のplt.subplots()に渡す引数 (例：figsize)
+            プロット用のmatplotlib.pyplot.subplots()に渡す引数 (例：figsize)
         heat_kws: dict, optional
             ヒートマップ用のsns.heatmap()に渡す引数
         scatter_kws: dict, optional
@@ -1616,7 +1616,7 @@ class classplot():
             正解クラスの散布図プロット形状
         false_marker: str, optional
             不正解クラスの散布図プロット形状
-        cv: int or KFold, optional
+        cv: int or sklearn.model_selection.*, optional
             クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)
         cv_seed: int, optional
             クロスバリデーションの乱数シード
@@ -1631,7 +1631,7 @@ class classplot():
             Noneならデフォルト
             Pipelineのときは{学習器名__パラメータ名:パラメータの値,‥}で指定する必要あり
         subplot_kws: dict, optional
-            プロット用のplt.subplots()に渡す引数 (例：figsize)
+            プロット用のmatplotlib.pyplot.subplots()に渡す引数 (例：figsize)
         contourf_kws: dict, optional
             決定境界図用のax.contourf()に渡す引数
         scatter_kws: dict, optional
@@ -1813,7 +1813,7 @@ class classplot():
             正解クラスの散布図プロット形状
         false_marker: str, optional
             不正解クラスの散布図プロット形状
-        cv: int or KFold, optional
+        cv: int or sklearn.model_selection.*, optional
             クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)
         cv_seed: int, optional
             クロスバリデーションの乱数シード
@@ -1828,7 +1828,7 @@ class classplot():
             Noneならデフォルト
             Pipelineのときは{学習器名__パラメータ名:パラメータの値,‥}で指定する必要あり
         subplot_kws: dict, optional
-            プロット用のplt.subplots()に渡す引数 (例：figsize)
+            プロット用のmatplotlib.pyplot.subplots()に渡す引数 (例：figsize)
         contourf_kws: dict, optional
             クラス確率図(等高線)用のax.contourf()に渡す引数
         imshow_kws: dict, optional
