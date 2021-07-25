@@ -7,11 +7,8 @@
 
 ![image](https://user-images.githubusercontent.com/59557625/126887193-ceba9bdd-3653-4d58-a916-21dcfe9c38a0.png)
 
-This documentation is currently Japanese language only.
-
-If there is a request for English version documantation, we will make it.
-
-Therefore, please let us know if you have any requests for us.
+This documentation is Japanese language version.
+[English version is here](https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst)
 
 <br>
 
