@@ -93,8 +93,8 @@ classplot class
     :header: "Method name", "Summary", "API Documentation"
     :widths: 300, 50, 15
 
-    "class_separator_plot", Plotting class separation lines, `hist.class_separator_plot <https://pypi.org/project/seaborn-analyzer/>`__
-    "class_proba_plot", Plotting class prediction probability, `hist.class_proba_plot <https://pypi.org/project/seaborn-analyzer/>`__
+    "class_separator_plot", Plotting class separation lines of any scikit-learn classification models, `hist.class_separator_plot <https://pypi.org/project/seaborn-analyzer/>`__
+    "class_proba_plot", Plotting class prediction probability of any scikit-learn classification models, `hist.class_proba_plot <https://pypi.org/project/seaborn-analyzer/>`__
 
 
 regplot class
@@ -106,8 +106,8 @@ regplot class
 
     "linear_plot", Plotting linear regression line and calculating Pearson correlation coefficient, `regplot.linear_plot <https://pypi.org/project/seaborn-analyzer/>`__
     "regression_pred_true", Plotting prediction value vs. true value scatter plots, `regplot.regression_pred_true <https://pypi.org/project/seaborn-analyzer/>`__
-    "regression_plot_1d", Plotting 1d regression lines of any scikit-learn regression model, `regplot.regression_plot_1d <https://pypi.org/project/seaborn-analyzer/>`__
-    "regression_heat_plot", Plotting 2 to 4d regression heat maps of any scikit-learn regression model, `regplot.regression_heat_plot <https://pypi.org/project/seaborn-analyzer/>`__
+    "regression_plot_1d", Plotting 1d regression lines of any scikit-learn regression models, `regplot.regression_plot_1d <https://pypi.org/project/seaborn-analyzer/>`__
+    "regression_heat_plot", Plotting 2 to 4d regression heat maps of any scikit-learn regression models, `regplot.regression_heat_plot <https://pypi.org/project/seaborn-analyzer/>`__
 
 
 =======
