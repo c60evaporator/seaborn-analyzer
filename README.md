@@ -16,6 +16,7 @@ Therefore, please let us know if you have any requests for us.
 <br>
 
 # 使用法
+CustomPairPlotクラスの使用例
 ```python
 from seaborn_analyzer import CustomPairPlot
 import seaborn as sns
@@ -24,6 +25,8 @@ titanic = sns.load_dataset("titanic")
 cp = CustomPairPlot()
 cp.pairanalyzer(titanic, hue='survived')
 ```
+※その他のクラスの使用法は[構成](https://github.com/c60evaporator/seaborn-analyzer#%E6%A7%8B%E6%88%90)の項を参照ください
+
 <br>
 
 # 必要要件
