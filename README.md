@@ -211,7 +211,7 @@ classplot.class_separator_plot(model, ['petal_width', 'petal_length'], 'species'
 |x|必須|List[str]|-|説明変数に指定するカラム名|
 |y|必須|str|-|目的変数に指定するカラム名|
 |data|必須|pd.DataFrame|-|入力データ|
-|x_chart|オプション|List[str]|None|説明変数のうちグラフ表示対象のカラム名|
+|x_chart|オプション　　|List[str]|None|説明変数のうちグラフ表示対象のカラム名|
 |pair_sigmarange|オプション|float|1.5|グラフ非使用変数の分割範囲|
 |pair_sigmainterval|オプション|float|0.5|グラフ非使用変数の1枚あたり表示範囲|
 |chart_extendsigma|オプション|float|0.5|グラフ縦軸横軸の表示拡張範囲|
@@ -251,7 +251,7 @@ classplot.class_proba_plot(model, ['petal_width', 'petal_length'], 'species', ir
 |x|必須|List[str]|-|説明変数に指定するカラム名|
 |y|必須|str|-|目的変数に指定するカラム名|
 |data|必須|pd.DataFrame|-|入力データ|
-|x_chart|オプション|List[str]|None|説明変数のうちグラフ表示対象のカラム名|
+|x_chart|オプション　　　|List[str]|None|説明変数のうちグラフ表示対象のカラム名|
 |pair_sigmarange|オプション|float|1.5|グラフ非使用変数の分割範囲|
 |pair_sigmainterval|オプション|float|0.5|グラフ非使用変数の1枚あたり表示範囲|
 |chart_extendsigma|オプション|float|0.5|グラフ縦軸横軸の表示拡張範囲|
@@ -337,7 +337,7 @@ regplot.regression_pred_true(LinearRegression(), x=['altitude', 'latitude'], y='
 |x|必須|List[str]|-|説明変数に指定するカラム名のリスト|
 |y|必須|str|-|目的変数に指定するカラム名|
 |data|必須|pd.DataFrame|-|入力データ|
-|hue|オプション|str|None|色分けに指定するカラム名|
+|hue|オプション　　　|str|None|色分けに指定するカラム名|
 |linecolor|オプション|str|'red'|予測値=実測値の[線の色](https://matplotlib.org/stable/gallery/color/named_colors.html)|
 |rounddigit|オプション|int|3|表示指標の小数丸め桁数|
 |rank_number|オプション|int|None|誤差上位何番目までを文字表示するか|
@@ -369,7 +369,7 @@ regplot.regression_plot_1d(SVR(), x='petal_length', y='sepal_length', data=iris)
 |x|必須|str|-|説明変数に指定するカラム名|
 |y|必須|str|-|目的変数に指定するカラム名|
 |data|必須|pd.DataFrame|-|入力するデータ（Pandasのデータフレーム）|
-|hue|オプション|str|None|色分けに指定するカラム名|
+|hue|オプション　　　|str|None|色分けに指定するカラム名|
 |linecolor|オプション|str|'red'|予測値=実測値の[線の色](https://matplotlib.org/stable/gallery/color/named_colors.html)|
 |rounddigit|オプション|int|3|表示指標の小数丸め桁数|
 |rank_number|オプション|int|None|誤差上位何番目までを文字表示するか|
@@ -401,7 +401,7 @@ regplot.regression_heat_plot(LinearRegression(), x=['altitude', 'latitude'], y='
 |x|必須|List[str]|-|説明変数に指定するカラム名のリスト|
 |y|必須|str|-|目的変数に指定するカラム名|
 |data|必須|pd.DataFrame|-|入力データ|
-|x_heat|オプション|List[str]|None|説明変数のうちヒートマップ表示対象のカラム名|
+|x_heat|オプション　　　|List[str]|None|説明変数のうちヒートマップ表示対象のカラム名|
 |scatter_hue|オプション|str|None|散布図色分け指定カラム名 (plot_scatter='hue'時のみ有効)|
 |pair_sigmarange|オプション|float|1.5|ヒートマップ非使用変数の分割範囲|
 |pair_sigmainterval|オプション|float|0.5|ヒートマップ非使用変数の1枚あたり表示範囲|
