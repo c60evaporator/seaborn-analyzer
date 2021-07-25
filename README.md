@@ -201,7 +201,7 @@ from sklearn.svm import SVC
 from seaborn_analyzer import classplot
 iris = sns.load_dataset("iris")
 model = SVC()
-classplot.class_separator_plot(model, ['petal_width', 'petal_length'], 'species', iris,)
+classplot.class_separator_plot(model, ['petal_width', 'petal_length'], 'species', iris)
 ```
 ![image](https://user-images.githubusercontent.com/59557625/117274234-d7474900-ae97-11eb-9de2-c8a74dc179a5.png)
 #### 引数一覧
