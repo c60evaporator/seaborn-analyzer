@@ -15,3 +15,123 @@ seaborn-analyzer
    
 **A data analysis and visualization tool using Seaborn library.**
 
+.. image:: https://user-images.githubusercontent.com/59557625/126887193-ceba9bdd-3653-4d58-a916-21dcfe9c38a0.png
+
+=======
+Usage
+=======
+An example of using CustomPairPlot class
+
+.. code-block:: python
+
+    from seaborn_analyzer import CustomPairPlot
+    import seaborn as sns
+ 
+    titanic = sns.load_dataset("titanic")
+    cp = CustomPairPlot()
+    cp.pairanalyzer(titanic, hue='survived')
+   
+If you want to know usage of other classes, see `API Reference
+<https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#seaborn-analyzer>`__
+
+=======
+Requirements
+=======
+seaborn-analyzer 0.1.2 requires
+
+* Python >=3.6
+* Numpy >=1.20.3
+* Pandas >=1.2.4
+* Matplotlib >=3.3.4
+* Scipy >=1.6.3
+* Scikit-learn >=0.24.2
+
+=======
+Installing seaborn-analyzer
+=======
+Use pip to install the binary wheels on `PyPI <https://pypi.org/project/seaborn-analyzer/>`__
+
+.. code-block:: console
+
+    $ pip install seaborn-analyzer
+
+=======
+Support
+=======
+Bugs may be reported at https://github.com/c60evaporator/seaborn-analyzer/issues
+
+=======
+API Reference
+=======
+The following classes and methods are included in seaborn-analyzer
+
+CustomPairPlot class
+=======
+
+.. csv-table::
+    :header: "Method name", "Summary", "API Documentation"
+    :widths: 300, 50, 15
+
+    "pairanalyzer", Plotting pair plot including scatter plot and correlation coefficient matrix simultaneously, `CustomPairPlot.pairanalyzer <https://pypi.org/project/seaborn-analyzer/>`__
+
+
+hist class
+=======
+
+.. csv-table::
+    :header: "Method name", "Summary", "API Documentation"
+    :widths: 300, 50, 15
+
+    "plot_normality", Plotting normality test and QQ plot, `hist.plot_normality <https://pypi.org/project/seaborn-analyzer/>`__
+    "fit_dist", Fitting distributions and calculating fitting scores, `hist.fit_dist <https://pypi.org/project/seaborn-analyzer/>`__
+
+
+classplot class
+=======
+
+.. csv-table::
+    :header: "Method name", "Summary", "API Documentation"
+    :widths: 300, 50, 15
+
+    "class_separator_plot", Plotting class separation lines, `hist.class_separator_plot <https://pypi.org/project/seaborn-analyzer/>`__
+    "class_proba_plot", Plotting class prediction probability, `hist.class_proba_plot <https://pypi.org/project/seaborn-analyzer/>`__
+
+
+regplot class
+=======
+
+.. csv-table::
+    :header: "Method name", "Summary", "API Documentation"
+    :widths: 300, 50, 15
+
+    "linear_plot", Plotting linear regression line and calculating Pearson correlation coefficient, `regplot.linear_plot <https://pypi.org/project/seaborn-analyzer/>`__
+    "regression_pred_true", Plotting prediction value vs. true value scatter plots, `regplot.regression_pred_true <https://pypi.org/project/seaborn-analyzer/>`__
+    "regression_plot_1d", Plotting 1d regression lines of any scikit-learn regression model, `regplot.regression_plot_1d <https://pypi.org/project/seaborn-analyzer/>`__
+    "regression_heat_plot", Plotting 2 to 4d regression heat maps of any scikit-learn regression model, `regplot.regression_heat_plot <https://pypi.org/project/seaborn-analyzer/>`__
+
+
+=======
+Examples
+=======
+
+CustomPairPlot.pairanalyzer
+=======
+.. code-block:: python
+
+    from seaborn_analyzer import CustomPairPlot
+    import seaborn as sns
+    titanic = sns.load_dataset("titanic")
+    cp = CustomPairPlot()
+    cp.pairanalyzer(titanic, hue='survived')
+.. image:: https://user-images.githubusercontent.com/59557625/115889860-4e8bde80-a48f-11eb-826a-cd3c79556a42.png
+
+hist.plot_normality
+=======
+.. code-block:: python
+
+    from seaborn_analyzer import hist
+    from sklearn.datasets import load_boston
+    import pandas as pd
+    df = pd.DataFrame(load_boston().data, columns= load_boston().feature_names)
+    hist.plot_normality(df, x='LSTAT', norm_hist=False, rounddigit=5)
+.. image:: https://user-images.githubusercontent.com/59557625/117275256-cfd46f80-ae98-11eb-9da7-6f6e133846fa.png
