@@ -32,7 +32,8 @@ An example of using CustomPairPlot class
     cp.pairanalyzer(titanic, hue='survived')
    
 If you want to know usage of other classes, see `API Reference
-<https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#seaborn-analyzer>`__
+<https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#api-reference>`__ and `Examples
+<https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#examples>`__
 
 =======
 Requirements
@@ -135,3 +136,98 @@ hist.plot_normality
     df = pd.DataFrame(load_boston().data, columns= load_boston().feature_names)
     hist.plot_normality(df, x='LSTAT', norm_hist=False, rounddigit=5)
 .. image:: https://user-images.githubusercontent.com/59557625/117275256-cfd46f80-ae98-11eb-9da7-6f6e133846fa.png
+
+hist.fit_dist
+=======
+.. code-block:: python
+
+    from seaborn_analyzer import hist
+    from sklearn.datasets import load_boston
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    from scipy import stats
+    df = pd.DataFrame(load_boston().data, columns= load_boston().feature_names)
+    all_params, all_scores = hist.fit_dist(df, x='LSTAT', dist=['norm', 'gamma', 'lognorm', 'uniform'])
+    df_scores = pd.DataFrame(all_scores).T
+    df_scores
+.. image:: https://user-images.githubusercontent.com/59557625/115890066-81ce6d80-a48f-11eb-8390-f985d9e2b8b1.png
+.. image:: https://user-images.githubusercontent.com/59557625/115890108-8d219900-a48f-11eb-9896-38f7dedbb6e4.png
+hist.plot_normality
+=======
+.. code-block:: python
+
+    from seaborn_analyzer import hist
+    from sklearn.datasets import load_boston
+    import pandas as pd
+    df = pd.DataFrame(load_boston().data, columns= load_boston().feature_names)
+    hist.plot_normality(df, x='LSTAT', norm_hist=False, rounddigit=5)
+.. image:: https://user-images.githubusercontent.com/59557625/117275256-cfd46f80-ae98-11eb-9da7-6f6e133846fa.png
+
+classplot.class_separator_plot
+=======
+.. code-block:: python
+
+    import seaborn as sns
+    from sklearn.svm import SVC
+    from seaborn_analyzer import classplot
+    iris = sns.load_dataset("iris")
+    model = SVC()
+    classplot.class_separator_plot(model, ['petal_width', 'petal_length'], 'species', iris)
+.. image:: https://user-images.githubusercontent.com/59557625/117274234-d7474900-ae97-11eb-9de2-c8a74dc179a5.png
+
+classplot.class_proba_plot
+=======
+.. code-block:: python
+
+    import seaborn as sns
+    from sklearn.svm import SVC
+    from seaborn_analyzer import classplot
+    iris = sns.load_dataset("iris")
+    model = SVC()
+    classplot.class_proba_plot(model, ['petal_width', 'petal_length'], 'species', iris,
+                               proba_type='imshow')
+.. image:: https://user-images.githubusercontent.com/59557625/117276085-a1a35f80-ae99-11eb-8368-cdd1cfa78346.png
+
+regplot.linear_plot
+=======
+.. code-block:: python
+
+    from seaborn_analyzer import regplot
+    import seaborn as sns
+    iris = sns.load_dataset("iris")
+    regplot.linear_plot(x='petal_length', y='sepal_length', data=iris)
+.. image:: https://user-images.githubusercontent.com/59557625/117276994-65243380-ae9a-11eb-8ec8-fa1fb5d60a55.png
+
+regplot.regression_pred_true
+=======
+.. code-block:: python
+
+    import pandas as pd
+    from seaborn_analyzer import regplot
+    import seaborn as sns
+    from sklearn.linear_model import LinearRegression
+    df_temp = pd.read_csv(f'./sample_data/temp_pressure.csv')
+    regplot.regression_pred_true(LinearRegression(), x=['altitude', 'latitude'], y='temperature', data=df_temp)
+.. image:: https://user-images.githubusercontent.com/59557625/117276085-a1a35f80-ae99-11eb-8368-cdd1cfa78346.png
+
+regplot.regression_plot_1d
+=======
+.. code-block:: python
+
+    from seaborn_analyzer import regplot
+    import seaborn as sns
+    from sklearn.svm import SVR
+    iris = sns.load_dataset("iris")
+    regplot.regression_plot_1d(SVR(), x='petal_length', y='sepal_length', data=iris)
+.. image:: https://user-images.githubusercontent.com/59557625/117277075-78cf9a00-ae9a-11eb-835c-01f635754f7b.png
+
+regplot.regression_heat_plot
+=======
+.. code-block:: python
+
+    import pandas as pd
+    from sklearn.linear_model import LinearRegression
+    from seaborn_analyzer import regplot
+    df_temp = pd.read_csv(f'./sample_data/temp_pressure.csv')
+    regplot.regression_heat_plot(LinearRegression(), x=['altitude', 'latitude'], y='temperature', data=df_temp)
+.. image:: https://user-images.githubusercontent.com/59557625/115955837-1b4f5b00-a534-11eb-91b0-b913019d26ff.png
