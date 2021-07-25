@@ -54,7 +54,7 @@ seabornを利用して、各種データの可視化および評価指標の算�
 以下のクラスからなります
 |クラス名|パッケージ名|概要|使用法|
 |---|---|---|---|
-|CustomPairPlot|custom_pair_plot.py|散布図行列と相関係数行列を同時に表示|[リンク](https://qiita.com/c60evaporator/items/fc531aff0cdbafac0f42)|
+|CustomPairPlot|custom_pair_plot.py|散布図行列と相関係数行列を同時に表示|[リンク](https://qiita.com/c60evaporator/items/20f11b6ee965cec48570)|
 |hist|custom_hist_plot.py|ヒストグラムと各種分布のフィッティング|[リンク](https://qiita.com/c60evaporator/items/fc531aff0cdbafac0f42)|
 |classplot|custom_scatter_plot.py|分類境界およびクラス確率の表示|[リンク](https://qiita.com/c60evaporator/items/43866a42e09daebb5cc0)|
 |regplot|custom_scatter_plot.py|相関・回帰分析の散布図・ヒートマップ表示|[リンク](https://qiita.com/c60evaporator/items/c930c822b527f62796ee)|
