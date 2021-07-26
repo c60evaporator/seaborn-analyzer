@@ -25,7 +25,7 @@ class hist():
             フィッティング線の表示範囲（標準偏差の何倍まで表示するか指定）
         linesplit : int
             フィッティング線の分割数（カクカクしたら増やす）
-        fit_params : Dict
+        fit_params : dict
             フィッティング時に固定するパラメータ
         """
         # 表示範囲指定用に平均と不偏標準偏差計算(正規分布のときを基準に)
@@ -91,7 +91,7 @@ class hist():
 
         Parameters
         ----------
-        srcdict : Dict[str, float]
+        srcdict : dict[str, float]
             丸め対象のDict
         rounddigit : int
             フィッティング線の表示範囲（標準偏差の何倍まで表示するか指定）
@@ -138,14 +138,14 @@ class hist():
             フィッティング線の色指定 (複数分布フィッティング時は、List指定)
         linesplit : int, optional
             フィッティング線の分割数 (カクカクしたら増やす)
-        hist_kws : Dict, optional
+        hist_kws : dict, optional
             ヒストグラム表示(seaborn.histplot)の引数
         
         Returns
         ----------
-        all_params : Dict
+        all_params : dict
             Parameters estimated by maximum likelihood estimation.
-        all_scores : Dict
+        all_scores : dict
             Fitting scores, which consist of RSS, AIC, and BIC.
         """
 
@@ -360,9 +360,9 @@ class hist():
             フィッティング線の分割数 (カクカクしたら増やす)
         rounddigit: int, optional
             表示指標の小数丸め桁数
-        hist_kws : Dict, optional
+        hist_kws : dict, optional
             ヒストグラム表示(matplotlib.axes.Axes.hist())の引数
-        subplot_kws : Dict, optional
+        subplot_kws : dict, optional
             プロット用のmatplotlib.pyplot.subplots()に渡す引数 (例：figsize)
         """
 

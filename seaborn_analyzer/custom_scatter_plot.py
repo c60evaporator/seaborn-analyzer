@@ -39,12 +39,12 @@ class regplot():
     @classmethod
     def _round_dict_digits(cls, srcdict: Dict[str, float], rounddigit: int = None, method='decimal'):
         """
-        指定桁数でDictの値を丸める
+        指定桁数でdictの値を丸める
 
         Parameters
         ----------
-        srcdict : Dict[str, float]
-            丸め対象のDict
+        srcdict : dict[str, float]
+            丸め対象のdict
         rounddigit : int
             フィッティング線の表示範囲（標準偏差の何倍まで表示するか指定）
         method : int
@@ -155,7 +155,7 @@ class regplot():
             フィッティング線の分割数 (カクカクしたら増やす)
         rounddigit: int
             表示指標の小数丸め桁数
-        score_dict : Dict[str, float]
+        score_dict : dict[str, float]
             算出した評価指標一覧
         """
         # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
@@ -218,20 +218,20 @@ class regplot():
             クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)
         cv_seed : int, optional
             クロスバリデーションの乱数シード
-        model_params : Dict, optional
+        model_params : dict, optional
             回帰モデルに渡すパラメータ (チューニング後のパラメータがgood、Noneならデフォルト)
-        fit_params : Dict, optional
+        fit_params : dict, optional
             学習時のパラメータをdict指定 (例: XGBoostのearly_stopping_rounds)
             Noneならデフォルト
             Pipelineのときは{学習器名__パラメータ名:パラメータの値,‥}で指定する必要あり
-        subplot_kws : Dict, optional
+        subplot_kws : dict, optional
             プロット用のmatplotlib.pyplot.subplots()に渡す引数 (例：figsize)
-        scatter_kws: Dict, optional
+        scatter_kws: dict, optional
             散布図用のsns.scatterplot()に渡す引数
 
         Returns
         ----------
-        score_dict : Dict
+        score_dict : dict
             Validation scores, e.g. r2, mae and rmse
         """
         # scoresの型をListに統一
@@ -449,7 +449,7 @@ class regplot():
             表示指標の小数丸め桁数
         plot_scores: bool, optional
             回帰式、ピアソンの相関係数およびp値の表示有無 (Trueなら表示あり)
-        scatter_kws: Dict, optional
+        scatter_kws: dict, optional
             散布図用のsns.scatterplot()に渡す引数
         """
         # scatter_kwsがNoneなら空のdictを入力
@@ -521,9 +521,9 @@ class regplot():
             フィッティング線の分割数 (カクカクしたら増やす)
         rounddigit: int
             表示指標の小数丸め桁数
-        score_dict : Dict[str, float]
+        score_dict : dict[str, float]
             算出した評価指標一覧
-        scatter_kws: Dict, optional
+        scatter_kws: dict, optional
             散布図用のsns.scatterplot()に渡す引数
         """
         # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
@@ -587,20 +587,20 @@ class regplot():
             クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)
         cv_seed : int, optional
             クロスバリデーションの乱数シード
-        model_params: Dict, optional
+        model_params: dict, optional
             回帰モデルに渡すパラメータ (チューニング後のパラメータがgood、Noneならデフォルト)
-        fit_params : Dict, optional
+        fit_params : dict, optional
             学習時のパラメータをdict指定 (例: XGBoostのearly_stopping_rounds)
             Noneならデフォルト
             Pipelineのときは{学習器名__パラメータ名:パラメータの値,‥}で指定する必要あり
-        subplot_kws : Dict, optional
+        subplot_kws : dict, optional
             プロット用のmatplotlib.pyplot.subplots()に渡す引数 (例：figsize)
-        scatter_kws: Dict, optional
+        scatter_kws: dict, optional
             散布図用のsns.scatterplot()に渡す引数
 
         Returns
         ----------
-        score_dict : Dict
+        score_dict : dict
             Validation scores, e.g. r2, mae and rmse
         """
         # scoresの型をListに統一
@@ -1075,9 +1075,9 @@ class regplot():
             クロスバリデーションの乱数シード
         display_cv_indices: int, optional
             表示対象のクロスバリデーション番号 (指定したCV番号での回帰結果が表示される。リスト指定も可)
-        model_params: Dict, optional
+        model_params: dict, optional
             回帰モデルに渡すパラメータ (チューニング後のパラメータがgood、Noneならデフォルト)
-        fit_params: Dict, optional
+        fit_params: dict, optional
             学習時のパラメータをdict指定 (例: XGBoostのearly_stopping_rounds)
             Noneならデフォルト
             Pipelineのときは{学習器名__パラメータ名:パラメータの値,‥}で指定する必要あり
@@ -1634,9 +1634,9 @@ class classplot():
             GroupKFold、LeaveOneGroupOutのグルーピング対象カラム (列名指定)
         display_cv_indices: int, optional
             表示対象のクロスバリデーション番号 (指定したCV番号での回帰結果が表示される。リスト指定も可)
-        model_params: Dict, optional
+        model_params: dict, optional
             回帰モデルに渡すパラメータ (チューニング後のパラメータがgood、Noneならデフォルト)
-        fit_params: Dict, optional
+        fit_params: dict, optional
             学習時のパラメータをdict指定 (例: XGBoostのearly_stopping_rounds)
             Noneならデフォルト
             Pipelineのときは{学習器名__パラメータ名:パラメータの値,‥}で指定する必要あり
@@ -1831,9 +1831,9 @@ class classplot():
             GroupKFold、LeaveOneGroupOutのグルーピング対象カラム (列名指定)
         display_cv_indices: int, optional
             表示対象のクロスバリデーション番号 (指定したCV番号での回帰結果が表示される。リスト指定も可)
-        model_params: Dict, optional
+        model_params: dict, optional
             回帰モデルに渡すパラメータ (チューニング後のパラメータがgood、Noneならデフォルト)
-        fit_params: Dict, optional
+        fit_params: dict, optional
             学習時のパラメータをdict指定 (例: XGBoostのearly_stopping_rounds)
             Noneならデフォルト
             Pipelineのときは{学習器名__パラメータ名:パラメータの値,‥}で指定する必要あり
