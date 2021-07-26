@@ -228,6 +228,11 @@ class regplot():
             プロット用のmatplotlib.pyplot.subplots()に渡す引数 (例：figsize)
         scatter_kws: Dict, optional
             散布図用のsns.scatterplot()に渡す引数
+
+        Returns
+        ----------
+        score_dict : Dict
+            Validation scores, e.g. r2, mae and rmse
         """
         # scoresの型をListに統一
         if scores is None:
@@ -592,6 +597,11 @@ class regplot():
             プロット用のmatplotlib.pyplot.subplots()に渡す引数 (例：figsize)
         scatter_kws: Dict, optional
             散布図用のsns.scatterplot()に渡す引数
+
+        Returns
+        ----------
+        score_dict : Dict
+            Validation scores, e.g. r2, mae and rmse
         """
         # scoresの型をListに統一
         if scores is None:

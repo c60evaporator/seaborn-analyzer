@@ -140,6 +140,13 @@ class hist():
             フィッティング線の分割数 (カクカクしたら増やす)
         hist_kws : Dict, optional
             ヒストグラム表示(seaborn.histplot)の引数
+        
+        Returns
+        ----------
+        all_params : Dict
+            Parameters estimated by maximum likelihood estimation.
+        all_scores : Dict
+            Fitting scores, which consist of RSS, AIC, and BIC.
         """
 
         # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
