@@ -7,11 +7,8 @@
 
 ![image](https://user-images.githubusercontent.com/59557625/126887193-ceba9bdd-3653-4d58-a916-21dcfe9c38a0.png)
 
-This documentation is currently Japanese language only.
-
-If there is a request for English version documantation, we will make it.
-
-Therefore, please let us know if you have any requests for us.
+This documentation is Japanese language version.
+[English version is here](https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst)
 
 <br>
 
@@ -54,7 +51,7 @@ seabornを利用して、各種データの可視化および評価指標の算�
 以下のクラスからなります
 |クラス名|パッケージ名|概要|使用法|
 |---|---|---|---|
-|CustomPairPlot|custom_pair_plot.py|散布図行列と相関係数行列を同時に表示|[リンク](https://qiita.com/c60evaporator/items/fc531aff0cdbafac0f42)|
+|CustomPairPlot|custom_pair_plot.py|散布図行列と相関係数行列を同時に表示|[リンク](https://qiita.com/c60evaporator/items/20f11b6ee965cec48570)|
 |hist|custom_hist_plot.py|ヒストグラムと各種分布のフィッティング|[リンク](https://qiita.com/c60evaporator/items/fc531aff0cdbafac0f42)|
 |classplot|custom_scatter_plot.py|分類境界およびクラス確率の表示|[リンク](https://qiita.com/c60evaporator/items/43866a42e09daebb5cc0)|
 |regplot|custom_scatter_plot.py|相関・回帰分析の散布図・ヒートマップ表示|[リンク](https://qiita.com/c60evaporator/items/c930c822b527f62796ee)|
