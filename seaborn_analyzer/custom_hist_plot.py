@@ -9,7 +9,7 @@ import decimal
 
 class hist():
     # 分布フィッティング線のデフォルトカラーマップ
-    DEFAULT_LINECOLORS = ['red', 'darkmagenta', 'mediumblue', 'darkorange',  'pink', 'brown', 'green', 'cyan', 'gold']
+    _DEFAULT_LINECOLORS = ['red', 'darkmagenta', 'mediumblue', 'darkorange',  'pink', 'brown', 'green', 'cyan', 'gold']
     
     def _fit_distribution(x: np.ndarray, distribution: distributions, sigmarange: float, linesplit: int, fit_params: Dict):
         """
@@ -200,7 +200,7 @@ class hist():
         # 2種類以上をプロットしており、かつ色指定がListでないとき、他の色を追加
         if len(dists) >= 2:
             if len(linecolor) == 1:
-                linecolor = cls.DEFAULT_LINECOLORS
+                linecolor = cls._DEFAULT_LINECOLORS
             elif len(dists) != len(linecolor):
                 raise Exception('the length of the "linecolor" argument must be equal to the length of the "dist" argument')
 

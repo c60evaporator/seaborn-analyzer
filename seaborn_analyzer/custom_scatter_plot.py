@@ -12,7 +12,7 @@ import decimal
 
 class regplot():
     # regression_heat_plotメソッド (回帰モデルヒートマップ表示)における、散布図カラーマップ
-    HEAT_SCATTER_HUECOLORS = ['red', 'mediumblue', 'darkorange', 'darkmagenta', 'cyan',  'pink', 'brown', 'gold', 'grey']
+    _HEAT_SCATTER_HUECOLORS = ['red', 'mediumblue', 'darkorange', 'darkmagenta', 'cyan',  'pink', 'brown', 'gold', 'grey']
 
     def _round_digits(src: float, rounddigit: int = None, method='decimal'):
         """
@@ -1151,7 +1151,7 @@ class regplot():
         if plot_scatter == 'hue':
             hue_list = data[scatter_hue].values.tolist()
             hue_list = sorted(set(hue_list), key=hue_list.index)
-            scatter_hue_dict = dict(zip(hue_list, cls.HEAT_SCATTER_HUECOLORS[0:len(hue_list)]))
+            scatter_hue_dict = dict(zip(hue_list, cls._HEAT_SCATTER_HUECOLORS[0:len(hue_list)]))
         else:
             scatter_hue_dict = None
         
@@ -1241,19 +1241,19 @@ class regplot():
 
 class classplot():
     # 散布図カラーリスト
-    SCATTER_COLORS = ['green', 'red', 'mediumblue', 'brown', 'darkmagenta', 'darkorange', 'gold', 'grey']
+    _SCATTER_COLORS = ['green', 'red', 'mediumblue', 'brown', 'darkmagenta', 'darkorange', 'gold', 'grey']
     # クラス確率図カラーマップ
-    PROB_CMAP = ['Greens', 'Reds', 'Blues', 'YlOrBr', 'Purples', 'OrRd', 'Wistia', 'Greys']
+    _PROB_CMAP = ['Greens', 'Reds', 'Blues', 'YlOrBr', 'Purples', 'OrRd', 'Wistia', 'Greys']
     # デフォルトでの決定境界図の透明度(alpha)
-    DEFAULT_SEPARATOR_ALPHA = 0.3
+    _DEFAULT_SEPARATOR_ALPHA = 0.3
     # デフォルトでのクラス確率図等高線モードの透明度(alpha)
-    DEFAULT_PROBA_CONTOURF_ALPHA = 0.5
+    _DEFAULT_PROBA_CONTOURF_ALPHA = 0.5
     # デフォルトでのクラス確率図透明度補正シグモイド関数のゲイン
-    DEFAULT_PROBA_CONTOURF_SIG_GAIN = 0.5
+    _DEFAULT_PROBA_CONTOURF_SIG_GAIN = 0.5
     # デフォルトでのクラス確率図の等高線段階数
-    DEFAULT_PROBA_CONTOURF_LEVELS = 10
+    _DEFAULT_PROBA_CONTOURF_LEVELS = 10
     # デフォルトでのクラス確率図RGB画像モードの透明度(alpha)
-    DEFAULT_PROBA_RGB_ALPHA = 0.45
+    _DEFAULT_PROBA_RGB_ALPHA = 0.45
 
     def _round_digits(src: float, rounddigit: int = None, method='decimal'):
         """
@@ -1341,7 +1341,7 @@ class classplot():
                 # alpha値を保持(描画終了後に更新前に戻すため)
                 src_alpha = contourf_kws['alpha']
                 # シグモイド関数(クラス数1のときalphaで、クラス数∞のとき1に漸近)でalphaを補正
-                contourf_kws['alpha'] = 2*(1-src_alpha)/(1+np.exp(-cls.DEFAULT_PROBA_CONTOURF_SIG_GAIN*(nclass-1)))+2*src_alpha-1
+                contourf_kws['alpha'] = 2*(1-src_alpha)/(1+np.exp(-cls._DEFAULT_PROBA_CONTOURF_SIG_GAIN*(nclass-1)))+2*src_alpha-1
                 # クラスごとに処理
                 for i in range(nclass):
                     # グリッドデータから該当クラスのみ抜き出してピボット化
@@ -1698,7 +1698,7 @@ class classplot():
 
         # クラス名と散布図色を紐づけ(色分けを全ての図で統一用)
         if scatter_colors is None:
-            scatter_colors = cls.SCATTER_COLORS
+            scatter_colors = cls._SCATTER_COLORS
         class_list = data[y].values.tolist()
         class_list = sorted(set(class_list), key=class_list.index)
         scatter_color_dict = dict(zip(class_list, scatter_colors[0:len(class_list)]))
@@ -1709,7 +1709,7 @@ class classplot():
             contourf_kws['colors'] = list(scatter_color_dict.values())
         # contourf_kwsにalphat指定ないとき、DEFAULT_SEPARATOR_ALPHAを使用
         if 'alpha' not in contourf_kws.keys():
-            contourf_kws['alpha'] = cls.DEFAULT_SEPARATOR_ALPHA
+            contourf_kws['alpha'] = cls._DEFAULT_SEPARATOR_ALPHA
         
         # クロスバリデーション有無で場合分け
         # クロスバリデーション未実施時(学習データから学習してプロット)
@@ -1900,7 +1900,7 @@ class classplot():
 
         # scatter_colors未指定のとき、デフォルト値を使用
         if scatter_colors is None:
-            scatter_colors = cls.SCATTER_COLORS
+            scatter_colors = cls._SCATTER_COLORS
         # クラス名と散布図色を紐づけ(色分けを全ての図で統一用)
         class_list = data[y].values.tolist()
         class_list = sorted(set(class_list), key=class_list.index)
@@ -1925,20 +1925,20 @@ class classplot():
         # proba_cmap_dict未指定のとき、デフォルト値を使用
         if proba_cmap_dict is None:
             proba_cmap_dict = dict(zip(proba_class,
-                                       [cls.PROB_CMAP[pci] for pci in proba_class_indices]))
+                                       [cls._PROB_CMAP[pci] for pci in proba_class_indices]))
         # proba_cmap_dictがproba_classと一致していないとき、エラーを出す
         if list(proba_cmap_dict.keys()) != proba_class:
             raise Exception(f'the keys of the "proba_cmap_dict" argument must be equal to the argument "proba_class"')
 
         # contourf_kwsにalpha指定ないとき、DEFAULT_PROBA_CONTOURF_ALPHAを使用
         if 'alpha' not in contourf_kws.keys():
-            contourf_kws['alpha'] = cls.DEFAULT_PROBA_CONTOURF_ALPHA
+            contourf_kws['alpha'] = cls._DEFAULT_PROBA_CONTOURF_ALPHA
         # contourf_kwsにlevels指定ないとき、DDEFAULT_PROBA_CONTOURF_LEVELSを使用
         if 'levels' not in contourf_kws.keys():
-            contourf_kws['levels'] = cls.DEFAULT_PROBA_CONTOURF_LEVELS
+            contourf_kws['levels'] = cls._DEFAULT_PROBA_CONTOURF_LEVELS
         # imshow_kwsにalpha指定ないとき、DEFAULT_PROBA_RGB_ALPHAを使用
         if 'alpha' not in imshow_kws.keys():
-            imshow_kws['alpha'] = cls.DEFAULT_PROBA_RGB_ALPHA
+            imshow_kws['alpha'] = cls._DEFAULT_PROBA_RGB_ALPHA
         
         # クロスバリデーション有無で場合分け
         # クロスバリデーション未実施時(学習データから学習してプロット)
