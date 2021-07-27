@@ -1616,8 +1616,7 @@ class classplot():
         chart_scale: int, optional
             決定境界図の表示倍率 (cv指定時等で表示が遅い時は大きくする)
         plot_scatter: str, optional
-            散布図の描画種類('error':正誤で形状分け, 'class':クラスで色分け,
-                            'class_error':正誤で形状分け＆クラスで色分け , None:散布図表示なし)
+            散布図の描画種類 ('error':正誤で形状分け, 'class':クラスで色分け, 'class_error':正誤で形状分け＆クラスで色分け , None:散布図表示なし)
         rounddigit_x3: int, optional
             決定境界図非表示軸の小数丸め桁数
         scatter_colors: List[str], optional
@@ -1807,8 +1806,7 @@ class classplot():
         plot_border: bool, optional
             クラス境界線の描画有無
         plot_scatter: str, optional
-            散布図の描画種類('error':正誤で形状分け, 'class':クラスで色分け,
-                            'class_error':正誤で形状分け＆クラスで色分け , None:散布図表示なし)
+            散布図の描画種類('error':正誤で形状分け, 'class':クラスで色分け, 'class_error':正誤で形状分け＆クラスで色分け , None:散布図表示なし)
         rounddigit_x3: int, optional
             クラス確率図非表示軸の小数丸め桁数
         proba_class: str or List[str], optional
