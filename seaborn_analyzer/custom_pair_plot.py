@@ -153,6 +153,40 @@ class CustomPairPlot():
              lowerkind="boxscatter", diag_kind="kde", markers=None,
              height=2.5, aspect=1, dropna=True,
              lower_kws={}, diag_kws={}, grid_kws={}, size=None):
+        """
+        散布図行列と相関係数行列を同時に表示
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            入力データ
+        hue : str
+            色分けに指定するカラム名 (Noneなら色分けなし)
+        palette : str
+            hueによる色分け用のカラーパレット
+        vars : int
+            グラフ化するカラム名 (Noneなら全ての数値型＆Boolean型の列を使用)
+        lowerkind : dict
+            左下に表示するグラフ種類 ('boxscatter', 'scatter', or 'reg')
+        diag_kind : ndarray
+            対角に表示するグラフ種類 ('kde' or 'hist')
+        markers : scipy.stats.distributions
+            hueで色分けしたデータの散布図プロット形状
+        height : float
+            グラフ1個の高さ
+        aspect : int
+            グラフ1個の縦横比
+        dropna : dict
+            seaborn.PairGridのdropna引数
+        lower_kws : scipy.stats.distributions
+            seaborn.PairGridのlower_kws引数
+        diag_kws : float
+            seaborn.PairGridのdiag_kws引数
+        grid_kws : int
+            seaborn.PairGridのgrid_kws引数
+        size : dict
+            seaborn.PairGridのsize引数
+        """
         #メンバ変数入力
         if diag_kind=="hist":#ヒストグラム表示のとき、bool型の列を除外してデータ読込
             self.df = df.select_dtypes(exclude=bool)
