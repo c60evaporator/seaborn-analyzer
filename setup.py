@@ -51,16 +51,11 @@ CLASSIFIERS = [
     'Framework :: Matplotlib',
 ]
 
-LONG_DESCRIPTION = """
-A data visualization tool of regression, classification and distribution.
-Contact
-=============
-If you have any questions or comments about seaborn-analyzer,
-please feel free to contact me via
-eMail: c60evaporator@gmail.com
-or Twitter: https://twitter.com/c60evaporator
-This project is hosted at https://github.com/c60evaporator/seaborn-analyzer
-"""
+with open('README.rst', 'r') as fp:
+    readme = fp.read()
+with open('CONTACT.txt', 'r') as fp:
+    contacts = fp.read()
+long_description = readme + '\n\n' + contacts
 
 setup(name=NAME,
       author=AUTHOR,
@@ -68,6 +63,7 @@ setup(name=NAME,
       maintainer=AUTHOR,
       maintainer_email=AUTHOR_EMAIL,
       description=DESCRIPTION,
+      long_description=long_description,
       license=LICENSE,
       url=URL,
       version=VERSION,
