@@ -2,4 +2,6 @@ __pycache__/
 build/
 dist/
 seaborn_analyzer.egg-info/
-docs/
+docs/_build/
+docs/_static/
+docs/_templates/
