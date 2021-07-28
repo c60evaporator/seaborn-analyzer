@@ -3,5 +3,4 @@ build/
 dist/
 seaborn_analyzer.egg-info/
 docs/_build/
-docs/_static/
 docs/_templates/
