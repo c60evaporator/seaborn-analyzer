@@ -3,6 +3,7 @@
 # License: BSD 3 clause
 
 from setuptools import setup
+import seaborn_analyzer
 
 DESCRIPTION = "seaborn-analyzer: data visualization of regression, classification and distribution"
 NAME = 'seaborn-analyzer'
@@ -11,7 +12,7 @@ AUTHOR_EMAIL = 'c60evaporator@gmail.com'
 URL = 'https://github.com/c60evaporator/seaborn-analyzer'
 LICENSE = 'BSD 3-Clause'
 DOWNLOAD_URL = 'https://github.com/c60evaporator/seaborn-analyzer'
-VERSION = '0.1.2'
+VERSION = seaborn_analyzer.__version__
 PYTHON_REQUIRES = ">=3.6"
 
 INSTALL_REQUIRES = [
