@@ -1,6 +1,6 @@
-=======
+================
 seaborn-analyzer
-=======
+================
 
 |python| |pypi| |license|
 
@@ -17,9 +17,9 @@ seaborn-analyzer
 
 .. image:: https://user-images.githubusercontent.com/59557625/126887193-ceba9bdd-3653-4d58-a916-21dcfe9c38a0.png
 
-=======
+=====
 Usage
-=======
+=====
 An example of using CustomPairPlot class
 
 .. code-block:: python
@@ -35,9 +35,9 @@ If you want to know usage of other classes, see `API Reference
 <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#api-reference>`__ and `Examples
 <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#examples>`__
 
-=======
+============
 Requirements
-=======
+============
 seaborn-analyzer 0.1.2 requires
 
 * Python >=3.6
@@ -47,9 +47,9 @@ seaborn-analyzer 0.1.2 requires
 * Scipy >=1.6.3
 * Scikit-learn >=0.24.2
 
-=======
+===========================
 Installing seaborn-analyzer
-=======
+===========================
 Use pip to install the binary wheels on `PyPI <https://pypi.org/project/seaborn-analyzer/>`__
 
 .. code-block:: console
@@ -61,13 +61,13 @@ Support
 =======
 Bugs may be reported at https://github.com/c60evaporator/seaborn-analyzer/issues
 
-=======
+=============
 API Reference
-=======
+=============
 The following classes and methods are included in seaborn-analyzer
 
 CustomPairPlot class
-=======
+====================
 
 .. csv-table::
     :header: "Method name", "Summary", "API Documentation", "Example"
@@ -77,7 +77,7 @@ CustomPairPlot class
 
 
 hist class
-=======
+==========
 
 .. csv-table::
     :header: "Method name", "Summary", "API Documentation", "Example"
@@ -88,7 +88,7 @@ hist class
 
 
 classplot class
-=======
+===============
 
 .. csv-table::
     :header: "Method name", "Summary", "API Documentation", "Example"
@@ -99,7 +99,7 @@ classplot class
 
 
 regplot class
-=======
+=============
 
 .. csv-table::
     :header: "Method name", "Summary", "API Documentation", "Example"
@@ -111,12 +111,12 @@ regplot class
     "**regression_heat_plot**", Plotting 2 to 4d regression heat maps of any scikit-learn regression models, `regplot.regression_heat_plot <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotregression_heat_plot>`__
 
 
-=======
+========
 Examples
-=======
+========
 
 CustomPairPlot.pairanalyzer
-=======
+===========================
 .. code-block:: python
 
     from seaborn_analyzer import CustomPairPlot
@@ -127,7 +127,7 @@ CustomPairPlot.pairanalyzer
 .. image:: https://user-images.githubusercontent.com/59557625/115889860-4e8bde80-a48f-11eb-826a-cd3c79556a42.png
 
 hist.plot_normality
-=======
+===================
 .. code-block:: python
 
     from seaborn_analyzer import hist
@@ -138,7 +138,7 @@ hist.plot_normality
 .. image:: https://user-images.githubusercontent.com/59557625/117275256-cfd46f80-ae98-11eb-9da7-6f6e133846fa.png
 
 hist.fit_dist
-=======
+=============
 .. code-block:: python
 
     from seaborn_analyzer import hist
@@ -154,7 +154,7 @@ hist.fit_dist
 .. image:: https://user-images.githubusercontent.com/59557625/115890108-8d219900-a48f-11eb-9896-38f7dedbb6e4.png
 
 classplot.class_separator_plot
-=======
+==============================
 .. code-block:: python
 
     import seaborn as sns
@@ -166,7 +166,7 @@ classplot.class_separator_plot
 .. image:: https://user-images.githubusercontent.com/59557625/117274234-d7474900-ae97-11eb-9de2-c8a74dc179a5.png
 
 classplot.class_proba_plot
-=======
+==========================
 .. code-block:: python
 
     import seaborn as sns
@@ -179,7 +179,7 @@ classplot.class_proba_plot
 .. image:: https://user-images.githubusercontent.com/59557625/117276085-a1a35f80-ae99-11eb-8368-cdd1cfa78346.png
 
 regplot.linear_plot
-=======
+===================
 .. code-block:: python
 
     from seaborn_analyzer import regplot
@@ -189,7 +189,7 @@ regplot.linear_plot
 .. image:: https://user-images.githubusercontent.com/59557625/117276994-65243380-ae9a-11eb-8ec8-fa1fb5d60a55.png
 
 regplot.regression_pred_true
-=======
+============================
 .. code-block:: python
 
     import pandas as pd
@@ -201,7 +201,7 @@ regplot.regression_pred_true
 .. image:: https://user-images.githubusercontent.com/59557625/117277036-6fdec880-ae9a-11eb-887a-5f8b2a93b0f9.png
 
 regplot.regression_plot_1d
-=======
+==========================
 .. code-block:: python
 
     from seaborn_analyzer import regplot
@@ -212,7 +212,7 @@ regplot.regression_plot_1d
 .. image:: https://user-images.githubusercontent.com/59557625/117277075-78cf9a00-ae9a-11eb-835c-01f635754f7b.png
 
 regplot.regression_heat_plot
-=======
+============================
 .. code-block:: python
 
     import pandas as pd
