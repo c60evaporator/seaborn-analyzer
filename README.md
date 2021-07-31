@@ -85,17 +85,17 @@ cp.pairanalyzer(titanic, hue='survived')
 |data|必須|pd.DataFrame|-|入力データ|
 |hue|オプション|str|None|色分けに指定するカラム名 (Noneなら色分けなし)|
 |palette|オプション|str|None|hueによる色分け用の[カラーパレット](https://matplotlib.org/stable/tutorials/colors/colormaps.html)|
-|vars|オプション|List[str]|None|グラフ化するカラム名 (Noneなら全ての数値型＆Boolean型の列を使用)|
+|vars|オプション|list[str]|None|グラフ化するカラム名 (Noneなら全ての数値型＆Boolean型の列を使用)|
 |lowerkind|オプション|str|'boxscatter'|左下に表示するグラフ種類 ('boxscatter', 'scatter', or 'reg')|
 |diag_kind|オプション|str|'kde'|対角に表示するグラフ種類 ('kde' or 'hist')|
-|markers|オプション|str or List[str]|None|hueで色分けしたデータの散布図プロット形状|
+|markers|オプション|str or list[str]|None|hueで色分けしたデータの散布図プロット形状|
 |height|オプション|float|2.5|グラフ1個の高さ|
 |aspect|オプション|float|1|グラフ1個の縦横比|
-|dropna|オプション|str|True|[seaborn.PairGridのdropna引数](https://seaborn.pydata.org/generated/seaborn.PairGrid.html?highlight=pairgrid#seaborn.PairGrid)|
-|lower_kws|オプション|Dict|{}|[seaborn.PairGridのlower_kws引数](https://seaborn.pydata.org/generated/seaborn.PairGrid.html?highlight=pairgrid#seaborn.PairGrid)|
-|diag_kws|オプション|Dict|{}|[seaborn.PairGridのdiag_kws引数](https://seaborn.pydata.org/generated/seaborn.PairGrid.html?highlight=pairgrid#seaborn.PairGrid)|
-|grid_kws|オプション|Dict|{}|[seaborn.PairGridのgrid_kws引数](https://seaborn.pydata.org/generated/seaborn.PairGrid.html?highlight=pairgrid#seaborn.PairGrid)|
-|size|オプション|Dict|None|[seaborn.PairGridのsize引数](https://seaborn.pydata.org/generated/seaborn.PairGrid.html?highlight=pairgrid#seaborn.PairGrid)|
+|dropna|オプション|bool|True|[seaborn.PairGridのdropna引数](https://seaborn.pydata.org/generated/seaborn.PairGrid.html?highlight=pairgrid#seaborn.PairGrid)|
+|lower_kws|オプション|dict|{}|[seaborn.PairGridのlower_kws引数](https://seaborn.pydata.org/generated/seaborn.PairGrid.html?highlight=pairgrid#seaborn.PairGrid)|
+|diag_kws|オプション|dict|{}|[seaborn.PairGridのdiag_kws引数](https://seaborn.pydata.org/generated/seaborn.PairGrid.html?highlight=pairgrid#seaborn.PairGrid)|
+|grid_kws|オプション|dict|{}|[seaborn.PairGridのgrid_kws引数](https://seaborn.pydata.org/generated/seaborn.PairGrid.html?highlight=pairgrid#seaborn.PairGrid)|
+|size|オプション|dict|None|[seaborn.PairGridのsize引数](https://seaborn.pydata.org/generated/seaborn.PairGrid.html?highlight=pairgrid#seaborn.PairGrid)|
 <br>
 
 ### CustomPairPlotクラス使用法詳細
@@ -136,8 +136,8 @@ hist.plot_normality(df, x='LSTAT', norm_hist=False, rounddigit=5)
 |sigmarange|オプション|float|4|フィッティング線の表示範囲 (標準偏差の何倍まで表示するか指定)|
 |linesplit|オプション|float|200|フィッティング線の分割数 (カクカクしたら増やす)
 |rounddigit|オプション|int|5|表示指標の小数丸め桁数|
-|hist_kws|オプション|Dict|{}|[matplotlib.axes.Axes.histに渡す引数](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.hist.html)|
-|subplot_kws|オプション|Dict|{}|[matplotlib.pyplot.subplotsに渡す引数](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)|
+|hist_kws|オプション|dict|{}|[matplotlib.axes.Axes.histに渡す引数](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.hist.html)|
+|subplot_kws|オプション|dict|{}|[matplotlib.pyplot.subplotsに渡す引数](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)|
 <br>
 
 ### fit_distメソッド
@@ -166,11 +166,11 @@ df_scores
 |norm_hist|オプション|bool|False|ヒストグラムを面積1となるよう正規化するか？|
 |sigmarange|オプション|float|4|フィッティング線の表示範囲 (標準偏差の何倍まで表示するか指定)|
 |linesplit|オプション|float|200|フィッティング線の分割数 (カクカクしたら増やす)
-|dist|オプション|str or List[str]|'norm'|分布の種類 ('norm', 'lognorm', 'gamma', 't', 'expon', 'uniform', 'chi2', 'weibull')|
+|dist|オプション|str or list[str]|'norm'|分布の種類 ('norm', 'lognorm', 'gamma', 't', 'expon', 'uniform', 'chi2', 'weibull')|
 |ax|オプション|matplotlib.axes._ subplots.Axes|None|表示対象のax (Noneならmatplotlib.pyplot.plotで1枚ごとにプロット)|
-|linecolor|オプション|str or List[str]|'red'|フィッティング線の[色指定](https://matplotlib.org/stable/gallery/color/named_colors.html) (Listで複数指定可)|
+|linecolor|オプション|str or list[str]|'red'|フィッティング線の[色指定](https://matplotlib.org/stable/gallery/color/named_colors.html) (listで複数指定可)|
 |floc|オプション|float|None|フィッティング時のX方向オフセット (Noneなら指定なし(weibullとexponは0))|
-|hist_kws|オプション|Dict|{}|[matplotlib.axes.Axes.histに渡す引数](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.hist.html)|
+|hist_kws|オプション|dict|{}|[matplotlib.axes.Axes.histに渡す引数](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.hist.html)|
 <br>
 
 ### histクラス使用法詳細
@@ -205,28 +205,28 @@ classplot.class_separator_plot(model, ['petal_width', 'petal_length'], 'species'
 |引数名|必須引数orオプション|型|デフォルト値|内容|
 |---|---|---|---|---|
 |model|必須|Scikit-learn API|-|表示対象の回帰モデル|
-|x|必須|List[str]|-|説明変数に指定するカラム名|
+|x|必須|list[str]|-|説明変数に指定するカラム名|
 |y|必須|str|-|目的変数に指定するカラム名|
 |data|必須|pd.DataFrame|-|入力データ|
-|x_chart|オプション　　|List[str]|None|説明変数のうちグラフ表示対象のカラム名|
+|x_chart|オプション　　|list[str]|None|説明変数のうちグラフ表示対象のカラム名|
 |pair_sigmarange|オプション|float|1.5|グラフ非使用変数の分割範囲|
 |pair_sigmainterval|オプション|float|0.5|グラフ非使用変数の1枚あたり表示範囲|
 |chart_extendsigma|オプション|float|0.5|グラフ縦軸横軸の表示拡張範囲|
 |chart_scale|オプション|int|1|グラフの描画倍率|
 |plot_scatter|オプション|str|'true'|散布図の描画種類|
 |rounddigit_x3|オプション|int|2|グラフ非使用軸の小数丸め桁数|
-|scatter_colors|オプション|List[str]|None|クラスごとのプロット色のリスト|
+|scatter_colors|オプション|list[str]|None|クラスごとのプロット色のリスト|
 |true_marker|オプション|str|None|正解クラスの散布図プロット形状|
 |false_marker|オプション|str|None|不正解クラスの散布図プロット形状|
 |cv|オプション|int or sklearn.model_selection.* |None|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
 |cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
 |cv_group|オプション|str|None|GroupKFold,LeaveOneGroupOutのグルーピング対象カラム名|
 |display_cv_indices|オプション|int|0|表示対象のクロスバリデーション番号|
-|model_params|オプション|Dict|None|分類モデルに渡すパラメータ|
-|fit_params|オプション|Dict|None|学習時のパラメータ|
-|subplot_kws|オプション|Dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
-|contourf_kws|オプション|Dict|None|グラフ表示用の[matplotlib.pyplot.contourf](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.contourf.html)に渡す引数|
-|scatter_kws|オプション|Dict|None|散布図用の[matplotlib.pyplot.scatter](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.scatter.html)に渡す引数|
+|model_params|オプション|dict|None|分類モデルに渡すパラメータ|
+|fit_params|オプション|dict|None|学習時のパラメータ|
+|subplot_kws|オプション|dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
+|contourf_kws|オプション|dict|None|グラフ表示用の[matplotlib.pyplot.contourf](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.contourf.html)に渡す引数|
+|scatter_kws|オプション|dict|None|散布図用の[matplotlib.pyplot.scatter](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.scatter.html)に渡す引数|
 <br>
 
 ### class_proba_plotメソッド
@@ -245,33 +245,33 @@ classplot.class_proba_plot(model, ['petal_width', 'petal_length'], 'species', ir
 |引数名|必須引数orオプション|型|デフォルト値|内容|
 |---|---|---|---|---|
 |model|必須|Scikit-learn API|-|表示対象の回帰モデル|
-|x|必須|List[str]|-|説明変数に指定するカラム名|
+|x|必須|list[str]|-|説明変数に指定するカラム名|
 |y|必須|str|-|目的変数に指定するカラム名|
 |data|必須|pd.DataFrame|-|入力データ|
-|x_chart|オプション　　　|List[str]|None|説明変数のうちグラフ表示対象のカラム名|
+|x_chart|オプション　　　|list[str]|None|説明変数のうちグラフ表示対象のカラム名|
 |pair_sigmarange|オプション|float|1.5|グラフ非使用変数の分割範囲|
 |pair_sigmainterval|オプション|float|0.5|グラフ非使用変数の1枚あたり表示範囲|
 |chart_extendsigma|オプション|float|0.5|グラフ縦軸横軸の表示拡張範囲|
 |chart_scale|オプション|int|1|グラフの描画倍率|
 |plot_scatter|オプション|str|'true'|散布図の描画種類|
 |rounddigit_x3|オプション|int|2|グラフ非使用軸の小数丸め桁数|
-|scatter_colors|オプション|List[str]|None|クラスごとのプロット色のリスト|
+|scatter_colors|オプション|list[str]|None|クラスごとのプロット色のリスト|
 |true_marker|オプション|str|None|正解クラスの散布図プロット形状|
 |false_marker|オプション|str|None|不正解クラスの散布図プロット形状|
 |cv|オプション|int or sklearn.model_selection.* |None|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
 |cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
 |cv_group|オプション|str|None|GroupKFold, LeaveOneGroupOutのグルーピング対象カラム名|
 |display_cv_indices|オプション|int|0|表示対象のクロスバリデーション番号|
-|model_params|オプション|Dict|None|分類モデルに渡すパラメータ|
-|fit_params|オプション|Dict|None|学習時のパラメータ|
-|subplot_kws|オプション|Dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
-|contourf_kws|オプション|Dict|None|proba_type='contour'のとき[matplotlib.pyplot.contourf](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.contourf.html)、 proba_type='contour'のとき[contour](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.contour.html))に渡す引数|
-|scatter_kws|オプション|Dict|None|散布図用の[matplotlib.pyplot.scatter](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.scatter.html)に渡す引数|
+|model_params|オプション|dict|None|分類モデルに渡すパラメータ|
+|fit_params|オプション|dict|None|学習時のパラメータ|
+|subplot_kws|オプション|dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
+|contourf_kws|オプション|dict|None|proba_type='contour'のとき[matplotlib.pyplot.contourf](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.contourf.html)、 proba_type='contour'のとき[contour](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.contour.html))に渡す引数|
+|scatter_kws|オプション|dict|None|散布図用の[matplotlib.pyplot.scatter](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.scatter.html)に渡す引数|
 |plot_border|オプション|bool|True|決定境界線の描画有無|
-|proba_class|オプション|str or List[str]|None|確率表示対象のクラス名|
-|proba_cmap_dict|オプション|Dict[str, str]|None|クラス確率図のカラーマップ(クラス名と[colormap](https://matplotlib.org/stable/tutorials/colors/colormaps.html)をDict指定)|
+|proba_class|オプション|str or list[str]|None|確率表示対象のクラス名|
+|proba_cmap_dict|オプション|dict[str, str]|None|クラス確率図のカラーマップ(クラス名と[colormap](https://matplotlib.org/stable/tutorials/colors/colormaps.html)をdict指定)|
 |proba_type|オプション|str|'contourf'|クラス確率図の描画種類<br>(等高線'contourf', 'contour', or RGB画像'imshow')|
-|imshow_kws|オプション|Dict|None|proba_type='imshow'のとき[matplotlib.pyplot.imshow](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.imshow.html)に渡す引数|
+|imshow_kws|オプション|dict|None|proba_type='imshow'のとき[matplotlib.pyplot.imshow](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.imshow.html)に渡す引数|
 <br>
 
 ### classplotクラス使用法詳細
@@ -313,7 +313,7 @@ regplot.linear_plot(x='petal_length', y='sepal_length', data=iris)
 |linecolor|オプション|str|'red'|回帰直線の[色](https://matplotlib.org/stable/gallery/color/named_colors.html)|
 |rounddigit|オプション|int|5|表示指標の小数丸め桁数|
 |plot_scores|オプション|bool|True|回帰式、ピアソンの相関係数およびp値の表示有無|
-|scatter_kws|オプション|Dict|None|[seaborn.scatterplot](https://seaborn.pydata.org/generated/seaborn.scatterplot.html)に渡す引数|
+|scatter_kws|オプション|dict|None|[seaborn.scatterplot](https://seaborn.pydata.org/generated/seaborn.scatterplot.html)に渡す引数|
 <br>
 
 ### regression_pred_trueメソッド
@@ -331,7 +331,7 @@ regplot.regression_pred_true(LinearRegression(), x=['altitude', 'latitude'], y='
 |引数名|必須引数orオプション|型|デフォルト値|内容|
 |---|---|---|---|---|
 |model|必須|Scikit-learn API|-|表示対象の回帰モデル|
-|x|必須|List[str]|-|説明変数に指定するカラム名のリスト|
+|x|必須|list[str]|-|説明変数に指定するカラム名のリスト|
 |y|必須|str|-|目的変数に指定するカラム名|
 |data|必須|pd.DataFrame|-|入力データ|
 |hue|オプション　　　|str|None|色分けに指定するカラム名|
@@ -339,14 +339,14 @@ regplot.regression_pred_true(LinearRegression(), x=['altitude', 'latitude'], y='
 |rounddigit|オプション|int|3|表示指標の小数丸め桁数|
 |rank_number|オプション|int|None|誤差上位何番目までを文字表示するか|
 |rank_col|オプション|str|None|誤差上位と一緒に表示するフィールド名|
-|scores|オプション|str or List[str]|'mae'|文字表示する評価指標を指定 ('r2', 'mae', 'rmse', 'rmsle', or 'max_error')|
+|scores|オプション|str or list[str]|'mae'|文字表示する評価指標を指定 ('r2', 'mae', 'rmse', 'rmsle', or 'max_error')|
 |cv_stats|オプション|str|'mean'|クロスバリデーション時に表示する評価指標統計値 ('mean', 'median', 'max', or 'min')|
 |cv|オプション|int or sklearn.model_selection.* |None|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
 |cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
-|model_params|オプション|Dict|None|回帰モデルに渡すパラメータ|
-|fit_params|オプション|Dict|None|学習時のパラメータをDict指定|
-|subplot_kws|オプション|Dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
-|scatter_kws|オプション|Dict|None|[seaborn.scatterplot](https://seaborn.pydata.org/generated/seaborn.scatterplot.html)に渡す引数|
+|model_params|オプション|dict|None|回帰モデルに渡すパラメータ|
+|fit_params|オプション|dict|None|学習時のパラメータをdict指定|
+|subplot_kws|オプション|dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
+|scatter_kws|オプション|dict|None|[seaborn.scatterplot](https://seaborn.pydata.org/generated/seaborn.scatterplot.html)に渡す引数|
 <br>
 
 ### regression_plot_1dメソッド
@@ -371,14 +371,14 @@ regplot.regression_plot_1d(SVR(), x='petal_length', y='sepal_length', data=iris)
 |rounddigit|オプション|int|3|表示指標の小数丸め桁数|
 |rank_number|オプション|int|None|誤差上位何番目までを文字表示するか|
 |rank_col|オプション|str|None|誤差上位と一緒に表示するフィールド名|
-|scores|オプション|str or List[str]|'mae'|文字表示する評価指標を指定 ('r2', 'mae', 'rmse', 'rmsle', or 'max_error')|
+|scores|オプション|str or list[str]|'mae'|文字表示する評価指標を指定 ('r2', 'mae', 'rmse', 'rmsle', or 'max_error')|
 |cv_stats|オプション|str|'mean'|クロスバリデーション時に表示する評価指標統計値 ('mean', 'median', 'max', or 'min')|
 |cv|オプション|int or sklearn.model_selection.* |None|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
 |cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
-|model_params|オプション|Dict|None|回帰モデルに渡すパラメータ|
-|fit_params|オプション|Dict|None|学習時のパラメータをDict指定|
-|subplot_kws|オプション|Dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
-|scatter_kws|オプション|Dict|None|[seaborn.scatterplot](https://seaborn.pydata.org/generated/seaborn.scatterplot.html)に渡す引数|
+|model_params|オプション|dict|None|回帰モデルに渡すパラメータ|
+|fit_params|オプション|dict|None|学習時のパラメータをdict指定|
+|subplot_kws|オプション|dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
+|scatter_kws|オプション|dict|None|[seaborn.scatterplot](https://seaborn.pydata.org/generated/seaborn.scatterplot.html)に渡す引数|
 <br>
 
 ### regression_heat_plotメソッド
@@ -395,10 +395,10 @@ regplot.regression_heat_plot(LinearRegression(), x=['altitude', 'latitude'], y='
 |引数名|必須引数orオプション|型|デフォルト値|内容|
 |---|---|---|---|---|
 |model|必須|Scikit-learn API|-|表示対象の回帰モデル|
-|x|必須|List[str]|-|説明変数に指定するカラム名のリスト|
+|x|必須|list[str]|-|説明変数に指定するカラム名のリスト|
 |y|必須|str|-|目的変数に指定するカラム名|
 |data|必須|pd.DataFrame|-|入力データ|
-|x_heat|オプション　　　|List[str]|None|説明変数のうちヒートマップ表示対象のカラム名|
+|x_heat|オプション　　　|list[str]|None|説明変数のうちヒートマップ表示対象のカラム名|
 |scatter_hue|オプション|str|None|散布図色分け指定カラム名 (plot_scatter='hue'時のみ有効)|
 |pair_sigmarange|オプション|float|1.5|ヒートマップ非使用変数の分割範囲|
 |pair_sigmainterval|オプション|float|0.5|ヒートマップ非使用変数の1枚あたり表示範囲|
@@ -415,11 +415,11 @@ regplot.regression_heat_plot(LinearRegression(), x=['altitude', 'latitude'], y='
 |cv|オプション|int or sklearn.model_selection.* |None|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
 |cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
 |display_cv_indices|オプション|int|0|表示対象のクロスバリデーション番号|
-|model_params|オプション|Dict|None|回帰モデルに渡すパラメータ|
-|fit_params|オプション|Dict|None|学習時のパラメータをDict指定|
-|subplot_kws|オプション|Dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
-|heat_kws|オプション|Dict|None|ヒートマップ用の[seaborn.heatmap](https://seaborn.pydata.org/generated/seaborn.heatmap.html)に渡す引数|
-|scatter_kws|オプション|Dict|None|散布図用の[matplotlib.pyplot.scatter](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.scatter.html)に渡す引数|
+|model_params|オプション|dict|None|回帰モデルに渡すパラメータ|
+|fit_params|オプション|dict|None|学習時のパラメータをdict指定|
+|subplot_kws|オプション|dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
+|heat_kws|オプション|dict|None|ヒートマップ用の[seaborn.heatmap](https://seaborn.pydata.org/generated/seaborn.heatmap.html)に渡す引数|
+|scatter_kws|オプション|dict|None|散布図用の[matplotlib.pyplot.scatter](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.scatter.html)に渡す引数|
 <br>
 
 ### regplotクラス使用法詳細
