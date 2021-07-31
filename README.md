@@ -166,7 +166,7 @@ df_scores
 |sigmarange|オプション|float|4|フィッティング線の表示範囲 (標準偏差の何倍まで表示するか指定)|
 |linesplit|オプション|float|200|フィッティング線の分割数 (カクカクしたら増やす)
 |dist|オプション|str or list[str]|'norm'|分布の種類 ('norm', 'lognorm', 'gamma', 't', 'expon', 'uniform', 'chi2', 'weibull')|
-|ax|オプション|matplotlib.axes._ subplots.Axes|None|表示対象のax (Noneならmatplotlib.pyplot.plotで1枚ごとにプロット)|
+|ax|オプション|matplotlib.axes.Axes|None|表示対象のax (Noneならmatplotlib.pyplot.plotで1枚ごとにプロット)|
 |linecolor|オプション|str or list[str]|'red'|フィッティング線の[色指定](https://matplotlib.org/stable/gallery/color/named_colors.html) (listで複数指定可)|
 |floc|オプション|float|None|フィッティング時のX方向オフセット (Noneなら指定なし(weibullとexponは0))|
 |hist_kws|オプション|dict|{}|[matplotlib.axes.Axes.histに渡す引数](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.hist.html)|
@@ -307,7 +307,7 @@ regplot.linear_plot(x='petal_length', y='sepal_length', data=iris)
 |x|必須|str|-|横軸に指定するカラム名|
 |y|必須|str|-|縦軸に指定するカラム名|
 |data|必須|pd.DataFrame|-|入力データ|
-|ax|オプション|matplotlib.axes._ subplots.Axes|None|表示対象のAxes (Noneならmatplotlib.pyplot.plotで1枚ごとにプロット)|
+|ax|オプション|matplotlib.axes.Axes|None|表示対象のAxes (Noneならmatplotlib.pyplot.plotで1枚ごとにプロット)|
 |hue|オプション|str|None|色分けに指定するカラム名|
 |linecolor|オプション|str|'red'|回帰直線の[色](https://matplotlib.org/stable/gallery/color/named_colors.html)|
 |rounddigit|オプション|int|5|表示指標の小数丸め桁数|
