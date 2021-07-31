@@ -84,7 +84,7 @@ hist class
     :widths: 30, 50, 15, 15
 
     "**plot_normality**", Plot normality test result and QQ plot, `hist.plot_normality <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#histplot_normality>`__
-    "**fit_dist**", Fit distributions and calculating fitting scores, `hist.fit_dist <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#histfit_dist>`__
+    "**fit_dist**", Fit distributions by maximum likelihood estimation and calculate fitting scores, `hist.fit_dist <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#histfit_dist>`__
 
 
 classplot class
