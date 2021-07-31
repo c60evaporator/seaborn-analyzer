@@ -109,7 +109,7 @@ class regplot():
         rank_index  = np.argsort(-y_error_abs)[:rank_number]
         for rank, i in enumerate(rank_index):
             error = cls._round_digits(y_error[i], rounddigit=rounddigit, method='decimal')
-            rank_text = f'{rank+1}\n{rank_col}={rank_col_data[i]}\nerror={error}'
+            rank_text = f'      no{rank+1}\n-<-error={error}\n      {rank_col}={rank_col_data[i]}'
             if x is None:  # 横軸y_true縦軸y_pred (regression_pred_trueメソッド用)
                 ax.text(y_true[i], y_pred[i], rank_text, verticalalignment='center', horizontalalignment='left')
             else:  # 横軸x縦軸y_true (regression_plot_1dメソッド用)
@@ -861,7 +861,7 @@ class regplot():
             rank_col_value = int(row[rank_col]) if rank_col == 'index' else row[rank_col]
             # 誤差を計算してテキスト化
             error = cls._round_digits(row['y_pred'] - row['y_true'], rounddigit=rounddigit_rank)
-            rank_text = f'{rank_dict[index]+1}\n{rank_col}={rank_col_value}\nerror={error}'
+            rank_text = f'     no{rank_dict[index]+1}\n-<-error={error}\n     {rank_col}={rank_col_value}'
             # 軸範囲が0～heat_divisionになっているので、スケール変換してプロット
             x1_text = 0.5 + (row[x_heat[0]] - x1_start) * (heat_division - 1) / (x1_end - x1_start)
             x2_text = 0.5 + (row[x_heat[1]] - x2_start) * (heat_division - 1) / (x2_end - x2_start)
