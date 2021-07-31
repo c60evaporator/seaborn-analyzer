@@ -92,10 +92,9 @@ cp.pairanalyzer(titanic, hue='survived')
 |height|オプション|float|2.5|グラフ1個の高さ|
 |aspect|オプション|float|1|グラフ1個の縦横比|
 |dropna|オプション|bool|True|[seaborn.PairGridのdropna引数](https://seaborn.pydata.org/generated/seaborn.PairGrid.html?highlight=pairgrid#seaborn.PairGrid)|
-|lower_kws|オプション|dict|{}|[seaborn.PairGridのlower_kws引数](https://seaborn.pydata.org/generated/seaborn.PairGrid.html?highlight=pairgrid#seaborn.PairGrid)|
-|diag_kws|オプション|dict|{}|[seaborn.PairGridのdiag_kws引数](https://seaborn.pydata.org/generated/seaborn.PairGrid.html?highlight=pairgrid#seaborn.PairGrid)|
-|grid_kws|オプション|dict|{}|[seaborn.PairGridのgrid_kws引数](https://seaborn.pydata.org/generated/seaborn.PairGrid.html?highlight=pairgrid#seaborn.PairGrid)|
-|size|オプション|dict|None|[seaborn.PairGridのsize引数](https://seaborn.pydata.org/generated/seaborn.PairGrid.html?highlight=pairgrid#seaborn.PairGrid)|
+|lower_kws|オプション|dict|{}|[seaborn.PairGrid.map_lowerの引数](https://seaborn.pydata.org/generated/seaborn.PairGrid.html?highlight=pairgrid#seaborn.PairGrid)|
+|diag_kws|オプション|dict|{}|[seaborn.PairGrid.map_diag引数](https://seaborn.pydata.org/generated/seaborn.PairGrid.html?highlight=pairgrid#seaborn.PairGrid)|
+|grid_kws|オプション|dict|{}|[seaborn.PairGridの上記以外の引数](https://seaborn.pydata.org/generated/seaborn.PairGrid.html?highlight=pairgrid#seaborn.PairGrid)|
 <br>
 
 ### CustomPairPlotクラス使用法詳細
