@@ -31,7 +31,7 @@ An example of using CustomPairPlot class
     cp = CustomPairPlot()
     cp.pairanalyzer(titanic, hue='survived')
    
-If you want to know usage of other classes, see `API Reference
+If you want to know usage of the other classes, see `API Reference
 <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#api-reference>`__ and `Examples
 <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#examples>`__
 
