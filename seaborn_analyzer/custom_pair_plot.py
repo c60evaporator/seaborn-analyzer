@@ -152,40 +152,39 @@ class CustomPairPlot():
     def pairanalyzer(self, df, hue=None, palette=None, vars=None,
              lowerkind="boxscatter", diag_kind="kde", markers=None,
              height=2.5, aspect=1, dropna=True,
-             lower_kws={}, diag_kws={}, grid_kws={}, size=None):
+             lower_kws={}, diag_kws={}, grid_kws={}):
         """
-        散布図行列と相関係数行列を同時に表示
+        Plotting pair plot including scatter plot and correlation coefficient matrix simultaneously.
+        This method mainly uses seaborn.PairGrid class.
 
         Parameters
         ----------
         df : pd.DataFrame
-            入力データ
+            Input data structure. Int, float, and bool columns are displayed in the output graph.
         hue : str
-            色分けに指定するカラム名 (Noneなら色分けなし)
-        palette : str
-            hueによる色分け用のカラーパレット
-        vars : int
-            グラフ化するカラム名 (Noneなら全ての数値型＆Boolean型の列を使用)
-        lowerkind : dict
-            左下に表示するグラフ種類 ('boxscatter', 'scatter', or 'reg')
-        diag_kind : ndarray
-            対角に表示するグラフ種類 ('kde' or 'hist')
-        markers : scipy.stats.distributions
-            hueで色分けしたデータの散布図プロット形状
+            Variable in data to map plot aspects to different colors.
+        palette : str or dict[str]
+            Set of colors for mapping the hue variable. If a dict, keys should be values in the hue variable.
+        vars : list[str]
+            Variables within data to use, otherwise use every column with a numeric datatype.
+        lowerkind : {'boxscatter', 'scatter', or 'reg'}
+            Kind of plot for the lower triangular subplots.
+        diag_kind : {'kde' or 'hist'}
+            Kind of plot for the diagonal subplots.
+        markers : str or list[str]
+            Marker to use for all scatterplot points or a list of markers. See https://matplotlib.org/stable/api/markers_api.html
         height : float
-            グラフ1個の高さ
-        aspect : int
-            グラフ1個の縦横比
-        dropna : dict
-            seaborn.PairGridのdropna引数
-        lower_kws : scipy.stats.distributions
-            seaborn.PairGridのlower_kws引数
-        diag_kws : float
-            seaborn.PairGridのdiag_kws引数
-        grid_kws : int
-            seaborn.PairGridのgrid_kws引数
-        size : dict
-            seaborn.PairGridのsize引数
+            Height (in inches) of each facet.
+        aspect : float
+            Aspect * height gives the width (in inches) of each facet.
+        dropna : bool
+            Drop missing values from the data before plotting.
+        lower_kws : dict
+            Additional parameters passed to seaborn.PairGrid.map_lower(). If lowerkind is 'scatter', the arguments are applied to seaborn.scatterplot method of the lower subplots.
+        diag_kws : dict
+            Additional parameters passed to seaborn.PairGrid.map_diag(). If lowerkind is 'kde', the arguments are applied to seaborn.kdeplot method of the diagonal subplots.
+        grid_kws : dict
+            Additional parameters passed to seaborn.PairGrid.__init__() other than the above arguments. See https://seaborn.pydata.org/generated/seaborn.PairGrid.html
         """
         #メンバ変数入力
         if diag_kind=="hist":#ヒストグラム表示のとき、bool型の列を除外してデータ読込

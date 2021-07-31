@@ -110,36 +110,36 @@ class hist():
     def fit_dist(cls, data: pd.DataFrame, x: str=None, hue=None, dist='norm', ax=None, binwidth=None, bins='auto', norm_hist=True,
                   floc=None, sigmarange=4, linecolor='red', linesplit=200, hist_kws={}):
         """
-        分布フィッティングと各指標の表示
+        Fitting distributions by maximum likelihood estimation, and calculating fitting scores
 
         Parameters
         ----------
         data : pd.DataFrame, pd.Series, or pd.ndarray
-            フィッティング対象のデータ
+            Input data structure. Either a long-form collection of vectors that can be assigned to named variables or a wide-form dataset that will be internally reshaped.
         x : str, optional
-            ヒストグラム作成対象の変数カラム (列名指定、dataがDataFrameのときのみ指定可)
-        hue : str, optional
-            色分け指定カラム (列名指定、dataがDataFrameのときのみ指定可)
-        dist : str or List[str], optional
-            分布の種類 ("norm", "lognorm", "gamma", "t", "expon", "uniform", "chi2", "weibull")
-        ax : matplotlib.axes._subplots.Axes, optional
-            表示対象のax (Noneならmatplotlib.pyplot.plotで1枚ごとにプロット)
+            Variables that specify positions on the x. Only available if data is pd.DataFrame
+        hue : str, pd.Series, or pd.ndarray, optional
+            Semantic variable that is mapped to determine the color of plot elements. If data is pd.DataFrame, the argument must be key in data.
+        dist : {'norm', 'lognorm', 'gamma', 't', 'expon', 'uniform', 'chi2', 'weibull'} or list, optional
+            Type of fitting distribution or list of distrbutions.
+        ax : matplotlib.axes.Axes, optional
+            Pre-existing axes for the plot. Otherwise, call matplotlib.pyplot.gca() internally.
         binwidth : float, optional
-            ビンの幅 (binsと共存不可)
+            Width of each bin, overrides bins.
         bins : int, optional
-            ビンの数 (bin_widthと共存不可、'auto'とするとスタージェスの公式で自動決定)
+            Generic bin parameter that can be the name of a reference rule, the number of bins, or the breaks of the bins. Passed to numpy.histogram_bin_edges().
         norm_hist : bool, optional
-            ヒストグラムを面積1となるよう正規化するか？
+            If True, the histogram height shows a density rather than a count.
         floc : float, optional
-            フィッティング時のX方向オフセット (Noneなら指定なし(weibullとexponは0))
+            Hold location parameter fixed to specified value. If None, location parameter is fitted by maximum likelihood estimation except when dist is 'weibull' or expon'. See https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.fit.html#scipy.stats.rv_continuous.fit
         sigmarange : float, optional
-            フィッティング線の表示範囲 (標準偏差の何倍まで表示するか指定)
+            Set the x-axis view limits. The lower limit is -sigmarange * std(data) + mean(data). The higher limit is sigmarange * std(data) + mean(data)
         linecolor : str or List[str], optional
-            フィッティング線の色指定 (複数分布フィッティング時は、List指定)
+            Color of fitting line or colors of fitting lines.
         linesplit : int, optional
-            フィッティング線の分割数 (カクカクしたら増やす)
+            Number of fitting line divisions.
         hist_kws : dict, optional
-            ヒストグラム表示(seaborn.histplot)の引数
+            Additional parameters passed to seaborn.histplot() other than the above arguments.
         
         Returns
         ----------
@@ -343,27 +343,27 @@ class hist():
         Parameters
         ----------
         data : pd.DataFrame, pd.Series, or pd.ndarray
-            フィッティング対象のデータ
+            Input data structure. Either a long-form collection of vectors that can be assigned to named variables or a wide-form dataset that will be internally reshaped.
         x : str, optional
-            ヒストグラム作成対象の変数カラム (列名指定、dataがDataFrameのときのみ指定可)
+            Variables that specify positions on the x. Only available if data is pd.DataFrame
         hue : str, optional
-            色分け指定カラム (列名指定、dataがDataFrameのときのみ指定可)
+            Semantic variable that is mapped to determine the color of plot elements. Only available if data is pd.DataFrame
         binwidth : float, optional
-            ビンの幅 (binsと共存不可)
+            Width of each bin, overrides bins.
         bins : int, optional
-            ビンの数 (bin_widthと共存不可、'auto'とするとスタージェスの公式で自動決定)
+            Generic bin parameter that can be the name of a reference rule, the number of bins, or the breaks of the bins. Passed to numpy.histogram_bin_edges().
         norm_hist : bool, optional
-            ヒストグラムを面積1となるよう正規化するか？
+            If True, the histogram height shows a density rather than a count.
         sigmarange : float, optional
-            フィッティング線の表示範囲 (標準偏差の何倍まで表示するか指定)
+            Set the x-axis view limits. The lower limit is -sigmarange * std(data) + mean(data). The higher limit is sigmarange * std(data) + mean(data)
         linesplit : int, optional
-            フィッティング線の分割数 (カクカクしたら増やす)
+            Number of fitting line divisions.
         rounddigit: int, optional
-            表示指標の小数丸め桁数
+            Round numbers of scores to a given precision in decimal digits.
         hist_kws : dict, optional
-            ヒストグラム表示(matplotlib.axes.Axes.hist())の引数
+            Additional parameters passed to seaborn.histplot() other than the above arguments.
         subplot_kws : dict, optional
-            プロット用のmatplotlib.pyplot.subplots()に渡す引数 (例：figsize)
+            Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize
         """
 
         # 描画用のsubplots作成

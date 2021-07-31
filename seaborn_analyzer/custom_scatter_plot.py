@@ -439,7 +439,7 @@ class regplot():
             目的変数カラム (列名指定)
         data : pd.DataFrame
             フィッティング対象のデータ
-        ax : matplotlib.axes._subplots.Axes, optional
+        ax : matplotlib.axes.Axes, optional
             表示対象のaxes (Noneならmatplotlib.pyplot.plotで1枚ごとにプロット)
         hue : str, optional
             色分け指定カラム (列名指定)
@@ -513,7 +513,7 @@ class regplot():
             色分け用ラベルデータ
         hue_name : str
             色分け用の列名
-        ax : matplotlib.axes._subplots.Axes
+        ax : matplotlib.axes.Axes
             表示対象のax (Noneならplt.plotで1枚ごとにプロット)
         linecolor : str
             予測値=実測値の線の色
