@@ -117,7 +117,7 @@ class hist():
         data : pd.DataFrame, pd.Series, or pd.ndarray
             Input data structure. Either a long-form collection of vectors that can be assigned to named variables or a wide-form dataset that will be internally reshaped.
         x : str, optional
-            Variables that specify positions on the x. Only available if data is pd.DataFrame.
+            Variables that specify positions on the x. Available only if data is pd.DataFrame.
         hue : str, pd.Series, or pd.ndarray, optional
             Semantic variable that is mapped to determine the color of plot elements. If data is pd.DataFrame, the argument must be key in data.
         dist : {'norm', 'lognorm', 'gamma', 't', 'expon', 'uniform', 'chi2', 'weibull'} or list, optional
@@ -135,7 +135,7 @@ class hist():
         sigmarange : float, optional
             Set the x-axis view limits. The lower limit is -sigmarange * std(data) + mean(data). The higher limit is sigmarange * std(data) + mean(data).
         linecolor : str or List[str], optional
-            Color of fitting line or colors of fitting lines.
+            Color of fitting line or colors of fitting lines. See https://matplotlib.org/stable/gallery/color/named_colors.html
         linesplit : int, optional
             Number of fitting line divisions.
         hist_kws : dict, optional
@@ -345,9 +345,9 @@ class hist():
         data : pd.DataFrame, pd.Series, or pd.ndarray
             Input data structure. Either a long-form collection of vectors that can be assigned to named variables or a wide-form dataset that will be internally reshaped.
         x : str, optional
-            Variables that specify positions on the x. Only available if data is pd.DataFrame.
+            Variables that specify positions on the x. Available only if data is pd.DataFrame.
         hue : str, optional
-            Semantic variable that is mapped to determine the color of plot elements. Only available if data is pd.DataFrame
+            Semantic variable that is mapped to determine the color of plot elements. Available only if data is pd.DataFrame
         binwidth : float, optional
             Width of each bin, overrides bins.
         bins : int, optional
@@ -359,11 +359,11 @@ class hist():
         linesplit : int, optional
             Number of fitting line divisions.
         rounddigit: int, optional
-            Round numbers of scores to a given precision in decimal digits.
+            Round a number of score to a given precision in decimal digits.
         hist_kws : dict, optional
             Additional parameters passed to seaborn.histplot() other than the above arguments.
         subplot_kws : dict, optional
-            Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize.
+            Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
         """
 
         # 描画用のsubplots作成

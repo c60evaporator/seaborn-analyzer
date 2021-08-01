@@ -188,46 +188,44 @@ class regplot():
                              model_params=None, fit_params=None, subplot_kws=None, scatter_kws=None):
 
         """
-        回帰して予測値と実測値をプロットし、評価値を表示
+        Plot prediction vs. true scatter plots of any scikit-learn regression model
 
         Parameters
         ----------
-        model : 
-            回帰の学習器
+        model : estimator object implementing 'fit'
+            Regression model. This is assumed to implement the scikit-learn estimator interface.
         x : str or List[str]
-            説明変数カラム (列名指定 or 列名のリスト指定)
+            Explanatory variables.
         y : str
-            目的変数カラム (列名指定)
+            Objective variable.
         data : pd.DataFrame
-            フィッティング対象のデータ
+            Input data structure.
         hue : str, optional
-            色分け指定カラム (列名指定)
+            Grouping variable that will produce points with different colors.
         linecolor : str, optional
-            予測値=実測値の線の色
+            Color of prediction = true line. See https://matplotlib.org/stable/gallery/color/named_colors.html
         rounddigit: int, optional
-            表示指標の小数丸め桁数
+            Round a number of score to a given precision in decimal digits.
         rank_number : int, optional
-            誤差上位何番目までを文字表示するか
-        rank_col : List[str], optional
-            誤差上位と一緒に表示するフィールド名 (NoneならIndexを使用)
-        scores : str or List[str], optional
-            算出する評価指標 ('r2', 'mae', 'rmse', 'rmsle', or 'max_error')
-        cv_stats : str, optional
-            クロスバリデーション時に表示する統計値 ('mean', 'median', 'max', or 'min')
-        cv : int or sklearn.model_selection.*, optional
-            クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)
+            Number of emphasized data that are in the top posiotions for regression error.
+        rank_col : list[str], optional
+            Variables that are displayed with emphasized data that are in the top posiotions for regression error.
+        scores : {'r2', 'mae', 'rmse', 'rmsle', 'max_error'} or list,, optional
+            Regression score that are displayed at the lower right of the graph.
+        cv_stats : {'mean', 'median', 'max', 'min'}, optional
+            Statistical method of cross validation score that are displayed at the lower right of the graph.
+        cv : int, cross-validation generator or an iterable, optional
+            Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
         cv_seed : int, optional
-            クロスバリデーションの乱数シード
+            Seed for random number generator of cross validation.
         model_params : dict, optional
-            回帰モデルに渡すパラメータ (チューニング後のパラメータがgood、Noneならデフォルト)
+            Parameters passed to the regression model. If the model is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         fit_params : dict, optional
-            学習時のパラメータをdict指定 (例: XGBoostのearly_stopping_rounds)
-            Noneならデフォルト
-            Pipelineのときは{学習器名__パラメータ名:パラメータの値,‥}で指定する必要あり
+            Parameters passed to the fit() method of the regression model, e.g. 'early_stopping_round' and 'eval_set' of XGBoostRegressor. If the model is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         subplot_kws : dict, optional
-            プロット用のmatplotlib.pyplot.subplots()に渡す引数 (例：figsize)
+            Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
         scatter_kws: dict, optional
-            散布図用のsns.scatterplot()に渡す引数
+            Additional parameters passed to sns.scatterplot(), e.g. alpha. See https://seaborn.pydata.org/generated/seaborn.scatterplot.html
 
         Returns
         ----------
@@ -429,28 +427,28 @@ class regplot():
     def linear_plot(cls, x: str, y: str, data: pd.DataFrame, ax=None, hue=None, linecolor='red',
                     rounddigit=5, plot_scores=True, scatter_kws=None):
         """
-        1変数線形回帰してプロットし、p値と相関係数を表示
+        Plot linear regression line and calculate Pearson correlation coefficient.
 
         Parameters
         ----------
         x : str
-            説明変数カラム (列名指定)
+            Variable that specify positions on the x.
         y : str
-            目的変数カラム (列名指定)
+            Variable that specify positions on the y.
         data : pd.DataFrame
-            フィッティング対象のデータ
+            Input data structure.
         ax : matplotlib.axes.Axes, optional
-            表示対象のaxes (Noneならmatplotlib.pyplot.plotで1枚ごとにプロット)
+            Pre-existing axes for the plot. Otherwise, call matplotlib.pyplot.gca() internally.
         hue : str, optional
-            色分け指定カラム (列名指定)
+            Grouping variable that will produce points with different colors.
         linecolor : str, optional
-            回帰直線の色
+            Color of regression line. See https://matplotlib.org/stable/gallery/color/named_colors.html
         rounddigit: int, optional
-            表示指標の小数丸め桁数
+            Round a number of score to a given precision in decimal digits.
         plot_scores: bool, optional
-            回帰式、ピアソンの相関係数およびp値の表示有無 (Trueなら表示あり)
+            If true, display Pearson correlation coefficient and the p-value.
         scatter_kws: dict, optional
-            散布図用のsns.scatterplot()に渡す引数
+            Additional parameters passed to sns.scatterplot(), e.g. alpha. See https://seaborn.pydata.org/generated/seaborn.scatterplot.html
         """
         # scatter_kwsがNoneなら空のdictを入力
         if scatter_kws is None:
@@ -561,42 +559,40 @@ class regplot():
 
         Parameters
         ----------
-        model : 
-            使用する回帰モデル(scikit-learn API)
+        model : estimator object implementing ‘fit’
+            Regression model. This is assumed to implement the scikit-learn estimator interface.
         x : str
-            説明変数カラム (列名指定)
+            Explanatory variable.
         y : str
-            目的変数カラム (列名指定)
+            Objective variable.
         data : pd.DataFrame
-            フィッティング対象のデータ
+            Input data structure.
         hue : str, optional
-            色分け指定カラム (列名指定)
+            Grouping variable that will produce points with different colors.
         linecolor : str, optional
-            予測値=実測値の線の色
+            Color of prediction = true line. See https://matplotlib.org/stable/gallery/color/named_colors.html
         rounddigit: int, optional
-            表示指標の小数丸め桁数
+            Round a number of score to a given precision in decimal digits.
         rank_number : int, optional
-            誤差上位何番目までを文字表示するか
-        rank_col : List[str], optional
-            誤差上位と一緒に表示するフィールド名 (NoneならIndexを使用)
-        scores : str or List[str], optional
-            算出する評価指標 ('r2', 'mae', 'rmse', 'rmsle', or 'max_error')
-        cv_stats : str, optional
-            クロスバリデーション時に表示する統計値 ('mean', 'median', 'max', or 'min')
-        cv : int or sklearn.model_selection.*, optional
-            クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)
+            Number of emphasized data that are in the top posiotions for regression error.
+        rank_col : list[str], optional
+            Variables that are displayed with emphasized data that are in the top posiotions for regression error.
+        scores : {'r2', 'mae', 'rmse', 'rmsle', 'max_error'} or list,, optional
+            Regression score that are displayed at the lower right of the graph.
+        cv_stats : {'mean', 'median', 'max', 'min'}, optional
+            Statistical method of cross validation score that are displayed at the lower right of the graph.
+        cv : int, cross-validation generator or an iterable, optional
+            Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
         cv_seed : int, optional
-            クロスバリデーションの乱数シード
+            Seed for random number generator of cross validation.
         model_params: dict, optional
-            回帰モデルに渡すパラメータ (チューニング後のパラメータがgood、Noneならデフォルト)
+            Parameters passed to the regression model. If the model is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         fit_params : dict, optional
-            学習時のパラメータをdict指定 (例: XGBoostのearly_stopping_rounds)
-            Noneならデフォルト
-            Pipelineのときは{学習器名__パラメータ名:パラメータの値,‥}で指定する必要あり
+            Parameters passed to the fit() method of the regression model, e.g. 'early_stopping_round' and 'eval_set' of XGBoostRegressor. If the model is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         subplot_kws : dict, optional
-            プロット用のmatplotlib.pyplot.subplots()に渡す引数 (例：figsize)
+            Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
         scatter_kws: dict, optional
-            散布図用のsns.scatterplot()に渡す引数
+            Additional parameters passed to sns.scatterplot(), e.g. alpha. See https://seaborn.pydata.org/generated/seaborn.scatterplot.html
 
         Returns
         ----------
@@ -1033,60 +1029,58 @@ class regplot():
 
         Parameters
         ----------
-        model:
-            使用する回帰モデル(scikit-learn API)
-        x: List[str]
-            説明変数カラム (列名指定)
-        y: str
-            目的変数カラム (列名指定)
-        data: pd.DataFrame
-            フィッティング対象のデータ
+        model : estimator object implementing 'fit'
+            Regression model. This is assumed to implement the scikit-learn estimator interface.
+        x : List[str]
+            Explanatory variables.
+        y : str
+            Objective variable.
+        data : pd.DataFrame
+            Input data structure.
         x_heat: List[str], optional
-            説明変数のうち、ヒートマップ表示対象のカラム (Noneなら前から2カラム自動選択)
+            X-axis and y-axis variables of heatmap. If None, use two variables in x from the front.
         scatter_hue : str, optional
-            散布図色分け指定カラム (列名指定, plot_scatter='hue'のときのみ有効)
+            Grouping variable that will produce points with different colors. Available only if plot_scatter is set to 'hue'.
         pair_sigmarange: float, optional
-            ヒートマップ非使用変数の分割範囲 (pair_sigmarange=2なら、-2σ~2σの範囲でpair_sigmaintervalに従いヒートマップ分割)
+            Set the range of subplots. The lower limit is mean({x3, x4}) - pair_sigmarange * std({x3, x4}). The higher limit is mean({x3, x4}) + pair_sigmarange * std({x3, x4}). Available only if len(x) is bigger than 2.
         pair_sigmainterval: float, optional
-            ヒートマップ非使用変数の1枚あたり表示範囲 (pair_sigmainterval=0.5なら、‥1σ~-0.5σ, 0.5σ~-0σ, 0σ~0.5σ, 0.5σ~1σ‥というようにヒートマップ分割)
+            Set the interval of subplots. For example, if pair_sigmainterval is set to 0.5 and pair_sigmarange is set to 1.0, The ranges of subplots are lower than μ-1σ, μ-1σ to μ-0.5σ, μ-0.5σ to μ, μ to μ+0.5σ, μ+0.5σ to μ+1σ, and higher than μ+1σ. Available only if len(x) is bigger than 2.
         heat_extendsigma: float, optional
-            ヒートマップ縦軸横軸の表示拡張範囲 (ヒートマップ使用変数の最大最小値 + extendsigmaが横軸範囲となる)
+            Set the axis view limits of the heatmap. The lower limit is min({x1, x2}) - std({x1, x2}) * heat_extendsigma. The higher limit is max({x1, x2}) + std({x1, x2}) * heat_extendsigma
         heat_division: int, optional
-            ヒートマップ縦軸横軸の解像度
+            Resolution of the heatmap.
         color_extendsigma: float, optional
-            ヒートマップの色分け最大最小値拡張範囲(y_trueの最大最小値 ± y_trueの標準偏差 × color_extendsigma)
-        plot_scatter: str, optional
-            散布図の描画種類('error':誤差で色分け, 'true':真値で色分け, 'hue':引数hue指定列で色分け, None:散布図表示なし)
+            Set the colormap limits of the heatmap. The lower limit is min(y_ture) - std(y_ture) * color_extendsigma. The higher limit is max(y_ture) - std(y_ture) * color_extendsigma.
+        plot_scatter: {'error', 'true', 'hue'}, optional
+            Color decision of scatter plot. If 'error', to be mapped to colors using error value. If 'true', to be mapped to colors using y_ture value. If 'hue', to be mapped to colors using scatter_hue variable. If None, no scatter.
         rounddigit_rank: int, optional
-            表示指標の小数丸め桁数
+            Round a number of error that are in the top posiotions for regression error. to a given precision in decimal digits.
         rounddigit_x1: int, optional
-            ヒートマップ横軸の小数丸め桁数
+            Round a number of x-axis valiable of the heatmap to a given precision in decimal digits.
         rounddigit_x2: int, optional
-            ヒートマップ縦軸の小数丸め桁数
+            Round a number of y-axis valiable of the heatmap to a given precision in decimal digits.
         rounddigit_x3: int, optional
-            ヒートマップ非表示軸の小数丸め桁数
+            Round a number of y-axis valiable of subplots to a given precision in decimal digits.
         rank_number: int, optional
-            誤差上位何番目までを文字表示するか
+            Number of emphasized data that are in the top posiotions for regression error.
         rank_col: str, optional
-            誤差上位と一緒に表示するフィールド名 (NoneならIndexを使用)
-        cv: int or sklearn.model_selection.*, optional
-            クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)
-        cv_seed: int, optional
-            クロスバリデーションの乱数シード
-        display_cv_indices: int, optional
-            表示対象のクロスバリデーション番号 (指定したCV番号での回帰結果が表示される。リスト指定も可)
-        model_params: dict, optional
-            回帰モデルに渡すパラメータ (チューニング後のパラメータがgood、Noneならデフォルト)
-        fit_params: dict, optional
-            学習時のパラメータをdict指定 (例: XGBoostのearly_stopping_rounds)
-            Noneならデフォルト
-            Pipelineのときは{学習器名__パラメータ名:パラメータの値,‥}で指定する必要あり
+            Variables that are displayed with emphasized data that are in the top posiotions for regression error.
+        cv : int, cross-validation generator or an iterable, optional
+            Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
+        cv_seed : int, optional
+            Seed for random number generator of cross validation.
+        display_cv_indices: int or list, optional
+            Cross validation index or indices to display.
+        model_params : dict, optional
+            Parameters passed to the regression model. If the model is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+        fit_params : dict, optional
+            Parameters passed to the fit() method of the regression model, e.g. 'early_stopping_round' and 'eval_set' of XGBoostRegressor. If the model is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         subplot_kws: dict, optional
-            プロット用のmatplotlib.pyplot.subplots()に渡す引数 (例：figsize)
+            Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
         heat_kws: dict, optional
-            ヒートマップ用のsns.heatmap()に渡す引数
+            Additional parameters passed to sns.heatmap(), e.g. cmap. See https://seaborn.pydata.org/generated/seaborn.heatmap.html
         scatter_kws: dict, optional
-            散布図用のax.scatter()に渡す引数
+            Additional parameters passed to matplotlib.pyplot.scatter(), e.g. alpha. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.scatter.html
         """
         # 説明変数xの次元が2～4以外ならエラーを出す
         if len(x) < 2 or len(x) > 4:
