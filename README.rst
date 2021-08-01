@@ -94,8 +94,8 @@ classplot class
     :header: "Method name", "Summary", "API Documentation", "Example"
     :widths: 30, 50, 15, 15
 
-    "**class_separator_plot**", Plot class separation lines of any scikit-learn classification models, `hist.class_separator_plot <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#classplotclass_separator_plot>`__
-    "**class_proba_plot**", Plot class prediction probability of any scikit-learn classification models, `hist.class_proba_plot <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#classplotclass_proba_plot>`__
+    "**class_separator_plot**", Plot class separation lines of any scikit-learn classification model, `hist.class_separator_plot <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#classplotclass_separator_plot>`__
+    "**class_proba_plot**", Plot class prediction probability of any scikit-learn classification model, `hist.class_proba_plot <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#classplotclass_proba_plot>`__
 
 
 regplot class
@@ -106,9 +106,9 @@ regplot class
     :widths: 30, 50, 15, 15
 
     "**linear_plot**", Plot linear regression line and calculate Pearson correlation coefficient, `regplot.linear_plot <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotlinear_plot>`__
-    "**regression_pred_true**", Plot prediction value vs. true value scatter plots, `regplot.regression_pred_true <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotregression_pred_true>`__
-    "**regression_plot_1d**", Plot 1d regression lines of any scikit-learn regression models, `regplot.regression_plot_1d <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotregression_plot_1d>`__
-    "**regression_heat_plot**", Plot 2 to 4d regression heat maps of any scikit-learn regression models, `regplot.regression_heat_plot <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotregression_heat_plot>`__
+    "**regression_pred_true**", Plot prediction value vs. true value scatter plots of any scikit-learn regression model, `regplot.regression_pred_true <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotregression_pred_true>`__
+    "**regression_plot_1d**", Plot 1d regression lines of any scikit-learn regression model, `regplot.regression_plot_1d <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotregression_plot_1d>`__
+    "**regression_heat_plot**", Plot 2 to 4d regression heat maps of any scikit-learn regression model, `regplot.regression_heat_plot <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotregression_heat_plot>`__
 
 
 ========
