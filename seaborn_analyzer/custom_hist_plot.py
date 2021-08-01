@@ -110,14 +110,14 @@ class hist():
     def fit_dist(cls, data: pd.DataFrame, x: str=None, hue=None, dist='norm', ax=None, binwidth=None, bins='auto', norm_hist=True,
                   floc=None, sigmarange=4, linecolor='red', linesplit=200, hist_kws={}):
         """
-        Fitting distributions by maximum likelihood estimation, and calculating fitting scores
+        Fit distributions by maximum likelihood estimation, and calculate fitting scores.
 
         Parameters
         ----------
         data : pd.DataFrame, pd.Series, or pd.ndarray
             Input data structure. Either a long-form collection of vectors that can be assigned to named variables or a wide-form dataset that will be internally reshaped.
         x : str, optional
-            Variables that specify positions on the x. Only available if data is pd.DataFrame
+            Variables that specify positions on the x. Only available if data is pd.DataFrame.
         hue : str, pd.Series, or pd.ndarray, optional
             Semantic variable that is mapped to determine the color of plot elements. If data is pd.DataFrame, the argument must be key in data.
         dist : {'norm', 'lognorm', 'gamma', 't', 'expon', 'uniform', 'chi2', 'weibull'} or list, optional
@@ -133,7 +133,7 @@ class hist():
         floc : float, optional
             Hold location parameter fixed to specified value. If None, location parameter is fitted by maximum likelihood estimation except when dist is 'weibull' or expon'. See https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.fit.html#scipy.stats.rv_continuous.fit
         sigmarange : float, optional
-            Set the x-axis view limits. The lower limit is -sigmarange * std(data) + mean(data). The higher limit is sigmarange * std(data) + mean(data)
+            Set the x-axis view limits. The lower limit is -sigmarange * std(data) + mean(data). The higher limit is sigmarange * std(data) + mean(data).
         linecolor : str or List[str], optional
             Color of fitting line or colors of fitting lines.
         linesplit : int, optional
@@ -338,14 +338,14 @@ class hist():
                         sigmarange=4, linesplit=200, rounddigit=5,
                         hist_kws={}, subplot_kws={}):
         """
-        正規性検定プロット
+        Plot normality test result and QQ plot.
 
         Parameters
         ----------
         data : pd.DataFrame, pd.Series, or pd.ndarray
             Input data structure. Either a long-form collection of vectors that can be assigned to named variables or a wide-form dataset that will be internally reshaped.
         x : str, optional
-            Variables that specify positions on the x. Only available if data is pd.DataFrame
+            Variables that specify positions on the x. Only available if data is pd.DataFrame.
         hue : str, optional
             Semantic variable that is mapped to determine the color of plot elements. Only available if data is pd.DataFrame
         binwidth : float, optional
@@ -355,7 +355,7 @@ class hist():
         norm_hist : bool, optional
             If True, the histogram height shows a density rather than a count.
         sigmarange : float, optional
-            Set the x-axis view limits. The lower limit is -sigmarange * std(data) + mean(data). The higher limit is sigmarange * std(data) + mean(data)
+            Set the x-axis view limits. The lower limit is -sigmarange * std(data) + mean(data). The higher limit is sigmarange * std(data) + mean(data).
         linesplit : int, optional
             Number of fitting line divisions.
         rounddigit: int, optional
@@ -363,7 +363,7 @@ class hist():
         hist_kws : dict, optional
             Additional parameters passed to seaborn.histplot() other than the above arguments.
         subplot_kws : dict, optional
-            Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize
+            Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize.
         """
 
         # 描画用のsubplots作成
