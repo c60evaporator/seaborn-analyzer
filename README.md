@@ -196,14 +196,14 @@ import seaborn as sns
 from sklearn.svm import SVC
 from seaborn_analyzer import classplot
 iris = sns.load_dataset("iris")
-model = SVC()
-classplot.class_separator_plot(model, ['petal_width', 'petal_length'], 'species', iris)
+clf = SVC()
+classplot.class_separator_plot(clf, ['petal_width', 'petal_length'], 'species', iris)
 ```
 ![image](https://user-images.githubusercontent.com/59557625/117274234-d7474900-ae97-11eb-9de2-c8a74dc179a5.png)
 #### 引数一覧
 |引数名|必須引数orオプション|型|デフォルト値|内容|
 |---|---|---|---|---|
-|model|必須|Scikit-learn API|-|表示対象の回帰モデル|
+|clf|必須|Scikit-learn API|-|表示対象の分類モデル|
 |x|必須|list[str]|-|説明変数に指定するカラム名|
 |y|必須|str|-|目的変数に指定するカラム名|
 |data|必須|pd.DataFrame|-|入力データ|
@@ -221,7 +221,7 @@ classplot.class_separator_plot(model, ['petal_width', 'petal_length'], 'species'
 |cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
 |cv_group|オプション|str|None|GroupKFold,LeaveOneGroupOutのグルーピング対象カラム名|
 |display_cv_indices|オプション|int|0|表示対象のクロスバリデーション番号|
-|model_params|オプション|dict|None|分類モデルに渡すパラメータ|
+|clf_params|オプション|dict|None|分類モデルに渡すパラメータ|
 |fit_params|オプション|dict|None|学習時のパラメータ|
 |subplot_kws|オプション|dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
 |contourf_kws|オプション|dict|None|グラフ表示用の[matplotlib.pyplot.contourf](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.contourf.html)に渡す引数|
@@ -235,15 +235,15 @@ import seaborn as sns
 from sklearn.svm import SVC
 from seaborn_analyzer import classplot
 iris = sns.load_dataset("iris")
-model = SVC()
-classplot.class_proba_plot(model, ['petal_width', 'petal_length'], 'species', iris,
+clf = SVC()
+classplot.class_proba_plot(clf, ['petal_width', 'petal_length'], 'species', iris,
                            proba_type='imshow')
 ```
 ![image](https://user-images.githubusercontent.com/59557625/117276085-a1a35f80-ae99-11eb-8368-cdd1cfa78346.png)
 #### 引数一覧
 |引数名|必須引数orオプション|型|デフォルト値|内容|
 |---|---|---|---|---|
-|model|必須|Scikit-learn API|-|表示対象の回帰モデル|
+|clf|必須|Scikit-learn API|-|表示対象の分類モデル|
 |x|必須|list[str]|-|説明変数に指定するカラム名|
 |y|必須|str|-|目的変数に指定するカラム名|
 |data|必須|pd.DataFrame|-|入力データ|
@@ -261,7 +261,7 @@ classplot.class_proba_plot(model, ['petal_width', 'petal_length'], 'species', ir
 |cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
 |cv_group|オプション|str|None|GroupKFold, LeaveOneGroupOutのグルーピング対象カラム名|
 |display_cv_indices|オプション|int|0|表示対象のクロスバリデーション番号|
-|model_params|オプション|dict|None|分類モデルに渡すパラメータ|
+|clf_params|オプション|dict|None|分類モデルに渡すパラメータ|
 |fit_params|オプション|dict|None|学習時のパラメータ|
 |subplot_kws|オプション|dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
 |contourf_kws|オプション|dict|None|proba_type='contour'のとき[matplotlib.pyplot.contourf](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.contourf.html)、 proba_type='contour'のとき[contour](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.contour.html))に渡す引数|
@@ -329,7 +329,7 @@ regplot.regression_pred_true(LinearRegression(), x=['altitude', 'latitude'], y='
 #### 引数一覧
 |引数名|必須引数orオプション|型|デフォルト値|内容|
 |---|---|---|---|---|
-|model|必須|Scikit-learn API|-|表示対象の回帰モデル|
+|estimator|必須|Scikit-learn API|-|表示対象の回帰モデル|
 |x|必須|list[str]|-|説明変数に指定するカラム名のリスト|
 |y|必須|str|-|目的変数に指定するカラム名|
 |data|必須|pd.DataFrame|-|入力データ|
@@ -342,7 +342,7 @@ regplot.regression_pred_true(LinearRegression(), x=['altitude', 'latitude'], y='
 |cv_stats|オプション|str|'mean'|クロスバリデーション時に表示する評価指標統計値 ('mean', 'median', 'max', or 'min')|
 |cv|オプション|int or sklearn.model_selection.* |None|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
 |cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
-|model_params|オプション|dict|None|回帰モデルに渡すパラメータ|
+|estimator_params|オプション|dict|None|回帰モデルに渡すパラメータ|
 |fit_params|オプション|dict|None|学習時のパラメータをdict指定|
 |subplot_kws|オプション|dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
 |scatter_kws|オプション|dict|None|[seaborn.scatterplot](https://seaborn.pydata.org/generated/seaborn.scatterplot.html)に渡す引数|
@@ -361,7 +361,7 @@ regplot.regression_plot_1d(SVR(), x='petal_length', y='sepal_length', data=iris)
 #### 引数一覧
 |引数名|必須引数orオプション|型|デフォルト値|内容|
 |---|---|---|---|---|
-|model|必須|Scikit-learn API|-|表示対象の回帰モデル|
+|estimator|必須|Scikit-learn API|-|表示対象の回帰モデル|
 |x|必須|str|-|説明変数に指定するカラム名|
 |y|必須|str|-|目的変数に指定するカラム名|
 |data|必須|pd.DataFrame|-|入力するデータ（Pandasのデータフレーム）|
@@ -374,7 +374,7 @@ regplot.regression_plot_1d(SVR(), x='petal_length', y='sepal_length', data=iris)
 |cv_stats|オプション|str|'mean'|クロスバリデーション時に表示する評価指標統計値 ('mean', 'median', 'max', or 'min')|
 |cv|オプション|int or sklearn.model_selection.* |None|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
 |cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
-|model_params|オプション|dict|None|回帰モデルに渡すパラメータ|
+|estimator_params|オプション|dict|None|回帰モデルに渡すパラメータ|
 |fit_params|オプション|dict|None|学習時のパラメータをdict指定|
 |subplot_kws|オプション|dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
 |scatter_kws|オプション|dict|None|[seaborn.scatterplot](https://seaborn.pydata.org/generated/seaborn.scatterplot.html)に渡す引数|
@@ -393,7 +393,7 @@ regplot.regression_heat_plot(LinearRegression(), x=['altitude', 'latitude'], y='
 #### 引数一覧
 |引数名|必須引数orオプション|型|デフォルト値|内容|
 |---|---|---|---|---|
-|model|必須|Scikit-learn API|-|表示対象の回帰モデル|
+|estimator|必須|Scikit-learn API|-|表示対象の回帰モデル|
 |x|必須|list[str]|-|説明変数に指定するカラム名のリスト|
 |y|必須|str|-|目的変数に指定するカラム名|
 |data|必須|pd.DataFrame|-|入力データ|
@@ -414,7 +414,7 @@ regplot.regression_heat_plot(LinearRegression(), x=['altitude', 'latitude'], y='
 |cv|オプション|int or sklearn.model_selection.* |None|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
 |cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
 |display_cv_indices|オプション|int|0|表示対象のクロスバリデーション番号|
-|model_params|オプション|dict|None|回帰モデルに渡すパラメータ|
+|estimator_params|オプション|dict|None|回帰モデルに渡すパラメータ|
 |fit_params|オプション|dict|None|学習時のパラメータをdict指定|
 |subplot_kws|オプション|dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
 |heat_kws|オプション|dict|None|ヒートマップ用の[seaborn.heatmap](https://seaborn.pydata.org/generated/seaborn.heatmap.html)に渡す引数|
