@@ -199,15 +199,15 @@ import seaborn as sns
 from sklearn.svm import SVC
 from seaborn_analyzer import classplot
 iris = sns.load_dataset("iris")
-model = SVC()
-classplot.class_separator_plot(model, ['petal_width', 'petal_length'], 'species', iris)
+clf = SVC()
+classplot.class_separator_plot(clf, ['petal_width', 'petal_length'], 'species', iris)
 # %% 概要の「機能2」（クラス確率）
 import seaborn as sns
 from sklearn.svm import SVC
 from seaborn_analyzer import classplot
 iris = sns.load_dataset("iris")
-model = SVC(probability=True)
-classplot.class_proba_plot(model, ['petal_width', 'petal_length'], 'species', iris,
+clf = SVC(probability=True)
+classplot.class_proba_plot(clf, ['petal_width', 'petal_length'], 'species', iris,
                            proba_type='contourf')
 # %% アヤメ散布図
 import seaborn as sns
@@ -219,9 +219,9 @@ from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, f1_score
 X = iris[['petal_width', 'petal_length']].values  # 説明変数
 y = iris['species'].values  # 目的変数(3種類のアヤメ種類)
-model = SVC()  # SVM分類用インスタンス
-model.fit(X, y)  # 学習
-y_pred = model.predict(X)  # 推論
+clf = SVC()  # SVM分類用インスタンス
+clf.fit(X, y)  # 学習
+y_pred = clf.predict(X)  # 推論
 print(f'Accuracy={accuracy_score(y, y_pred)}')  # 正解率を表示
 print(f'F1={f1_score(y, y_pred, average="macro")}')  # F1-Macroを表示
 # %% mlxtendで決定境界可視化
@@ -234,37 +234,37 @@ label_names = list(dict.fromkeys(y[:, 0]))
 label_dict = dict(zip(label_names, range(len(label_names))))
 y_int=np.vectorize(lambda x: label_dict[x])(y)
 # 学習
-model.fit(X, y_int)
+clf.fit(X, y_int)
 # mlxtendで決定境界可視化
-plot_decision_regions(X, y_int[:, 0], clf=model,
+plot_decision_regions(X, y_int[:, 0], clf=clf,
                       colors='green,red,blue')
 # %% 本ツールによる決定境界可視化
 from seaborn_analyzer import classplot
-model = SVC()
-classplot.class_separator_plot(model, ['petal_width', 'petal_length'], 'species', iris)
+clf = SVC()
+classplot.class_separator_plot(clf, ['petal_width', 'petal_length'], 'species', iris)
 # %% ランダムフォレスト回帰での描画例
 from sklearn.ensemble import RandomForestClassifier
-model = RandomForestClassifier()
-classplot.class_separator_plot(model, ['petal_width', 'petal_length'], 'species', iris)
+clf = RandomForestClassifier()
+classplot.class_separator_plot(clf, ['petal_width', 'petal_length'], 'species', iris)
 # %% 2分割クロスバリデーション
-model = SVC()
-classplot.class_separator_plot(model, ['petal_width', 'petal_length'], 'species', iris,
+clf = SVC()
+classplot.class_separator_plot(clf, ['petal_width', 'petal_length'], 'species', iris,
                                cv=2, display_cv_indices = [0, 1])
 # %% 3次元特徴量
-classplot.class_separator_plot(model, ['petal_width', 'petal_length', 'sepal_width'], 'species', iris,
+classplot.class_separator_plot(clf, ['petal_width', 'petal_length', 'sepal_width'], 'species', iris,
                                x_chart=['petal_width', 'petal_length'],
                                pair_sigmarange = 1.0, pair_sigmainterval = 0.5)
 # %% 4次元特徴量
-classplot.class_separator_plot(model, ['petal_width', 'petal_length', 'sepal_width', 'sepal_length'], 'species', iris,
+classplot.class_separator_plot(clf, ['petal_width', 'petal_length', 'sepal_width', 'sepal_length'], 'species', iris,
                                x_chart=['petal_width', 'petal_length'],
                                pair_sigmarange = 0.5, pair_sigmainterval = 0.5,
                                chart_scale=2)
 # %% 本ツールによるクラス確率可視化（等高線表示）
-model = SVC(probability=True)  # SVMでpredict_probaを有効にするため、引数"probability"をTrueに
-classplot.class_proba_plot(model, ['petal_width', 'petal_length'], 'species', iris,
+clf = SVC(probability=True)  # SVMでpredict_probaを有効にするため、引数"probability"をTrueに
+classplot.class_proba_plot(clf, ['petal_width', 'petal_length'], 'species', iris,
                            proba_type='contourf')
 # %% 本ツールによるクラス確率可視化（RGB画像表示）
-classplot.class_proba_plot(model, ['petal_width', 'petal_length'], 'species', iris,
+classplot.class_proba_plot(clf, ['petal_width', 'petal_length'], 'species', iris,
                            proba_type='imshow')
 # %% class_separator_plotの参考図プロット用
 import seaborn as sns
@@ -273,8 +273,8 @@ from seaborn_analyzer import classplot
 from sklearn.svm import SVC
 from xgboost import XGBClassifier
 from sklearn.model_selection import ShuffleSplit, LeaveOneGroupOut
-model = SVC()
-classplot.class_separator_plot(model, x=['petal_width', 'petal_length'],
+clf = SVC()
+classplot.class_separator_plot(clf, x=['petal_width', 'petal_length'],
                                y='species', data=iris,
                                scatter_kws={'edgecolors': 'red'})
 # %% class_proba_plotの参考図プロット用
@@ -284,8 +284,8 @@ from sklearn.svm import SVC
 from xgboost import XGBClassifier
 from seaborn_analyzer import classplot
 from sklearn.model_selection import ShuffleSplit, LeaveOneGroupOut
-model = SVC(probability=True)
-classplot.class_proba_plot(model, x=['petal_width', 'petal_length'],
+clf = SVC(probability=True)
+classplot.class_proba_plot(clf, x=['petal_width', 'petal_length'],
                            y='species', data=iris,
                            proba_type='imshow',
                            imshow_kws={'alpha':0.8})
@@ -305,13 +305,13 @@ iris = sns.load_dataset("iris")
 from xgboost import XGBClassifier
 import matplotlib.pyplot as plt
 # モデルの学習
-model = XGBClassifier()
+clf = XGBClassifier()
 features = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']
 X = iris[features].values
 y = iris['species'].values
-model.fit(X, y)
+clf.fit(X, y)
 # 特徴量重要度の取得と可視化
-importances = list(model.feature_importances_)
+importances = list(clf.feature_importances_)
 plt.barh(features, importances)
 # %% 主成分分析
 import seaborn as sns
@@ -334,8 +334,8 @@ pca.fit(X_ss)  # 主成分分析の学習
 X_pca = pca.transform(X_ss)  # 学習結果に基づき次元圧縮
 iris['pc1'] = pd.Series(X_pca[:, 0])  # 第1主成分をirisに格納
 iris['pc2'] = pd.Series(X_pca[:, 1])  # 第2主成分をirisに格納
-model = SVC()
-classplot.class_separator_plot(model, x=['pc1', 'pc2'],
+clf = SVC()
+classplot.class_separator_plot(clf, x=['pc1', 'pc2'],
                                y='species', data=iris)
 # %% t-SNE
 import seaborn as sns
@@ -444,17 +444,17 @@ iris = sns.load_dataset("iris")
 # 散布図プロット
 sns.scatterplot(x='petal_length', y='sepal_length', data=iris)
 # サポートベクター回帰学習
-model = SVR()
+estimator = SVR()
 X = iris[['petal_length']].values
 y = iris['sepal_length'].values
-model.fit(X, y)  
+estimator.fit(X, y)  
 # 回帰モデルの線を作成
 xmin = np.amin(X)
 xmax = np.amax(X)
 Xline = np.linspace(xmin, xmax, 100)
 Xline = Xline.reshape(len(Xline), 1)
 # 回帰線を描画
-plt.plot(Xline, model.predict(Xline), color='red')
+plt.plot(Xline, estimator.predict(Xline), color='red')
 # %% seaborn_analyzer.regplot.regression_plot_1d
 import seaborn as sns
 from seaborn_analyzer import regplot
@@ -536,13 +536,13 @@ iris = sns.load_dataset("iris")
 from xgboost import XGBRegressor
 import matplotlib.pyplot as plt
 # モデルの学習
-model = XGBRegressor()
+estimator = XGBRegressor()
 features = ['sepal_width', 'petal_width', 'petal_length']
 X = iris[features].values
 y = iris['sepal_length'].values
-model.fit(X, y)
+estimator.fit(X, y)
 # 特徴量重要度の取得と可視化
-importances = list(model.feature_importances_)
+importances = list(estimator.feature_importances_)
 plt.barh(features, importances)
 # %% 残差プロット
 import seaborn as sns
@@ -551,13 +551,13 @@ from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
 import numpy as np
 # モデルの学習
-model = LinearRegression()
+estimator = LinearRegression()
 features = ['petal_width', 'petal_length']
 X = iris[features].values
 y = iris['sepal_length'].values
-model.fit(X, y)
+estimator.fit(X, y)
 # 残差プロット(横軸は目的変数予測値)
-y_pred = model.predict(X)
+y_pred = estimator.predict(X)
 error = y_pred - y
 plt.scatter(y_pred, error)
 plt.xlabel('y_pred')
@@ -574,7 +574,7 @@ regplot.regression_heat_plot(XGBRegressor(), x=['2_between_30to60', '3_male_rati
                              pair_sigmarange = 0.5, pair_sigmainterval = 0.5,
                              rank_number=3, rank_col='ward_before',
                              rounddigit_x1=3,
-                             model_params={'learning_rate': 0.297,
+                             estimator_params={'learning_rate': 0.297,
                                            'min_child_weight': 4,
                                            'max_depth': 6,
                                            'colsample_bytree': 0.545,
