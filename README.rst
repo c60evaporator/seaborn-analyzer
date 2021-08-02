@@ -94,8 +94,8 @@ classplot class
     :header: "Method name", "Summary", "API Documentation", "Example"
     :widths: 30, 50, 15, 15
 
-    "**class_separator_plot**", Plot class separation lines of any scikit-learn classification model., `hist.class_separator_plot <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#classplotclass_separator_plot>`__
-    "**class_proba_plot**", Plot class prediction probability of any scikit-learn classification model., `hist.class_proba_plot <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#classplotclass_proba_plot>`__
+    "**class_separator_plot**", Plot class separation lines of any scikit-learn classifier., `hist.class_separator_plot <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#classplotclass_separator_plot>`__
+    "**class_proba_plot**", Plot class prediction probability of any scikit-learn classifier., `hist.class_proba_plot <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#classplotclass_proba_plot>`__
 
 
 regplot class
@@ -106,9 +106,9 @@ regplot class
     :widths: 30, 50, 15, 15
 
     "**linear_plot**", Plot linear regression line and calculate Pearson correlation coefficient., `regplot.linear_plot <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotlinear_plot>`__
-    "**regression_pred_true**", Plot prediction vs. true scatter plots of any scikit-learn regression model., `regplot.regression_pred_true <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotregression_pred_true>`__
-    "**regression_plot_1d**", Plot 1d regression lines of any scikit-learn regression model., `regplot.regression_plot_1d <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotregression_plot_1d>`__
-    "**regression_heat_plot**", Plot 2 to 4d regression heat maps of any scikit-learn regression model., `regplot.regression_heat_plot <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotregression_heat_plot>`__
+    "**regression_pred_true**", Plot prediction vs. true scatter plots of any scikit-learn regressor., `regplot.regression_pred_true <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotregression_pred_true>`__
+    "**regression_plot_1d**", Plot 1d regression lines of any scikit-learn regressor., `regplot.regression_plot_1d <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotregression_plot_1d>`__
+    "**regression_heat_plot**", Plot 2 to 4d regression heat maps of any scikit-learn regressor., `regplot.regression_heat_plot <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotregression_heat_plot>`__
 
 
 ========
@@ -161,8 +161,8 @@ classplot.class_separator_plot
     from sklearn.svm import SVC
     from seaborn_analyzer import classplot
     iris = sns.load_dataset("iris")
-    model = SVC()
-    classplot.class_separator_plot(model, ['petal_width', 'petal_length'], 'species', iris)
+    clf = SVC()
+    classplot.class_separator_plot(clf, ['petal_width', 'petal_length'], 'species', iris)
 .. image:: https://user-images.githubusercontent.com/59557625/117274234-d7474900-ae97-11eb-9de2-c8a74dc179a5.png
 
 classplot.class_proba_plot
@@ -173,8 +173,8 @@ classplot.class_proba_plot
     from sklearn.svm import SVC
     from seaborn_analyzer import classplot
     iris = sns.load_dataset("iris")
-    model = SVC()
-    classplot.class_proba_plot(model, ['petal_width', 'petal_length'], 'species', iris,
+    clf = SVC()
+    classplot.class_proba_plot(clf, ['petal_width', 'petal_length'], 'species', iris,
                                proba_type='imshow')
 .. image:: https://user-images.githubusercontent.com/59557625/117276085-a1a35f80-ae99-11eb-8368-cdd1cfa78346.png
 
