@@ -183,17 +183,17 @@ class regplot():
         ax.text(true_max, np.amin(y_pred), score_text, verticalalignment='bottom', horizontalalignment='right')
     
     @classmethod
-    def regression_pred_true(cls, model, x: List[str], y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=3,
+    def regression_pred_true(cls, estimator, x: List[str], y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=3,
                              rank_number=None, rank_col=None, scores='mae', cv_stats='mean', cv=None, cv_seed=42,
-                             model_params=None, fit_params=None, subplot_kws=None, scatter_kws=None):
+                             estimator_params=None, fit_params=None, subplot_kws=None, scatter_kws=None):
 
         """
-        Plot prediction vs. true scatter plots of any scikit-learn regression model
+        Plot prediction vs. true scatter plots of any scikit-learn regression estimator
 
         Parameters
         ----------
-        model : estimator object implementing 'fit'
-            Regression model. This is assumed to implement the scikit-learn estimator interface.
+        estimator : estimator object implementing 'fit'
+            Regression estimator. This is assumed to implement the scikit-learn estimator interface.
         x : str or List[str]
             Explanatory variables.
         y : str
@@ -218,10 +218,10 @@ class regplot():
             Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
         cv_seed : int, optional
             Seed for random number generator of cross validation.
-        model_params : dict, optional
-            Parameters passed to the regression model. If the model is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+        estimator_params : dict, optional
+            Parameters passed to the regression estimator. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         fit_params : dict, optional
-            Parameters passed to the fit() method of the regression model, e.g. 'early_stopping_round' and 'eval_set' of XGBoostRegressor. If the model is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+            Parameters passed to the fit() method of the regression estimator, e.g. 'early_stopping_round' and 'eval_set' of XGBoostRegressor. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         subplot_kws : dict, optional
             Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
         scatter_kws: dict, optional
@@ -240,8 +240,8 @@ class regplot():
         elif not isinstance(scores, list):
             raise Exception('the "scores" argument must be str or list[str]')
         # 学習器パラメータがあれば適用
-        if model_params is not None:
-            model.set_params(**model_params)
+        if estimator_params is not None:
+            estimator.set_params(**estimator_params)
         # 学習時パラメータがNoneなら空のdictを入力
         if fit_params is None:
             fit_params = {}
@@ -269,8 +269,8 @@ class regplot():
         # クロスバリデーション未実施時(学習データからプロット＆指標算出)
         if cv is None:
             # 学習と推論
-            model.fit(X, y_true, **fit_params)
-            y_pred = model.predict(X)
+            estimator.fit(X, y_true, **fit_params)
+            y_pred = estimator.predict(X)
             # 評価指標算出
             score_dict = cls._make_score_dict(y_true, y_pred, scores)
             # 色分け用データ取得
@@ -317,22 +317,22 @@ class regplot():
             for scoring in scores:
                 # cross_val_scoreでクロスバリデーション
                 if scoring == 'r2':
-                    score_all_dict['r2'] = cross_val_score(model, X, y_true, cv=cv, scoring='r2',
+                    score_all_dict['r2'] = cross_val_score(estimator, X, y_true, cv=cv, scoring='r2',
                                                            fit_params=fit_params, n_jobs=-1, **split_kws)
                 elif scoring == 'mae':
-                    neg_mae = cross_val_score(model, X, y_true, cv=cv, scoring='neg_mean_absolute_error',
+                    neg_mae = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_mean_absolute_error',
                                                            fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['mae'] = -neg_mae  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'rmse':
-                    neg_rmse = cross_val_score(model, X, y_true, cv=cv, scoring='neg_root_mean_squared_error',
+                    neg_rmse = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_root_mean_squared_error',
                                                            fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['rmse'] = -neg_rmse  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'rmsle':
-                    neg_msle = cross_val_score(model, X, y_true, cv=cv, scoring='neg_mean_squared_log_error',
+                    neg_msle = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_mean_squared_log_error',
                                                            fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['rmsle'] = np.sqrt(-neg_msle)  # 正負を逆にしてルートをとる
                 elif scoring == 'max_error':
-                    neg_max_error = cross_val_score(model, X, y_true, cv=cv, scoring='max_error',
+                    neg_max_error = cross_val_score(estimator, X, y_true, cv=cv, scoring='max_error',
                                                            fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['max_error'] = - neg_max_error  # scikit-learnの仕様に合わせ正負を逆に
             
@@ -375,8 +375,8 @@ class regplot():
                 else:
                     rank_col_test = np.array([])
                 # 学習と推論
-                model.fit(X_train, y_train, **fit_params)
-                y_pred = model.predict(X_test)
+                estimator.fit(X_train, y_train, **fit_params)
+                y_pred = estimator.predict(X_test)
                 # CV内結果をプロット(LeaveOneOutのときはプロットしない)
                 if not isLeaveOneOut:
                     score_cv_dict = {k: v[i] for k, v in score_all_dict.items()}
@@ -405,8 +405,8 @@ class regplot():
             elif cv_stats == 'max':
                 score_stats_dict = {f'{k}_max': np.amax(v) for k, v in score_all_dict.items()}
             # 全体データを学習＆評価データとして評価指標算出
-            model.fit(X, y_true, **fit_params)
-            y_pred = model.predict(X)
+            estimator.fit(X, y_true, **fit_params)
+            y_pred = estimator.predict(X)
             score_dict = cls._make_score_dict(y_true, y_pred, scores)
             # 学習データ指標を指標dictに追加
             score_dict = {f'{k}_train': np.mean(v) for k, v in score_dict.items()}
@@ -494,14 +494,14 @@ class regplot():
             ax.text(xmax, np.amin(y_true), rtext, verticalalignment='bottom', horizontalalignment='right')
 
     @classmethod
-    def _model_plot_1d(cls, trained_model, X, y_true, hue_data=None, hue_name=None, ax=None, linecolor='red', linesplit=1000, rounddigit=None,
+    def _estimator_plot_1d(cls, trained_estimator, X, y_true, hue_data=None, hue_name=None, ax=None, linecolor='red', linesplit=1000, rounddigit=None,
                        score_dict=None, scatter_kws=None):
         """
         1次説明変数回帰曲線を、回帰評価指標とともにプロット
 
         Parameters
         ----------
-        trained_model : 
+        trained_estimator : 
             学習済の回帰モデル(scikit-learn API)
         X : ndarray
             説明変数
@@ -543,7 +543,7 @@ class regplot():
         Xline = np.linspace(xmin, xmax, linesplit)
         Xline = Xline.reshape(len(Xline), 1)
         # 回帰線を描画
-        ax.plot(Xline, trained_model.predict(Xline), color=linecolor)
+        ax.plot(Xline, trained_estimator.predict(Xline), color=linecolor)
         
         # 評価指標文字列作成
         score_list = [f'{k}={v}' for k, v in cls._round_dict_digits(score_dict, rounddigit, 'sig').items()]
@@ -551,16 +551,16 @@ class regplot():
         ax.text(xmax, np.amin(y_true), score_text, verticalalignment='bottom', horizontalalignment='right')
 
     @classmethod
-    def regression_plot_1d(cls, model, x: str, y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=3,
+    def regression_plot_1d(cls, estimator, x: str, y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=3,
                            rank_number=None, rank_col=None, scores='mae', cv_stats='mean', cv=None, cv_seed=42,
-                           model_params=None, fit_params=None, subplot_kws=None, scatter_kws=None):
+                           estimator_params=None, fit_params=None, subplot_kws=None, scatter_kws=None):
         """
         1次元説明変数の任意の回帰曲線をプロット
 
         Parameters
         ----------
-        model : estimator object implementing ‘fit’
-            Regression model. This is assumed to implement the scikit-learn estimator interface.
+        estimator : estimator object implementing ‘fit’
+            Regression estimator. This is assumed to implement the scikit-learn estimator interface.
         x : str
             Explanatory variable.
         y : str
@@ -585,10 +585,10 @@ class regplot():
             Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
         cv_seed : int, optional
             Seed for random number generator of cross validation.
-        model_params: dict, optional
-            Parameters passed to the regression model. If the model is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+        estimator_params: dict, optional
+            Parameters passed to the regression estimator. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         fit_params : dict, optional
-            Parameters passed to the fit() method of the regression model, e.g. 'early_stopping_round' and 'eval_set' of XGBoostRegressor. If the model is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+            Parameters passed to the fit() method of the regression estimator, e.g. 'early_stopping_round' and 'eval_set' of XGBoostRegressor. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         subplot_kws : dict, optional
             Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
         scatter_kws: dict, optional
@@ -607,8 +607,8 @@ class regplot():
         elif not isinstance(scores, list):
             raise Exception('the "scores" argument must be str or list[str]')
         # 学習器パラメータがあれば適用
-        if model_params is not None:
-            model.set_params(**model_params)
+        if estimator_params is not None:
+            estimator.set_params(**estimator_params)
         # 学習時パラメータがNoneなら空のdictを入力
         if fit_params is None:
             fit_params = {}
@@ -634,8 +634,8 @@ class regplot():
         # クロスバリデーション未実施時(学習データからプロット＆指標算出)
         if cv is None:
             # 学習と推論
-            model.fit(X, y_true, **fit_params)
-            y_pred = model.predict(X)
+            estimator.fit(X, y_true, **fit_params)
+            y_pred = estimator.predict(X)
             # 評価指標算出
             score_dict = cls._make_score_dict(y_true, y_pred, scores)
             # 色分け用データ取得
@@ -648,7 +648,7 @@ class regplot():
                 else:  # 表示フィールド指定あるとき
                     rank_col_data = data[rank_col].values
             # 回帰線プロット
-            cls._model_plot_1d(model, X, y_true, hue_data=hue_data, hue_name=hue_name,
+            cls._estimator_plot_1d(estimator, X, y_true, hue_data=hue_data, hue_name=hue_name,
                                linecolor=linecolor, rounddigit=rounddigit, score_dict=score_dict, scatter_kws=scatter_kws)
             # 誤差上位を文字表示
             if rank_number is not None:
@@ -681,22 +681,22 @@ class regplot():
             for scoring in scores:
                 # cross_val_scoreでクロスバリデーション
                 if scoring == 'r2':
-                    score_all_dict['r2'] = cross_val_score(model, X, y_true, cv=cv, scoring='r2',
+                    score_all_dict['r2'] = cross_val_score(estimator, X, y_true, cv=cv, scoring='r2',
                                                            fit_params=fit_params, n_jobs=-1, **split_kws)
                 elif scoring == 'mae':
-                    neg_mae = cross_val_score(model, X, y_true, cv=cv, scoring='neg_mean_absolute_error',
+                    neg_mae = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_mean_absolute_error',
                                                            fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['mae'] = -neg_mae  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'rmse':
-                    neg_rmse = cross_val_score(model, X, y_true, cv=cv, scoring='neg_root_mean_squared_error',
+                    neg_rmse = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_root_mean_squared_error',
                                                            fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['rmse'] = -neg_rmse  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'rmsle':
-                    neg_msle = cross_val_score(model, X, y_true, cv=cv, scoring='neg_mean_squared_log_error',
+                    neg_msle = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_mean_squared_log_error',
                                                            fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['rmsle'] = np.sqrt(-neg_msle)  # 正負を逆にしてルートをとる
                 elif scoring == 'max_error':
-                    neg_max_error = cross_val_score(model, X, y_true, cv=cv, scoring='max_error',
+                    neg_max_error = cross_val_score(estimator, X, y_true, cv=cv, scoring='max_error',
                                                            fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['max_error'] = - neg_max_error  # scikit-learnの仕様に合わせ正負を逆に
             
@@ -727,14 +727,14 @@ class regplot():
                     else:  # 表示フィールド指定あるとき
                         rank_col_test = data[rank_col].values[test]
                 # 学習と推論
-                model.fit(X_train, y_train, **fit_params)
+                estimator.fit(X_train, y_train, **fit_params)
                 # CV内結果をプロット
                 score_cv_dict = {k: v[i] for k, v in score_all_dict.items()}
-                cls._model_plot_1d(model, X_test, y_test, hue_data=hue_test, hue_name=hue_name, ax=axes[i],
+                cls._estimator_plot_1d(estimator, X_test, y_test, hue_data=hue_test, hue_name=hue_name, ax=axes[i],
                                    linecolor=linecolor, rounddigit=rounddigit, score_dict=score_cv_dict, scatter_kws=scatter_kws)
                 # 誤差上位を文字表示
                 if rank_number is not None:
-                    cls._rank_display(y_test, model.predict(X_test), rank_number, rank_col, rank_col_test, x=X_test, ax=axes[i], rounddigit=rounddigit)
+                    cls._rank_display(y_test, estimator.predict(X_test), rank_number, rank_col, rank_col_test, x=X_test, ax=axes[i], rounddigit=rounddigit)
                 axes[i].set_title(f'Cross Validation No{i}')
 
             # 指標の統計値を計算
@@ -747,8 +747,8 @@ class regplot():
             elif cv_stats == 'max':
                 score_stats_dict = {f'{k}_max': np.amax(v) for k, v in score_all_dict.items()}
             # 全体データを学習＆評価データとして評価指標算出
-            model.fit(X, y_true, **fit_params)
-            y_pred = model.predict(X)
+            estimator.fit(X, y_true, **fit_params)
+            y_pred = estimator.predict(X)
             score_dict = cls._make_score_dict(y_true, y_pred, scores)
             # 学習データ指標を指標dictに追加
             score_dict = {f'{k}_train': np.mean(v) for k, v in score_dict.items()}
@@ -758,13 +758,13 @@ class regplot():
             hue_name = None if hue is None else hue
             # 全体プロット
             ax_all = axes[cv_num]
-            cls._model_plot_1d(model, X, y_true, hue_data=hue_data, hue_name=hue_name, ax=ax_all,
+            cls._estimator_plot_1d(estimator, X, y_true, hue_data=hue_data, hue_name=hue_name, ax=ax_all,
                                linecolor=linecolor, rounddigit=rounddigit, score_dict=score_stats_dict, scatter_kws=scatter_kws)
             ax_all.set_title('All Cross Validations')
             return score_stats_dict
 
     @classmethod
-    def _reg_heat_plot_2d(cls, trained_model, x_heat, y_true_col, y_pred_col, rank_col, data, x_heat_indices, hue_name,
+    def _reg_heat_plot_2d(cls, trained_estimator, x_heat, y_true_col, y_pred_col, rank_col, data, x_heat_indices, hue_name,
                           x1_start, x1_end, x2_start, x2_end, heat_division, other_x,
                           vmin, vmax, ax, plot_scatter, maxerror, rank_dict, scatter_hue_dict,
                           rounddigit_rank, rounddigit_x1, rounddigit_x2,
@@ -799,7 +799,7 @@ class regplot():
                 X_all.append(np.full((n_rows, 1), other_x[1]))
         X_all = np.hstack(X_all)
         # グリッドデータに対して学習し、推定値を作成
-        y_pred_grid = trained_model.predict(X_all)
+        y_pred_grid = trained_estimator.predict(X_all)
         df_heat['y_pred'] = pd.Series(y_pred_grid)
         # グリッドデータ縦軸横軸の表示桁数を調整
         df_heat[x_heat[0]] = df_heat[x_heat[0]].map(lambda x: cls._round_digits(x, rounddigit=rounddigit_x1))
@@ -864,7 +864,7 @@ class regplot():
             ax.text(x1_text, x2_text, rank_text, verticalalignment='center', horizontalalignment='left')
     
     @classmethod
-    def _reg_heat_plot(cls, trained_model, X, y_pred, y_true, x_heat, x_not_heat, x_heat_indices, hue_data, hue_name,
+    def _reg_heat_plot(cls, trained_estimator, X, y_pred, y_true, x_heat, x_not_heat, x_heat_indices, hue_data, hue_name,
                        pair_sigmarange=2.0, pair_sigmainterval=0.5, heat_extendsigma=0.5, heat_division=30, 
                        vmin=None, vmax=None, plot_scatter='true', maxerror=None,
                        rank_number=None, rank_col=None, rank_col_data=None, scatter_hue_dict=None,
@@ -998,7 +998,7 @@ class regplot():
                     x4_std = np.std(X_not_heat[:, 1])
                     other_x = [h_mean * x3_std + x3_mean, w_mean * x4_std + x4_mean]
                 
-                cls._reg_heat_plot_2d(trained_model, x_heat, 'y_true', 'y_pred', rank_col, df_pair, x_heat_indices, hue_name,
+                cls._reg_heat_plot_2d(trained_estimator, x_heat, 'y_true', 'y_pred', rank_col, df_pair, x_heat_indices, hue_name,
                                       x1_start, x1_end, x2_start, x2_end, heat_division, other_x,
                                       vmin, vmax, ax, plot_scatter, maxerror, rank_dict, scatter_hue_dict,
                                       rounddigit_rank, rounddigit_x1, rounddigit_x2,
@@ -1019,18 +1019,18 @@ class regplot():
         plt.tight_layout()
 
     @classmethod
-    def regression_heat_plot(cls, model, x: List[str], y: str, data: pd.DataFrame, x_heat: List[str] = None, scatter_hue=None,
+    def regression_heat_plot(cls, estimator, x: List[str], y: str, data: pd.DataFrame, x_heat: List[str] = None, scatter_hue=None,
                              pair_sigmarange = 1.5, pair_sigmainterval = 0.5, heat_extendsigma = 0.5, heat_division = 30, color_extendsigma = 0.5,
                              plot_scatter = 'true', rounddigit_rank=3, rounddigit_x1=2, rounddigit_x2=2, rounddigit_x3=2, rank_number=None, rank_col=None,
                              cv=None, cv_seed=42, display_cv_indices = 0,
-                             model_params=None, fit_params=None, subplot_kws=None, heat_kws=None, scatter_kws=None):
+                             estimator_params=None, fit_params=None, subplot_kws=None, heat_kws=None, scatter_kws=None):
         """
         2～4次元説明変数の回帰モデルをヒートマップで可視化
 
         Parameters
         ----------
-        model : estimator object implementing 'fit'
-            Regression model. This is assumed to implement the scikit-learn estimator interface.
+        estimator : estimator object implementing 'fit'
+            Regression estimator. This is assumed to implement the scikit-learn estimator interface.
         x : List[str]
             Explanatory variables.
         y : str
@@ -1071,10 +1071,10 @@ class regplot():
             Seed for random number generator of cross validation.
         display_cv_indices: int or list, optional
             Cross validation index or indices to display.
-        model_params : dict, optional
-            Parameters passed to the regression model. If the model is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+        estimator_params : dict, optional
+            Parameters passed to the regression estimator. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         fit_params : dict, optional
-            Parameters passed to the fit() method of the regression model, e.g. 'early_stopping_round' and 'eval_set' of XGBoostRegressor. If the model is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+            Parameters passed to the fit() method of the regression estimator, e.g. 'early_stopping_round' and 'eval_set' of XGBoostRegressor. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         subplot_kws: dict, optional
             Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
         heat_kws: dict, optional
@@ -1092,8 +1092,8 @@ class regplot():
         elif not isinstance(x, list):
             raise Exception('the "cv_display_num" argument must be int or List[int]')
         # 学習器パラメータがあれば適用
-        if model_params is not None:
-            model.set_params(**model_params)
+        if estimator_params is not None:
+            estimator.set_params(**estimator_params)
         # 学習時パラメータがNoneなら空のdictを入力
         if fit_params is None:
             fit_params = {}
@@ -1153,8 +1153,8 @@ class regplot():
         # クロスバリデーション未実施時(学習データからプロット＆指標算出)
         if cv is None:
             # 学習と推論
-            model.fit(X, y_true, **fit_params)
-            y_pred = model.predict(X)
+            estimator.fit(X, y_true, **fit_params)
+            y_pred = estimator.predict(X)
             # 誤差上位表示用データ取得
             if rank_number is not None:
                 if rank_col is None:  # 表示フィールド指定ないとき、Index使用
@@ -1169,7 +1169,7 @@ class regplot():
             hue_data = data[scatter_hue] if scatter_hue is not None and plot_scatter=='hue' else None
             hue_name = scatter_hue if scatter_hue is not None and plot_scatter=='hue' else None
             # ヒートマップをプロット
-            cls._reg_heat_plot(model, X, y_pred, y_true, x_heat, x_not_heat, x_heat_indices, hue_data, hue_name,
+            cls._reg_heat_plot(estimator, X, y_pred, y_true, x_heat, x_not_heat, x_heat_indices, hue_data, hue_name,
                                pair_sigmarange = pair_sigmarange, pair_sigmainterval=pair_sigmainterval, heat_extendsigma=heat_extendsigma, heat_division=heat_division,
                                vmin=vmin, vmax=vmax, plot_scatter=plot_scatter, maxerror=maxerror,
                                rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_data, scatter_hue_dict=scatter_hue_dict,
@@ -1209,8 +1209,8 @@ class regplot():
                 X_test = X[test]
                 y_test = y_true[test]
                 # 学習と推論
-                model.fit(X_train, y_train, **fit_params)
-                y_pred = model.predict(X_test)
+                estimator.fit(X_train, y_train, **fit_params)
+                y_pred = estimator.predict(X_test)
                 # 誤差上位表示用データ取得
                 if rank_number is not None:
                     if rank_col is None:  # 表示フィールド指定ないとき、Index使用
@@ -1225,7 +1225,7 @@ class regplot():
                 hue_data = data[scatter_hue].values[test] if scatter_hue is not None and plot_scatter=='hue' else None
                 hue_name = scatter_hue if scatter_hue is not None and plot_scatter=='hue' else None
                 # ヒートマップをプロット
-                cls._reg_heat_plot(model, X_test, y_pred, y_test, x_heat, x_not_heat, x_heat_indices, hue_data, hue_name,
+                cls._reg_heat_plot(estimator, X_test, y_pred, y_test, x_heat, x_not_heat, x_heat_indices, hue_data, hue_name,
                                    pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, heat_extendsigma=heat_extendsigma, heat_division=heat_division,
                                    vmin=vmin, vmax=vmax, plot_scatter = plot_scatter, maxerror=maxerror,
                                    rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_test, scatter_hue_dict=scatter_hue_dict,
@@ -1272,7 +1272,7 @@ class classplot():
             return '{:.{width}g}'.format(src, width=rounddigit)
 
     @classmethod
-    def _chart_plot_2d(cls, trained_model, x_chart, y_true_col, y_pred_col, data, x_chart_indices,
+    def _chart_plot_2d(cls, trained_clf, x_chart, y_true_col, y_pred_col, data, x_chart_indices,
                        x1_start, x1_end, x2_start, x2_end, other_x, chart_scale,
                        proba_pred_col, proba_class_indices, ax, plot_border, plot_scatter,
                        scatter_color_dict, scatter_marker_dict, proba_cmap_dict, proba_type,
@@ -1309,7 +1309,7 @@ class classplot():
         X_all = np.hstack(X_all)
 
         # グリッドデータに対して推論し、推定値を作成
-        y_pred_grid = trained_model.predict(X_all)
+        y_pred_grid = trained_clf.predict(X_all)
         # 推定値をint型に変換
         class_int_dict = dict(zip(scatter_color_dict.keys(), range(len(scatter_color_dict))))
         y_pred_grid_int = np.vectorize(lambda x: class_int_dict[x])(y_pred_grid)
@@ -1328,7 +1328,7 @@ class classplot():
             # クラス数
             nclass = len(proba_class_indices)
             # グリッドデータに対してクラス確率算出
-            y_proba_grid = trained_model.predict_proba(X_all)[:, proba_class_indices]
+            y_proba_grid = trained_clf.predict_proba(X_all)[:, proba_class_indices]
 
             # contourfで等高線プロット（塗りつぶしあり）するとき
             if proba_type == 'contourf':
@@ -1433,7 +1433,7 @@ class classplot():
         ax.set_ylabel(x_chart[1])
 
     @classmethod
-    def _class_chart_plot(cls, trained_model, X, y_pred, y_true, x_chart, x_not_chart, x_chart_indices,
+    def _class_chart_plot(cls, trained_clf, X, y_pred, y_true, x_chart, x_not_chart, x_chart_indices,
                        pair_sigmarange=2.0, pair_sigmainterval=0.5, chart_extendsigma=0.5, chart_scale=1,
                        proba_pred = None, proba_class_indices = None, plot_border=True, plot_scatter='class', 
                        scatter_color_dict=None, scatter_marker_dict=None, proba_cmap_dict=None,  proba_type=None,
@@ -1559,7 +1559,7 @@ class classplot():
                     x4_std = np.std(X_not_chart[:, 1])
                     other_x = [h_mean * x3_std + x3_mean, w_mean * x4_std + x4_mean]
                 
-                cls._chart_plot_2d(trained_model, x_chart, 'y_true', 'y_pred', df_pair, x_chart_indices,
+                cls._chart_plot_2d(trained_clf, x_chart, 'y_true', 'y_pred', df_pair, x_chart_indices,
                                       x1_start, x1_end, x2_start, x2_end, other_x, chart_scale,
                                       proba_pred_col, proba_class_indices, ax, plot_border, plot_scatter,
                                       scatter_color_dict, scatter_marker_dict, proba_cmap_dict,  proba_type,
@@ -1580,19 +1580,19 @@ class classplot():
         plt.tight_layout()
 
     @classmethod
-    def class_separator_plot(cls, model, x: List[str], y: str, data: pd.DataFrame, x_chart: List[str] = None,
+    def class_separator_plot(cls, clf, x: List[str], y: str, data: pd.DataFrame, x_chart: List[str] = None,
                              pair_sigmarange = 1.5, pair_sigmainterval = 0.5, chart_extendsigma = 0.5, chart_scale = 1,
                              plot_scatter = 'class_error', rounddigit_x3 = 2,
                              scatter_colors = None, true_marker = 'o', false_marker = 'x',
                              cv=None, cv_seed=42, cv_group=None, display_cv_indices = 0,
-                             model_params=None, fit_params=None, subplot_kws=None, contourf_kws=None, scatter_kws=None):
+                             clf_params=None, fit_params=None, subplot_kws=None, contourf_kws=None, scatter_kws=None):
         """
         2～4次元説明変数の分類決定境界可視化
 
         Parameters
         ----------
-        model:
-            使用する回帰モデル(scikit-learn API)
+        clf:
+            使用する分類モデル(scikit-learn API)
         x: List[str]
             説明変数カラム (列名指定)
         y: str
@@ -1626,9 +1626,9 @@ class classplot():
         cv_group: str, optional
             GroupKFold、LeaveOneGroupOutのグルーピング対象カラム (列名指定)
         display_cv_indices: int, optional
-            表示対象のクロスバリデーション番号 (指定したCV番号での回帰結果が表示される。リスト指定も可)
-        model_params: dict, optional
-            回帰モデルに渡すパラメータ (チューニング後のパラメータがgood、Noneならデフォルト)
+            表示対象のクロスバリデーション番号 (指定したCV番号での分類結果が表示される。リスト指定も可)
+        clf_params: dict, optional
+            分類モデルに渡すパラメータ (チューニング後のパラメータがgood、Noneならデフォルト)
         fit_params: dict, optional
             学習時のパラメータをdict指定 (例: XGBoostのearly_stopping_rounds)
             Noneならデフォルト
@@ -1650,8 +1650,8 @@ class classplot():
         elif not isinstance(x, list):
             raise Exception('the "cv_display_num" argument must be int or List[int]')
         # 学習器パラメータがあれば適用
-        if model_params is not None:
-            model.set_params(**model_params)
+        if clf_params is not None:
+            clf.set_params(**clf_params)
         # 学習時パラメータがNoneなら空のdictを入力
         if fit_params is None:
             fit_params = {}
@@ -1708,10 +1708,10 @@ class classplot():
         # クロスバリデーション未実施時(学習データから学習してプロット)
         if cv is None:
             # 学習と推論
-            model.fit(X, y_true, **fit_params)
-            y_pred = model.predict(X)
+            clf.fit(X, y_true, **fit_params)
+            y_pred = clf.predict(X)
             # 決定境界図をプロット
-            cls._class_chart_plot(model, X, y_pred, y_true, x_chart, x_not_chart, x_chart_indices,
+            cls._class_chart_plot(clf, X, y_pred, y_true, x_chart, x_not_chart, x_chart_indices,
                                pair_sigmarange = pair_sigmarange, pair_sigmainterval=pair_sigmainterval, chart_extendsigma=chart_extendsigma, chart_scale=chart_scale,
                                proba_pred = None, proba_class_indices = None, plot_border = True, plot_scatter = plot_scatter,
                                scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict, proba_cmap_dict=None, proba_type=None,
@@ -1756,10 +1756,10 @@ class classplot():
                 X_test = X[test]
                 y_test = y_true[test]
                 # 学習と推論
-                model.fit(X_train, y_train, **fit_params)
-                y_pred = model.predict(X_test)
+                clf.fit(X_train, y_train, **fit_params)
+                y_pred = clf.predict(X_test)
                 # 決定境界図をプロット
-                cls._class_chart_plot(model, X_test, y_pred, y_test, x_chart, x_not_chart, x_chart_indices,
+                cls._class_chart_plot(clf, X_test, y_pred, y_test, x_chart, x_not_chart, x_chart_indices,
                                    pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, chart_extendsigma=chart_extendsigma, chart_scale=chart_scale,
                                    proba_pred = None, proba_class_indices = None, plot_border = True, plot_scatter = plot_scatter,
                                    scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict, proba_cmap_dict=None, proba_type=None,
@@ -1767,20 +1767,20 @@ class classplot():
                                    cv_index=cv_index, subplot_kws=subplot_kws, contourf_kws=contourf_kws, imshow_kws=None, scatter_kws=scatter_kws)
 
     @classmethod
-    def class_proba_plot(cls, model, x: List[str], y: str, data: pd.DataFrame, x_chart: List[str] = None,
+    def class_proba_plot(cls, clf, x: List[str], y: str, data: pd.DataFrame, x_chart: List[str] = None,
                          pair_sigmarange = 1.5, pair_sigmainterval = 0.5, chart_extendsigma = 0.5, chart_scale = 1,
                          plot_border = True, plot_scatter = 'class', rounddigit_x3 = 2,
                          proba_class = None, proba_cmap_dict = None, proba_type = 'contourf',
                          scatter_colors = None, true_marker = 'o', false_marker = 'x',
                          cv=None, cv_seed=42, cv_group=None, display_cv_indices = 0,
-                         model_params=None, fit_params=None, subplot_kws=None, contourf_kws=None, imshow_kws=None, scatter_kws=None):
+                         clf_params=None, fit_params=None, subplot_kws=None, contourf_kws=None, imshow_kws=None, scatter_kws=None):
         """
         2～4次元説明変数のクラス確率図可視化
 
         Parameters
         ----------
-        model:
-            使用する回帰モデル(scikit-learn API)
+        clf:
+            使用する分類モデル(scikit-learn API)
         x: List[str]
             説明変数カラム (列名指定)
         y: str
@@ -1822,9 +1822,9 @@ class classplot():
         cv_group: str, optional
             GroupKFold、LeaveOneGroupOutのグルーピング対象カラム (列名指定)
         display_cv_indices: int, optional
-            表示対象のクロスバリデーション番号 (指定したCV番号での回帰結果が表示される。リスト指定も可)
-        model_params: dict, optional
-            回帰モデルに渡すパラメータ (チューニング後のパラメータがgood、Noneならデフォルト)
+            表示対象のクロスバリデーション番号 (指定したCV番号での分類結果が表示される。リスト指定も可)
+        clf_params: dict, optional
+            分類モデルに渡すパラメータ (チューニング後のパラメータがgood、Noneならデフォルト)
         fit_params: dict, optional
             学習時のパラメータをdict指定 (例: XGBoostのearly_stopping_rounds)
             Noneならデフォルト
@@ -1848,8 +1848,8 @@ class classplot():
         elif not isinstance(x, list):
             raise Exception('the "cv_display_num" argument must be int or List[int]')
         # 学習器パラメータがあれば適用
-        if model_params is not None:
-            model.set_params(**model_params)
+        if clf_params is not None:
+            clf.set_params(**clf_params)
         # 学習時パラメータがNoneなら空のdictを入力
         if fit_params is None:
             fit_params = {}
@@ -1936,14 +1936,14 @@ class classplot():
         # クロスバリデーション未実施時(学習データから学習してプロット)
         if cv is None:
             # 学習と推論
-            model.fit(X, y_true, **fit_params)
-            y_pred = model.predict(X)
+            clf.fit(X, y_true, **fit_params)
+            y_pred = clf.predict(X)
             # クラス確率を推定
-            proba_pred = model.predict_proba(X)[:, proba_class_indices]
+            proba_pred = clf.predict_proba(X)[:, proba_class_indices]
             # TODO:クラス確率の順番が逆転した時の対策をメソッドとして実装する必要あり
             # https://qiita.com/rawHam/items/3bcb6a68a533f2b82a85
             # クラス確率図をプロット
-            cls._class_chart_plot(model, X, y_pred, y_true, x_chart, x_not_chart, x_chart_indices,
+            cls._class_chart_plot(clf, X, y_pred, y_true, x_chart, x_not_chart, x_chart_indices,
                                pair_sigmarange = pair_sigmarange, pair_sigmainterval=pair_sigmainterval, chart_extendsigma=chart_extendsigma, chart_scale=chart_scale,
                                proba_pred = proba_pred, proba_class_indices = proba_class_indices, plot_border = plot_border, plot_scatter = plot_scatter,
                                scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict, proba_cmap_dict=proba_cmap_dict, proba_type = proba_type,
@@ -1997,12 +1997,12 @@ class classplot():
                 # proba_cmap_dictも学習データから再取得
                 proba_cmap_dict = {k: v for k, v in proba_cmap_dict.items() if k in class_list_train}
                 # 学習と推論
-                model.fit(X_train, y_train, **fit_params)
-                y_pred = model.predict(X_test)
+                clf.fit(X_train, y_train, **fit_params)
+                y_pred = clf.predict(X_test)
                 # クラス確率を推定
-                proba_pred = model.predict_proba(X_test)[:, proba_class_indices]
+                proba_pred = clf.predict_proba(X_test)[:, proba_class_indices]
                 # クラス確率図をプロット
-                cls._class_chart_plot(model, X_test, y_pred, y_test, x_chart, x_not_chart, x_chart_indices,
+                cls._class_chart_plot(clf, X_test, y_pred, y_test, x_chart, x_not_chart, x_chart_indices,
                                    pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, chart_extendsigma=chart_extendsigma, chart_scale=chart_scale,
                                    proba_pred = proba_pred, proba_class_indices = proba_class_indices, plot_border = plot_border, plot_scatter = plot_scatter,
                                    scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict, proba_cmap_dict=proba_cmap_dict, proba_type = proba_type,
