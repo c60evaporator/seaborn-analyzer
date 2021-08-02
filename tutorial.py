@@ -444,17 +444,17 @@ iris = sns.load_dataset("iris")
 # 散布図プロット
 sns.scatterplot(x='petal_length', y='sepal_length', data=iris)
 # サポートベクター回帰学習
-estimator = SVR()
+svr = SVR()
 X = iris[['petal_length']].values
 y = iris['sepal_length'].values
-estimator.fit(X, y)  
+svr.fit(X, y)  
 # 回帰モデルの線を作成
 xmin = np.amin(X)
 xmax = np.amax(X)
 Xline = np.linspace(xmin, xmax, 100)
 Xline = Xline.reshape(len(Xline), 1)
 # 回帰線を描画
-plt.plot(Xline, estimator.predict(Xline), color='red')
+plt.plot(Xline, svr.predict(Xline), color='red')
 # %% seaborn_analyzer.regplot.regression_plot_1d
 import seaborn as sns
 from seaborn_analyzer import regplot
@@ -536,13 +536,13 @@ iris = sns.load_dataset("iris")
 from xgboost import XGBRegressor
 import matplotlib.pyplot as plt
 # モデルの学習
-estimator = XGBRegressor()
+xgbr = XGBRegressor()
 features = ['sepal_width', 'petal_width', 'petal_length']
 X = iris[features].values
 y = iris['sepal_length'].values
-estimator.fit(X, y)
+xgbr.fit(X, y)
 # 特徴量重要度の取得と可視化
-importances = list(estimator.feature_importances_)
+importances = list(xgbr.feature_importances_)
 plt.barh(features, importances)
 # %% 残差プロット
 import seaborn as sns
@@ -551,13 +551,13 @@ from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
 import numpy as np
 # モデルの学習
-estimator = LinearRegression()
+lr = LinearRegression()
 features = ['petal_width', 'petal_length']
 X = iris[features].values
 y = iris['sepal_length'].values
-estimator.fit(X, y)
+lr.fit(X, y)
 # 残差プロット(横軸は目的変数予測値)
-y_pred = estimator.predict(X)
+y_pred = lr.predict(X)
 error = y_pred - y
 plt.scatter(y_pred, error)
 plt.xlabel('y_pred')
