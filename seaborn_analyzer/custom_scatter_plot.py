@@ -555,7 +555,7 @@ class regplot():
                            rank_number=None, rank_col=None, scores='mae', cv_stats='mean', cv=None, cv_seed=42,
                            estimator_params=None, fit_params=None, subplot_kws=None, scatter_kws=None):
         """
-        1次元説明変数の任意の回帰曲線をプロット
+        Plot regression lines of any scikit-learn regressor with 1D explanatory variable.
 
         Parameters
         ----------
@@ -1025,7 +1025,7 @@ class regplot():
                              cv=None, cv_seed=42, display_cv_indices = 0,
                              estimator_params=None, fit_params=None, subplot_kws=None, heat_kws=None, scatter_kws=None):
         """
-        2～4次元説明変数の回帰モデルをヒートマップで可視化
+        Plot regression heatmaps of any scikit-learn regressor with 2 to 4D explanatory variables.
 
         Parameters
         ----------
