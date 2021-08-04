@@ -8,9 +8,9 @@
 ![image](https://user-images.githubusercontent.com/59557625/126887193-ceba9bdd-3653-4d58-a916-21dcfe9c38a0.png)
 
 This documentation is Japanese language version.
-[English version is here](https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst)
+**[English version is here](https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst)**
 
-[API reference is here](https://c60evaporator.github.io/seaborn-analyzer/)
+**[API reference is here](https://c60evaporator.github.io/seaborn-analyzer/)**
 
 <br>
 
