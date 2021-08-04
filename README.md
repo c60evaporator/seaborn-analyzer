@@ -10,6 +10,8 @@
 This documentation is Japanese language version.
 [English version is here](https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst)
 
+[API reference is here](https://c60evaporator.github.io/seaborn-analyzer/)
+
 <br>
 
 # 使用法
