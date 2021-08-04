@@ -446,7 +446,7 @@ class regplot():
         rounddigit: int, optional
             Round a number of score to a given precision in decimal digits.
         plot_scores: bool, optional
-            If true, display Pearson correlation coefficient and the p-value.
+            If True, display Pearson correlation coefficient and the p-value.
         scatter_kws: dict, optional
             Additional parameters passed to sns.scatterplot(), e.g. alpha. See https://seaborn.pydata.org/generated/seaborn.scatterplot.html
         """
@@ -1609,12 +1609,12 @@ class classplot():
             Set the axis view limits of the separation map. The lower limit is min({x1, x2}) - std({x1, x2}) * chart_extendsigma. The higher limit is max({x1, x2}) + std({x1, x2}) * chart_extendsigma
         chart_scale: int, optional
             Set the resolution of the separation lines. If plotting speed is slow, we reccomend setting chart_scale to 2. We DON'T reccomend setting it to larger than 3 because of jaggies.
-        plot_scatter: str, optional
-            Color decision of scatter plot. If 'error', to be mapped to colors using true-false. If 'class', to be mapped to colors using classification labels. If 'class_error', to be mapped to colors using classification labels and marker styles using true-false. If None, no scatter.
+        plot_scatter: {'error', 'class', 'class_error', None}, optional
+            Color decision of scatter plot. If 'error', to be mapped to colors using true-false. If 'class', to be mapped to colors using class labels. If 'class_error', to be mapped to colors using class labels and marker styles using true-false. If None, no scatter.
         rounddigit_x3: int, optional
             Round a number of y-axis valiable of subplots to a given precision in decimal digits.
         scatter_colors: List[str], optional
-            Set of colors for mapping the classification labels. Available only if plot_scatter is set to 'class' or 'class_error'.
+            Set of colors for mapping the class labels. Available only if plot_scatter is set to 'class' or 'class_error'.
         true_marker: str, optional
             Marker style of True label. Available only if plot_scatter is set to 'error' or 'class_error'. See https://matplotlib.org/stable/api/markers_api.html#module-matplotlib.markers
         false_marker: str, optional
@@ -1773,68 +1773,66 @@ class classplot():
                          cv=None, cv_seed=42, cv_group=None, display_cv_indices = 0,
                          clf_params=None, fit_params=None, subplot_kws=None, contourf_kws=None, imshow_kws=None, scatter_kws=None):
         """
-        2～4次元説明変数のクラス確率図可視化
+        Plot class prediction probability of any scikit-learn classifier with 2 to 4D explanatory variables.
 
         Parameters
         ----------
         clf: classifier object implementing 'fit'
-            使用する分類モデル(scikit-learn API)
+            Classifier. This is assumed to implement the scikit-learn estimator interface.
         x: List[str]
-            説明変数カラム (列名指定)
+            Explanatory variables.
         y: str
-            目的変数カラム (列名指定)
+            Objective variable.
         data: pd.DataFrame
-            フィッティング対象のデータ
+            Input data structure.
         x_chart: List[str], optional
-            説明変数のうち、クラス確率図表示対象のカラム (Noneなら前から2カラム自動選択)
+            X-axis and y-axis variables of separation map. If None, use two variables in x from the front.
         pair_sigmarange: float, optional
-            クラス確率図非使用変数の分割範囲 (pair_sigmarange=2なら、-2σ~2σの範囲でpair_sigmaintervalに従い決定境界図分割)
+            Set the range of subplots. The lower limit is mean({x3, x4}) - pair_sigmarange * std({x3, x4}). The higher limit is mean({x3, x4}) + pair_sigmarange * std({x3, x4}). Available only if len(x) is bigger than 2.
         pair_sigmainterval: float, optional
-            クラス確率図非使用変数の1枚あたり表示範囲 (pair_sigmainterval=0.5なら、‥1σ~-0.5σ, 0.5σ~-0σ, 0σ~0.5σ, 0.5σ~1σ‥というようにヒートマップ分割)
+            Set the interval of subplots. For example, if pair_sigmainterval is set to 0.5 and pair_sigmarange is set to 1.0, The ranges of subplots are lower than μ-1σ, μ-1σ to μ-0.5σ, μ-0.5σ to μ, μ to μ+0.5σ, μ+0.5σ to μ+1σ, and higher than μ+1σ. Available only if len(x) is bigger than 2.
         chart_extendsigma: float, optional
-            クラス確率図縦軸横軸の表示拡張範囲 (クラス確率図使用変数の最大最小値 + extendsigmaが横軸範囲となる)
+            Set the axis view limits of the separation map. The lower limit is min({x1, x2}) - std({x1, x2}) * chart_extendsigma. The higher limit is max({x1, x2}) + std({x1, x2}) * chart_extendsigma
         chart_scale: int, optional
-            決定境界図の表示倍率 (cv指定時等で表示が遅い時は大きくする)
+            Set the resolution of the separation lines. If plotting speed is slow, we reccomend setting chart_scale to 2. We DON'T reccomend setting it to larger than 3 because of jaggies.
         plot_border: bool, optional
-            クラス境界線の描画有無
-        plot_scatter: str, optional
-            散布図の描画種類('error':正誤で形状分け, 'class':クラスで色分け, 'class_error':正誤で形状分け＆クラスで色分け , None:散布図表示なし)
+            If True, display class separation lines
+        plot_scatter: {'error', 'class', 'class_error', None}, optional
+            Color decision of scatter plot. If 'error', to be mapped to colors using true-false. If 'class', to be mapped to colors using class labels. If 'class_error', to be mapped to colors using class labels and marker styles using true-false. If None, no scatter.
         rounddigit_x3: int, optional
-            クラス確率図非表示軸の小数丸め桁数
+            Round a number of y-axis valiable of subplots to a given precision in decimal digits.
         proba_class: str or List[str], optional
-            確率表示対象のクラス名
+            Class label name, in which probability map is displayed.
         proba_cmap_dict: dict[str, str], optional
-            クラス確率図のカラーマップ (キーがクラス名、値がカラーマップのdictで指定)
-        proba_type: str, optional
-            クラス確率図の描画種類 ('contourf':ax.contourfでプロット, 'imshow':ax.imshowでプロット(3クラスまで))
+            Colormap of probability map. The keys must be class label name and the values must be colormap names in Matplotlib. See https://matplotlib.org/stable/tutorials/colors/colormaps.html
+        proba_type: {'contourf', 'contour', 'imshow'}, optional
+            Plotting type of probabiliity map. If 'contourf', mapped by matplotlib.pyplot.contourf(). If 'contour', mapped by matplotlib.pyplot.contour(). If 'imshow', mapped by matplotlib.pyplot.imshow(). 'imshow' is available only if the number of class labels is less than 4.
         scatter_colors: List[str], optional
-            クラスごとのプロット色のリスト
+            Set of colors for mapping the class labels. Available only if plot_scatter is set to 'class' or 'class_error'.
         true_marker: str, optional
-            正解クラスの散布図プロット形状
+            Marker style of True label. Available only if plot_scatter is set to 'error' or 'class_error'. See https://matplotlib.org/stable/api/markers_api.html#module-matplotlib.markers
         false_marker: str, optional
-            不正解クラスの散布図プロット形状
+            Marker style of False label. Available only if plot_scatter is set to 'error' or 'class_error'. See https://matplotlib.org/stable/api/markers_api.html#module-matplotlib.markers
         cv: int or sklearn.model_selection.*, optional
-            クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)
+            Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
         cv_seed: int, optional
-            クロスバリデーションの乱数シード
+            Seed for random number generator of cross validation.
         cv_group: str, optional
-            GroupKFold、LeaveOneGroupOutのグルーピング対象カラム (列名指定)
+            Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to 'groups' argument of cv.split(). Available only if cv is GroupKFold or LeaveOneGroupOut
         display_cv_indices: int, optional
-            表示対象のクロスバリデーション番号 (指定したCV番号での分類結果が表示される。リスト指定も可)
+            Cross validation index or indices to display.
         clf_params: dict, optional
-            分類モデルに渡すパラメータ (チューニング後のパラメータがgood、Noneならデフォルト)
+            Parameters passed to the classifier. If the classifier is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         fit_params: dict, optional
-            学習時のパラメータをdict指定 (例: XGBoostのearly_stopping_rounds)
-            Noneならデフォルト
-            Pipelineのときは{学習器名__パラメータ名:パラメータの値,‥}で指定する必要あり
+            Parameters passed to the fit() method of the classifier, e.g. 'early_stopping_round' and 'eval_set' of XGBClassifier. If the classifier is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         subplot_kws: dict, optional
-            プロット用のmatplotlib.pyplot.subplots()に渡す引数 (例：figsize)
+            Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
         contourf_kws: dict, optional
-            クラス確率図(等高線)用のax.contourf()に渡す引数
+            Additional parameters passed to matplotlib.pyplot.contourf() if proba_type is set to 'contourf', or additional parameters passed to matplotlib.pyplot.contour() if proba_type is set to 'contour'. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.contourf.html or https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.contour.html
         imshow_kws: dict, optional
-            クラス確率図(RGB画像)用のax.imshow()に渡す引数
+            Additional parameters passed to matplotlib.pyplot.imshow(), e.g. alpha. Available only if proba_type is set to 'imshow'. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.imshow.html
         scatter_kws: dict, optional
-            散布図用のax.scatter()に渡す引数
+            Additional parameters passed to matplotlib.pyplot.scatter(), e.g. alpha. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.scatter.html
         """
         # 説明変数xの次元が2～4以外ならエラーを出す
         if len(x) < 2 or len(x) > 4:
