@@ -73,7 +73,7 @@ CustomPairPlot class
     :header: "Method name", "Summary", "API Documentation", "Example"
     :widths: 30, 50, 15, 15
 
-    "**pairanalyzer**", Plot pair plot including scatter plot and correlation coefficient matrix simultaneously., `CustomPairPlot.pairanalyzer <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#custompairplotpairanalyzer>`__
+    "**pairanalyzer**", Plot pair plot including scatter plot and correlation coefficient matrix simultaneously., `CustomPairPlot.pairanalyzer <https://c60evaporator.github.io/seaborn-analyzer/seaborn_analyzer.html#seaborn_analyzer.custom_pair_plot.CustomPairPlot.pairanalyzer>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#custompairplotpairanalyzer>`__
 
 
 hist class
@@ -83,8 +83,8 @@ hist class
     :header: "Method name", "Summary", "API Documentation", "Example"
     :widths: 30, 50, 15, 15
 
-    "**plot_normality**", Plot normality test result and QQ plot., `hist.plot_normality <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#histplot_normality>`__
-    "**fit_dist**", Fit distributions by maximum likelihood estimation and calculate fitting scores., `hist.fit_dist <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#histfit_dist>`__
+    "**plot_normality**", Plot normality test result and QQ plot., `hist.plot_normality <https://c60evaporator.github.io/seaborn-analyzer/seaborn_analyzer.html#seaborn_analyzer.custom_hist_plot.hist.plot_normality>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#histplot_normality>`__
+    "**fit_dist**", Fit distributions by maximum likelihood estimation and calculate fitting scores., `hist.fit_dist <https://c60evaporator.github.io/seaborn-analyzer/seaborn_analyzer.html#seaborn_analyzer.custom_hist_plot.hist.fit_dist>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#histfit_dist>`__
 
 
 classplot class
@@ -94,8 +94,8 @@ classplot class
     :header: "Method name", "Summary", "API Documentation", "Example"
     :widths: 30, 50, 15, 15
 
-    "**class_separator_plot**", Plot class separation lines of any scikit-learn classifier., `hist.class_separator_plot <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#classplotclass_separator_plot>`__
-    "**class_proba_plot**", Plot class prediction probability of any scikit-learn classifier., `hist.class_proba_plot <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#classplotclass_proba_plot>`__
+    "**class_separator_plot**", Plot class separation lines of any scikit-learn classifier., `hist.class_separator_plot <https://c60evaporator.github.io/seaborn-analyzer/seaborn_analyzer.html#seaborn_analyzer.custom_scatter_plot.classplot.class_separator_plot>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#classplotclass_separator_plot>`__
+    "**class_proba_plot**", Plot class prediction probability of any scikit-learn classifier., `hist.class_proba_plot <https://c60evaporator.github.io/seaborn-analyzer/seaborn_analyzer.html#seaborn_analyzer.custom_scatter_plot.classplot.class_proba_plot>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#classplotclass_proba_plot>`__
 
 
 regplot class
@@ -105,10 +105,10 @@ regplot class
     :header: "Method name", "Summary", "API Documentation", "Example"
     :widths: 30, 50, 15, 15
 
-    "**linear_plot**", Plot linear regression line and calculate Pearson correlation coefficient., `regplot.linear_plot <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotlinear_plot>`__
-    "**regression_pred_true**", Plot prediction vs. true scatter plots of any scikit-learn regressor., `regplot.regression_pred_true <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotregression_pred_true>`__
-    "**regression_plot_1d**", Plot 1d regression lines of any scikit-learn regressor., `regplot.regression_plot_1d <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotregression_plot_1d>`__
-    "**regression_heat_plot**", Plot 2 to 4d regression heat maps of any scikit-learn regressor., `regplot.regression_heat_plot <https://pypi.org/project/seaborn-analyzer/>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotregression_heat_plot>`__
+    "**linear_plot**", Plot linear regression line and calculate Pearson correlation coefficient., `regplot.linear_plot <https://c60evaporator.github.io/seaborn-analyzer/seaborn_analyzer.html#seaborn_analyzer.custom_scatter_plot.regplot.linear_plot>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotlinear_plot>`__
+    "**regression_pred_true**", Plot prediction vs. true scatter plots of any scikit-learn regressor., `regplot.regression_pred_true <https://c60evaporator.github.io/seaborn-analyzer/seaborn_analyzer.html#seaborn_analyzer.custom_scatter_plot.regplot.regression_pred_true>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotregression_pred_true>`__
+    "**regression_plot_1d**", Plot 1d regression lines of any scikit-learn regressor., `regplot.regression_plot_1d <https://c60evaporator.github.io/seaborn-analyzer/seaborn_analyzer.html#seaborn_analyzer.custom_scatter_plot.regplot.regression_plot_1d>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotregression_plot_1d>`__
+    "**regression_heat_plot**", Plot 2 to 4d regression heat maps of any scikit-learn regressor., `regplot.regression_heat_plot <https://c60evaporator.github.io/seaborn-analyzer/seaborn_analyzer.html#seaborn_analyzer.custom_scatter_plot.regplot.regression_heat_plot>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotregression_heat_plot>`__
 
 
 ========
