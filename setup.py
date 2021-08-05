@@ -17,7 +17,7 @@ PYTHON_REQUIRES = ">=3.6"
 
 INSTALL_REQUIRES = [
     'matplotlib>=3.3.4',
-    'seaborn>=0.11.1',
+    'seaborn>=0.11.0',
     'numpy >=1.20.3',
     'pandas>=1.2.4',
     'matplotlib>=3.3.4',
