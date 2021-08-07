@@ -1,7 +1,7 @@
 # seaborn-analyzer
 [![python](https://img.shields.io/pypi/pyversions/seaborn-analyzer)](https://www.python.org/)
-[![pypi](https://img.shields.io/pypi/v/seaborn-analyzer?color=blue)](https://img.shields.io/pypi/l/seaborn-analyzer?color=blue)
-[![license](https://img.shields.io/pypi/l/seaborn-analyzer?color=blue)](https://github.com/c60evaporator/seaborn-analyzer/LICENSE)
+[![pypi](https://img.shields.io/pypi/v/seaborn-analyzer?color=blue)](https://pypi.org/project/seaborn-analyzer/)
+[![license](https://img.shields.io/pypi/l/seaborn-analyzer?color=blue)](https://github.com/c60evaporator/seaborn-analyzer/blob/master/LICENSE)
 
 **A data analysis and visualization tool using Seaborn library.**
 
