@@ -449,6 +449,11 @@ class regplot():
             If True, display Pearson correlation coefficient and the p-value.
         scatter_kws: dict, optional
             Additional parameters passed to sns.scatterplot(), e.g. alpha. See https://seaborn.pydata.org/generated/seaborn.scatterplot.html
+
+        Returns
+        ----------
+        ax : matplotlib.axes.Axes
+            Returns the Axes object with the plot drawn onto it.
         """
         # scatter_kwsがNoneなら空のdictを入力
         if scatter_kws is None:
@@ -492,6 +497,8 @@ class regplot():
             # プロット
             rtext = f'{equation}\nr={r}\np={pvalue}'
             ax.text(xmax, np.amin(y_true), rtext, verticalalignment='bottom', horizontalalignment='right')
+
+        return ax
 
     @classmethod
     def _estimator_plot_1d(cls, trained_estimator, X, y_true, hue_data=None, hue_name=None, ax=None, linecolor='red', linesplit=1000, rounddigit=None,
