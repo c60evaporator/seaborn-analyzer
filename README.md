@@ -343,7 +343,7 @@ regplot.regression_pred_true(LinearRegression(), x=['altitude', 'latitude'], y='
 |rounddigit|オプション|int|3|表示指標の小数丸め桁数|
 |rank_number|オプション|int|None|誤差上位何番目までを文字表示するか|
 |rank_col|オプション|str|None|誤差上位と一緒に表示するフィールド名|
-|scores|オプション|str or list[str]|'mae'|文字表示する評価指標を指定 ('r2', 'mae', 'rmse', 'rmsle', or 'max_error')|
+|scores|オプション|str or list[str]|'mae'|文字表示する評価指標を指定 ('r2', 'mae', 'mse', 'rmse', 'rmsle', or 'max_error')|
 |cv_stats|オプション|str|'mean'|クロスバリデーション時に表示する評価指標統計値 ('mean', 'median', 'max', or 'min')|
 |cv|オプション|int or sklearn.model_selection.* |None|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
 |cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
@@ -375,7 +375,7 @@ regplot.regression_plot_1d(SVR(), x='petal_length', y='sepal_length', data=iris)
 |rounddigit|オプション|int|3|表示指標の小数丸め桁数|
 |rank_number|オプション|int|None|誤差上位何番目までを文字表示するか|
 |rank_col|オプション|str|None|誤差上位と一緒に表示するフィールド名|
-|scores|オプション|str or list[str]|'mae'|文字表示する評価指標を指定 ('r2', 'mae', 'rmse', 'rmsle', or 'max_error')|
+|scores|オプション|str or list[str]|'mae'|文字表示する評価指標を指定 ('r2', 'mae', 'mse', 'rmse', 'rmsle', or 'max_error')|
 |cv_stats|オプション|str|'mean'|クロスバリデーション時に表示する評価指標統計値 ('mean', 'median', 'max', or 'min')|
 |cv|オプション|int or sklearn.model_selection.* |None|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
 |cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
