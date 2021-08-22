@@ -26,6 +26,8 @@ cp.pairanalyzer(titanic, hue='survived')
 ```
 ※その他のクラスの使用法は[構成](https://github.com/c60evaporator/seaborn-analyzer#%E6%A7%8B%E6%88%90)の項を参照ください
 
+※**[Qiitaにも記事を作成している](https://qiita.com/c60evaporator/items/8cb774e65d4423fd93ee)** ので、こちらもご覧ください
+
 <br>
 
 # 必要要件
