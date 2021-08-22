@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>seaborn_analyzer package &mdash; seaborn_analyzer 0.1.4 documentation</title>
+  <title>seaborn_analyzer package &mdash; seaborn_analyzer 0.1.5 documentation</title>
   
 
   
@@ -367,6 +367,12 @@ This method mainly uses seaborn.PairGrid class.</p>
 <li><p><strong>scatter_kws</strong> (<em>dict</em><em>, </em><em>optional</em>) – Additional parameters passed to sns.scatterplot(), e.g. alpha. See <a class="reference external" href="https://seaborn.pydata.org/generated/seaborn.scatterplot.html">https://seaborn.pydata.org/generated/seaborn.scatterplot.html</a></p></li>
 </ul>
 </dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>ax</strong> – Returns the Axes object with the plot drawn onto it.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>matplotlib.axes.Axes</p>
+</dd>
 </dl>
 </dd></dl>
 
@@ -424,7 +430,7 @@ This method mainly uses seaborn.PairGrid class.</p>
 <li><p><strong>rounddigit</strong> (<em>int</em><em>, </em><em>optional</em>) – Round a number of score to a given precision in decimal digits.</p></li>
 <li><p><strong>rank_number</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of emphasized data that are in the top posiotions for regression error.</p></li>
 <li><p><strong>rank_col</strong> (<em>list</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – Variables that are displayed with emphasized data that are in the top posiotions for regression error.</p></li>
-<li><p><strong>scores</strong> (<em>{'r2'</em><em>, </em><em>'mae'</em><em>, </em><em>'rmse'</em><em>, </em><em>'rmsle'</em><em>, </em><em>'max_error'}</em><em> or </em><em>list</em><em>,</em><em>, </em><em>optional</em>) – Regression score that are displayed at the lower right of the graph.</p></li>
+<li><p><strong>scores</strong> (<em>{'r2'</em><em>, </em><em>'mae'</em><em>, </em><em>'mse'</em><em>, </em><em>'rmse'</em><em>, </em><em>'rmsle'</em><em>, </em><em>'max_error'}</em><em> or </em><em>list</em><em>,</em><em>, </em><em>optional</em>) – Regression score that are displayed at the lower right of the graph.</p></li>
 <li><p><strong>cv_stats</strong> (<em>{'mean'</em><em>, </em><em>'median'</em><em>, </em><em>'max'</em><em>, </em><em>'min'}</em><em>, </em><em>optional</em>) – Statistical method of cross validation score that are displayed at the lower right of the graph.</p></li>
 <li><p><strong>cv</strong> (<em>int</em><em>, </em><em>cross-validation generator</em><em> or </em><em>an iterable</em><em>, </em><em>optional</em>) – Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.</p></li>
 <li><p><strong>cv_seed</strong> (<em>int</em><em>, </em><em>optional</em>) – Seed for random number generator of cross validation.</p></li>
@@ -459,7 +465,7 @@ This method mainly uses seaborn.PairGrid class.</p>
 <li><p><strong>rounddigit</strong> (<em>int</em><em>, </em><em>optional</em>) – Round a number of score to a given precision in decimal digits.</p></li>
 <li><p><strong>rank_number</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of emphasized data that are in the top posiotions for regression error.</p></li>
 <li><p><strong>rank_col</strong> (<em>list</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – Variables that are displayed with emphasized data that are in the top posiotions for regression error.</p></li>
-<li><p><strong>scores</strong> (<em>{'r2'</em><em>, </em><em>'mae'</em><em>, </em><em>'rmse'</em><em>, </em><em>'rmsle'</em><em>, </em><em>'max_error'}</em><em> or </em><em>list</em><em>,</em><em>, </em><em>optional</em>) – Regression score that are displayed at the lower right of the graph.</p></li>
+<li><p><strong>scores</strong> (<em>{'r2'</em><em>, </em><em>'mae'</em><em>, </em><em>'mse'</em><em>, </em><em>'rmse'</em><em>, </em><em>'rmsle'</em><em>, </em><em>'max_error'}</em><em> or </em><em>list</em><em>,</em><em>, </em><em>optional</em>) – Regression score that are displayed at the lower right of the graph.</p></li>
 <li><p><strong>cv_stats</strong> (<em>{'mean'</em><em>, </em><em>'median'</em><em>, </em><em>'max'</em><em>, </em><em>'min'}</em><em>, </em><em>optional</em>) – Statistical method of cross validation score that are displayed at the lower right of the graph.</p></li>
 <li><p><strong>cv</strong> (<em>int</em><em>, </em><em>cross-validation generator</em><em> or </em><em>an iterable</em><em>, </em><em>optional</em>) – Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.</p></li>
 <li><p><strong>cv_seed</strong> (<em>int</em><em>, </em><em>optional</em>) – Seed for random number generator of cross validation.</p></li>
