@@ -68,6 +68,8 @@ class regplot():
                 score_dict['r2'] = r2_score(y_true, y_pred)
             elif scoring == 'mae':
                 score_dict['mae'] = mean_absolute_error(y_true, y_pred)
+            elif scoring == 'mse':
+                score_dict['mse'] = mean_squared_error(y_true, y_pred, squared=False)
             elif scoring == 'rmse':
                 score_dict['rmse'] = mean_squared_error(y_true, y_pred)
             elif scoring == 'rmsle':
@@ -210,7 +212,7 @@ class regplot():
             Number of emphasized data that are in the top posiotions for regression error.
         rank_col : list[str], optional
             Variables that are displayed with emphasized data that are in the top posiotions for regression error.
-        scores : {'r2', 'mae', 'rmse', 'rmsle', 'max_error'} or list,, optional
+        scores : {'r2', 'mae', 'mse', 'rmse', 'rmsle', 'max_error'} or list,, optional
             Regression score that are displayed at the lower right of the graph.
         cv_stats : {'mean', 'median', 'max', 'min'}, optional
             Statistical method of cross validation score that are displayed at the lower right of the graph.
@@ -323,6 +325,10 @@ class regplot():
                     neg_mae = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_mean_absolute_error',
                                                            fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['mae'] = -neg_mae  # scikit-learnの仕様に合わせ正負を逆に
+                elif scoring == 'mse':
+                    neg_mse = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_root_mean_squared_error',
+                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
+                    score_all_dict['mse'] = -neg_mse  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'rmse':
                     neg_rmse = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_root_mean_squared_error',
                                                            fit_params=fit_params, n_jobs=-1, **split_kws)
@@ -584,7 +590,7 @@ class regplot():
             Number of emphasized data that are in the top posiotions for regression error.
         rank_col : list[str], optional
             Variables that are displayed with emphasized data that are in the top posiotions for regression error.
-        scores : {'r2', 'mae', 'rmse', 'rmsle', 'max_error'} or list,, optional
+        scores : {'r2', 'mae', 'mse', 'rmse', 'rmsle', 'max_error'} or list,, optional
             Regression score that are displayed at the lower right of the graph.
         cv_stats : {'mean', 'median', 'max', 'min'}, optional
             Statistical method of cross validation score that are displayed at the lower right of the graph.
@@ -694,6 +700,10 @@ class regplot():
                     neg_mae = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_mean_absolute_error',
                                                            fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['mae'] = -neg_mae  # scikit-learnの仕様に合わせ正負を逆に
+                elif scoring == 'mse':
+                    neg_mse = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_mean_squared_error',
+                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
+                    score_all_dict['mse'] = -neg_mse  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'rmse':
                     neg_rmse = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_root_mean_squared_error',
                                                            fit_params=fit_params, n_jobs=-1, **split_kws)
