@@ -326,7 +326,7 @@ class regplot():
                                                            fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['mae'] = -neg_mae  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'mse':
-                    neg_mse = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_root_mean_squared_error',
+                    neg_mse = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_mean_squared_error',
                                                            fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['mse'] = -neg_mse  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'rmse':
