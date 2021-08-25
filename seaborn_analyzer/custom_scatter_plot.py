@@ -216,7 +216,7 @@ class regplot():
             Regression score that are displayed at the lower right of the graph.
         cv_stats : {'mean', 'median', 'max', 'min'}, optional
             Statistical method of cross validation score that are displayed at the lower right of the graph.
-        cv : int, cross-validation generator or an iterable, optional
+        cv : int, cross-validation generator, or an iterable, optional
             Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
         cv_seed : int, optional
             Seed for random number generator of cross validation.
@@ -594,11 +594,11 @@ class regplot():
             Regression score that are displayed at the lower right of the graph.
         cv_stats : {'mean', 'median', 'max', 'min'}, optional
             Statistical method of cross validation score that are displayed at the lower right of the graph.
-        cv : int, cross-validation generator or an iterable, optional
+        cv : int, cross-validation generator, or an iterable, optional
             Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
         cv_seed : int, optional
             Seed for random number generator of cross validation.
-        estimator_params: dict, optional
+        estimator_params : dict, optional
             Parameters passed to the regression estimator. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         fit_params : dict, optional
             Parameters passed to the fit() method of the regression estimator, e.g. 'early_stopping_round' and 'eval_set' of XGBRegressor. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
@@ -1082,11 +1082,11 @@ class regplot():
             Number of emphasized data that are in the top posiotions for regression error.
         rank_col: str, optional
             Variables that are displayed with emphasized data that are in the top posiotions for regression error.
-        cv : int, cross-validation generator or an iterable, optional
+        cv : int, cross-validation generator, or an iterable, optional
             Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
         cv_seed : int, optional
             Seed for random number generator of cross validation.
-        display_cv_indices: int or list, optional
+        display_cv_indices : int or list, optional
             Cross validation index or indices to display.
         estimator_params : dict, optional
             Parameters passed to the regression estimator. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
@@ -1636,7 +1636,7 @@ class classplot():
             Marker style of True label. Available only if plot_scatter is set to 'error' or 'class_error'. See https://matplotlib.org/stable/api/markers_api.html#module-matplotlib.markers
         false_marker: str, optional
             Marker style of False label. Available only if plot_scatter is set to 'error' or 'class_error'. See https://matplotlib.org/stable/api/markers_api.html#module-matplotlib.markers
-        cv : int, cross-validation generator or an iterable, optional
+        cv : int, cross-validation generator, or an iterable, optional
             Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
         cv_seed: int, optional
             Seed for random number generator of cross validation.
