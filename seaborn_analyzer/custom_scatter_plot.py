@@ -5,7 +5,7 @@ import numbers
 import numpy as np
 import pandas as pd
 from scipy import stats
-from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error, mean_squared_log_error
+from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error, mean_squared_log_error, mean_absolute_percentage_error
 from sklearn.model_selection import KFold, LeaveOneOut, GroupKFold, LeaveOneGroupOut, cross_val_score
 from sklearn.linear_model import LinearRegression
 import decimal
@@ -74,6 +74,8 @@ class regplot():
                 score_dict['rmse'] = mean_squared_error(y_true, y_pred)
             elif scoring == 'rmsle':
                 score_dict['rmsle'] = mean_squared_log_error(y_true, y_pred)
+            elif scoring == 'mape':
+                score_dict['mape'] = mean_absolute_percentage_error(y_true, y_pred)
             elif scoring == 'max_error':
                 score_dict['max_error'] = max([abs(p - r) for r, p in zip(y_true, y_pred)])
         return score_dict
@@ -95,7 +97,7 @@ class regplot():
             誤差上位と一緒に表示するフィールド名 (NoneならIndexを使用)
         x : np.ndarray
             説明変数の値 (Noneなら横軸y_true縦軸y_pred、Noneでなければ横軸x縦軸y_true)
-        ax : matplotlib.axes._subplots.Axes
+        ax : matplotlib.axes.Axes
             表示対象のax（Noneならmatplotlib.pyplot.plotで1枚ごとにプロット）
         rounddigit: int
             表示指標の小数丸め桁数
@@ -149,7 +151,7 @@ class regplot():
             色分け用ラベルデータ
         hue_name : str
             色分け用の列名
-        ax : matplotlib.axes._subplots.Axes
+        ax : matplotlib.axes.Axes
             表示対象のax (Noneならmatplotlib.pyplot.plotで1枚ごとにプロット)
         linecolor : str
             予測値=実測値の線の色
@@ -186,7 +188,7 @@ class regplot():
     
     @classmethod
     def regression_pred_true(cls, estimator, x: List[str], y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=3,
-                             rank_number=None, rank_col=None, scores='mae', cv_stats='mean', cv=None, cv_seed=42,
+                             rank_number=None, rank_col=None, scores='mae', cv_stats='mean', cv=None, cv_seed=42, ax=None,
                              estimator_params=None, fit_params=None, subplot_kws=None, scatter_kws=None):
 
         """
@@ -212,7 +214,7 @@ class regplot():
             Number of emphasized data that are in the top posiotions for regression error.
         rank_col : list[str], optional
             Variables that are displayed with emphasized data that are in the top posiotions for regression error.
-        scores : {'r2', 'mae', 'mse', 'rmse', 'rmsle', 'max_error'} or list,, optional
+        scores : {'r2', 'mae', 'mse', 'rmse', 'rmsle', 'mape', 'max_error'} or list, optional
             Regression score that are displayed at the lower right of the graph.
         cv_stats : {'mean', 'median', 'max', 'min'}, optional
             Statistical method of cross validation score that are displayed at the lower right of the graph.
@@ -220,12 +222,14 @@ class regplot():
             Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
         cv_seed : int, optional
             Seed for random number generator of cross validation.
+        ax : {matplotlib.axes.Axes, list[matplotlib.axes.Axes]}, optional
+            Pre-existing axes for the plot or list of it. Otherwise, call matplotlib.pyplot.subplot() internally.
         estimator_params : dict, optional
             Parameters passed to the regression estimator. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         fit_params : dict, optional
             Parameters passed to the fit() method of the regression estimator, e.g. 'early_stopping_round' and 'eval_set' of XGBRegressor. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         subplot_kws : dict, optional
-            Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
+            Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize. Available only if ``axes`` is None. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
         scatter_kws: dict, optional
             Additional parameters passed to sns.scatterplot(), e.g. alpha. See https://seaborn.pydata.org/generated/seaborn.scatterplot.html
 
@@ -285,7 +289,7 @@ class regplot():
                 else:  # 表示フィールド指定あるとき
                     rank_col_data = data[rank_col].values
             # 予測値と実測値プロット
-            cls._plot_pred_true(y_true, y_pred, hue_data=hue_data, hue_name=hue_name,
+            cls._plot_pred_true(y_true, y_pred, hue_data=hue_data, hue_name=hue_name, ax=ax,
                                 linecolor=linecolor, rounddigit=rounddigit, score_dict=score_dict, scatter_kws=scatter_kws)
             # 誤差上位を文字表示
             if rank_number is not None:
@@ -337,22 +341,27 @@ class regplot():
                     neg_msle = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_mean_squared_log_error',
                                                            fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['rmsle'] = np.sqrt(-neg_msle)  # 正負を逆にしてルートをとる
+                elif scoring == 'mape':
+                    neg_mape = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_mean_absolute_percentage_error',
+                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
+                    score_all_dict['mape'] = -neg_mape  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'max_error':
                     neg_max_error = cross_val_score(estimator, X, y_true, cv=cv, scoring='max_error',
                                                            fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['max_error'] = - neg_max_error  # scikit-learnの仕様に合わせ正負を逆に
             
-            # 表示用のaxes作成
-            # LeaveOneOutのとき、クロスバリデーションごとの図は作成せず
-            if isLeaveOneOut:
-                if 'figsize' not in subplot_kws.keys():
-                    subplot_kws['figsize'] = (6, 6)
-                fig, axes = plt.subplots(1, 1, **subplot_kws)
-            # LeaveOneOut以外のとき、クロスバリデーションごとに図作成
-            else:
-                if 'figsize' not in subplot_kws.keys():
-                    subplot_kws['figsize'] = (6, (cv_num + 1) * 6)
-                fig, axes = plt.subplots(cv_num + 1, 1, **subplot_kws)
+            # 表示用のax作成
+            if ax is None:
+                # LeaveOneOutのとき、クロスバリデーションごとの図は作成せず
+                if isLeaveOneOut:
+                    if 'figsize' not in subplot_kws.keys():
+                        subplot_kws['figsize'] = (6, 6)
+                    fig, ax = plt.subplots(1, 1, **subplot_kws)
+                # LeaveOneOut以外のとき、クロスバリデーションごとに図作成
+                else:
+                    if 'figsize' not in subplot_kws.keys():
+                        subplot_kws['figsize'] = (6, (cv_num + 1) * 6)
+                    fig, ax = plt.subplots(cv_num + 1, 1, **subplot_kws)
 
             # クロスバリデーション
             y_true_all = []
@@ -386,10 +395,10 @@ class regplot():
                 # CV内結果をプロット(LeaveOneOutのときはプロットしない)
                 if not isLeaveOneOut:
                     score_cv_dict = {k: v[i] for k, v in score_all_dict.items()}
-                    cls._plot_pred_true(y_test, y_pred, hue_data=hue_test, hue_name=hue_name, ax=axes[i],
+                    cls._plot_pred_true(y_test, y_pred, hue_data=hue_test, hue_name=hue_name, ax=ax[i],
                                         linecolor=linecolor, rounddigit=rounddigit, score_dict=score_cv_dict,
                                         scatter_kws=scatter_kws)
-                    axes[i].set_title(f'Cross Validation No{i}')
+                    ax[i].set_title(f'Cross Validation No{i}')
                 # 全体プロット用データに追加
                 y_true_all.append(y_test)
                 y_pred_all.append(y_pred)
@@ -418,7 +427,7 @@ class regplot():
             score_dict = {f'{k}_train': np.mean(v) for k, v in score_dict.items()}
             score_stats_dict.update(score_dict)
             # 全体プロット
-            ax_all = axes if isLeaveOneOut else axes[cv_num]
+            ax_all = ax if isLeaveOneOut else ax[cv_num]
             cls._plot_pred_true(y_true_all, y_pred_all, hue_data=hue_all, hue_name=hue_name, ax=ax_all,
                                linecolor=linecolor, rounddigit=rounddigit, score_dict=score_stats_dict,
                                scatter_kws=scatter_kws)
@@ -590,7 +599,7 @@ class regplot():
             Number of emphasized data that are in the top posiotions for regression error.
         rank_col : list[str], optional
             Variables that are displayed with emphasized data that are in the top posiotions for regression error.
-        scores : {'r2', 'mae', 'mse', 'rmse', 'rmsle', 'max_error'} or list,, optional
+        scores : {'r2', 'mae', 'mse', 'rmse', 'rmsle', 'mape', 'max_error'} or list,, optional
             Regression score that are displayed at the lower right of the graph.
         cv_stats : {'mean', 'median', 'max', 'min'}, optional
             Statistical method of cross validation score that are displayed at the lower right of the graph.
@@ -712,6 +721,10 @@ class regplot():
                     neg_msle = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_mean_squared_log_error',
                                                            fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['rmsle'] = np.sqrt(-neg_msle)  # 正負を逆にしてルートをとる
+                elif scoring == 'mape':
+                    neg_mape = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_mean_absolute_percentage_error',
+                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
+                    score_all_dict['mape'] = -neg_mape  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'max_error':
                     neg_max_error = cross_val_score(estimator, X, y_true, cv=cv, scoring='max_error',
                                                            fit_params=fit_params, n_jobs=-1, **split_kws)
