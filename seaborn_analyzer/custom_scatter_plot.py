@@ -196,7 +196,7 @@ class regplot():
 
         Parameters
         ----------
-        estimator : estimator object implementing 'fit'
+        estimator : estimator object implementing ``fit``
             Regression estimator. This is assumed to implement the scikit-learn estimator interface.
         x : str or List[str]
             Explanatory variables.
@@ -227,7 +227,7 @@ class regplot():
         estimator_params : dict, optional
             Parameters passed to the regression estimator. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         fit_params : dict, optional
-            Parameters passed to the fit() method of the regression estimator, e.g. 'early_stopping_round' and 'eval_set' of XGBRegressor. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+            Parameters passed to the fit() method of the regression estimator, e.g. ``early_stopping_round`` and ``eval_set`` of XGBRegressor. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         subplot_kws : dict, optional
             Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize. Available only if ``axes`` is None. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
         scatter_kws: dict, optional
@@ -581,7 +581,7 @@ class regplot():
 
         Parameters
         ----------
-        estimator : estimator object implementing ‘fit’
+        estimator : estimator object implementing ``fit``
             Regression estimator. This is assumed to implement the scikit-learn estimator interface.
         x : str
             Explanatory variable.
@@ -610,7 +610,7 @@ class regplot():
         estimator_params : dict, optional
             Parameters passed to the regression estimator. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         fit_params : dict, optional
-            Parameters passed to the fit() method of the regression estimator, e.g. 'early_stopping_round' and 'eval_set' of XGBRegressor. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+            Parameters passed to the fit() method of the regression estimator, e.g. ``early_stopping_round`` and ``eval_set`` of XGBRegressor. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         subplot_kws : dict, optional
             Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
         scatter_kws: dict, optional
@@ -1059,7 +1059,7 @@ class regplot():
 
         Parameters
         ----------
-        estimator : estimator object implementing 'fit'
+        estimator : estimator object implementing ``fit``
             Regression estimator. This is assumed to implement the scikit-learn estimator interface.
         x : List[str]
             Explanatory variables.
@@ -1070,7 +1070,7 @@ class regplot():
         x_heat: List[str], optional
             X-axis and y-axis variables of heatmap. If None, use two variables in x from the front.
         scatter_hue : str, optional
-            Grouping variable that will produce points with different colors. Available only if plot_scatter is set to 'hue'.
+            Grouping variable that will produce points with different colors. Available only if plot_scatter is set to ``hue``.
         pair_sigmarange: float, optional
             Set the range of subplots. The lower limit is mean({x3, x4}) - pair_sigmarange * std({x3, x4}). The higher limit is mean({x3, x4}) + pair_sigmarange * std({x3, x4}). Available only if len(x) is bigger than 2.
         pair_sigmainterval: float, optional
@@ -1104,7 +1104,7 @@ class regplot():
         estimator_params : dict, optional
             Parameters passed to the regression estimator. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         fit_params : dict, optional
-            Parameters passed to the fit() method of the regression estimator, e.g. 'early_stopping_round' and 'eval_set' of XGBRegressor. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+            Parameters passed to the fit() method of the regression estimator, e.g. ``early_stopping_round`` and ``eval_set`` of XGBRegressor. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         subplot_kws: dict, optional
             Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
         heat_kws: dict, optional
@@ -1621,7 +1621,7 @@ class classplot():
 
         Parameters
         ----------
-        clf: classifier object implementing 'fit'
+        clf: classifier object implementing ``fit``
             Classifier. This is assumed to implement the scikit-learn estimator interface.
         x: List[str]
             Explanatory variables.
@@ -1644,23 +1644,23 @@ class classplot():
         rounddigit_x3: int, optional
             Round a number of y-axis valiable of subplots to a given precision in decimal digits.
         scatter_colors: List[str], optional
-            Set of colors for mapping the class labels. Available only if plot_scatter is set to 'class' or 'class_error'.
+            Set of colors for mapping the class labels. Available only if ``plot_scatter`` is set to 'class' or 'class_error'.
         true_marker: str, optional
-            Marker style of True label. Available only if plot_scatter is set to 'error' or 'class_error'. See https://matplotlib.org/stable/api/markers_api.html#module-matplotlib.markers
+            Marker style of True label. Available only if ``plot_scatter`` is set to 'error' or 'class_error'. See https://matplotlib.org/stable/api/markers_api.html#module-matplotlib.markers
         false_marker: str, optional
-            Marker style of False label. Available only if plot_scatter is set to 'error' or 'class_error'. See https://matplotlib.org/stable/api/markers_api.html#module-matplotlib.markers
+            Marker style of False label. Available only if ``plot_scatter`` is set to 'error' or 'class_error'. See https://matplotlib.org/stable/api/markers_api.html#module-matplotlib.markers
         cv : int, cross-validation generator, or an iterable, optional
             Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
         cv_seed: int, optional
             Seed for random number generator of cross validation.
         cv_group: str, optional
-            Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to 'groups' argument of cv.split(). Available only if cv is GroupKFold or LeaveOneGroupOut
+            Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to ``groups`` argument of cv.split(). Available only if cv is GroupKFold or LeaveOneGroupOut
         display_cv_indices: int, optional
             Cross validation index or indices to display.
         clf_params: dict, optional
             Parameters passed to the classifier. If the classifier is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         fit_params: dict, optional
-            Parameters passed to the fit() method of the classifier, e.g. 'early_stopping_round' and 'eval_set' of XGBClassifier. If the classifier is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+            Parameters passed to the fit() method of the classifier, e.g. ``early_stopping_round`` and ``eval_set`` of XGBClassifier. If the classifier is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         subplot_kws: dict, optional
             Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
         contourf_kws: dict, optional
@@ -1807,7 +1807,7 @@ class classplot():
 
         Parameters
         ----------
-        clf: classifier object implementing 'fit'
+        clf: classifier object implementing ``fit``
             Classifier. This is assumed to implement the scikit-learn estimator interface.
         x: List[str]
             Explanatory variables.
@@ -1838,23 +1838,23 @@ class classplot():
         proba_type: {'contourf', 'contour', 'imshow'}, optional
             Plotting type of probabiliity map. If 'contourf', mapped by matplotlib.pyplot.contourf(). If 'contour', mapped by matplotlib.pyplot.contour(). If 'imshow', mapped by matplotlib.pyplot.imshow(). 'imshow' is available only if the number of class labels is less than 4.
         scatter_colors: List[str], optional
-            Set of colors for mapping the class labels. Available only if plot_scatter is set to 'class' or 'class_error'.
+            Set of colors for mapping the class labels. Available only if ``plot_scatter`` is set to 'class' or 'class_error'.
         true_marker: str, optional
-            Marker style of True label. Available only if plot_scatter is set to 'error' or 'class_error'. See https://matplotlib.org/stable/api/markers_api.html#module-matplotlib.markers
+            Marker style of True label. Available only if ``plot_scatter`` is set to 'error' or 'class_error'. See https://matplotlib.org/stable/api/markers_api.html#module-matplotlib.markers
         false_marker: str, optional
-            Marker style of False label. Available only if plot_scatter is set to 'error' or 'class_error'. See https://matplotlib.org/stable/api/markers_api.html#module-matplotlib.markers
+            Marker style of False label. Available only if ``plot_scatter`` is set to 'error' or 'class_error'. See https://matplotlib.org/stable/api/markers_api.html#module-matplotlib.markers
         cv: int or sklearn.model_selection.*, optional
             Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
         cv_seed: int, optional
             Seed for random number generator of cross validation.
         cv_group: str, optional
-            Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to 'groups' argument of cv.split(). Available only if cv is GroupKFold or LeaveOneGroupOut
+            Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to ``groups`` argument of cv.split(). Available only if cv is GroupKFold or LeaveOneGroupOut
         display_cv_indices: int, optional
             Cross validation index or indices to display.
         clf_params: dict, optional
             Parameters passed to the classifier. If the classifier is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         fit_params: dict, optional
-            Parameters passed to the fit() method of the classifier, e.g. 'early_stopping_round' and 'eval_set' of XGBClassifier. If the classifier is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+            Parameters passed to the fit() method of the classifier, e.g. ``early_stopping_round`` and ``eval_set`` of XGBClassifier. If the classifier is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         subplot_kws: dict, optional
             Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
         contourf_kws: dict, optional

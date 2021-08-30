@@ -180,9 +180,9 @@ class CustomPairPlot():
         dropna : bool
             Drop missing values from the data before plotting.
         lower_kws : dict
-            Additional parameters passed to seaborn.PairGrid.map_lower(). If lowerkind is 'scatter', the arguments are applied to seaborn.scatterplot method of the lower subplots.
+            Additional parameters passed to seaborn.PairGrid.map_lower(). If ``lowerkind`` is 'scatter', the arguments are applied to seaborn.scatterplot method of the lower subplots.
         diag_kws : dict
-            Additional parameters passed to seaborn.PairGrid.map_diag(). If lowerkind is 'kde', the arguments are applied to seaborn.kdeplot method of the diagonal subplots.
+            Additional parameters passed to seaborn.PairGrid.map_diag(). If ``lowerkind`` is 'kde', the arguments are applied to seaborn.kdeplot method of the diagonal subplots.
         grid_kws : dict
             Additional parameters passed to seaborn.PairGrid.__init__() other than the above arguments. See https://seaborn.pydata.org/generated/seaborn.PairGrid.html
         """

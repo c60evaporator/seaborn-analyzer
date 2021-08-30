@@ -119,19 +119,19 @@ class hist():
         x : str, optional
             Variables that specify positions on the x. Available only if data is pd.DataFrame.
         hue : str, pd.Series, or pd.ndarray, optional
-            Semantic variable that is mapped to determine the color of plot elements. If data is pd.DataFrame, the argument must be key in data.
+            Semantic variable that is mapped to determine the color of plot elements. If ``data`` is pd.DataFrame, the argument must be key in data.
         dist : {'norm', 'lognorm', 'gamma', 't', 'expon', 'uniform', 'chi2', 'weibull'} or list, optional
             Type of fitting distribution or list of distrbutions.
         ax : matplotlib.axes.Axes, optional
             Pre-existing axes for the plot. Otherwise, call matplotlib.pyplot.gca() internally.
         binwidth : float, optional
-            Width of each bin, overrides bins.
+            Width of each bin, overrides ``bins``.
         bins : int, optional
             Generic bin parameter that can be the name of a reference rule, the number of bins, or the breaks of the bins. Passed to numpy.histogram_bin_edges().
         norm_hist : bool, optional
             If True, the histogram height shows a density rather than a count.
         floc : float, optional
-            Hold location parameter fixed to specified value. If None, location parameter is fitted by maximum likelihood estimation except when dist is 'weibull' or expon'. See https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.fit.html#scipy.stats.rv_continuous.fit
+            Hold location parameter fixed to specified value. If None, location parameter is fitted by maximum likelihood estimation except when ``dist`` is 'weibull' or expon'. See https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.fit.html#scipy.stats.rv_continuous.fit
         sigmarange : float, optional
             Set the x-axis view limits. The lower limit is -sigmarange * std(data) + mean(data). The higher limit is sigmarange * std(data) + mean(data).
         linecolor : str or List[str], optional
@@ -347,9 +347,9 @@ class hist():
         x : str, optional
             Variables that specify positions on the x. Available only if data is pd.DataFrame.
         hue : str, optional
-            Semantic variable that is mapped to determine the color of plot elements. Available only if data is pd.DataFrame
+            Semantic variable that is mapped to determine the color of plot elements. Available only if ``data`` is pd.DataFrame
         binwidth : float, optional
-            Width of each bin, overrides bins.
+            Width of each bin, overrides ``bins``.
         bins : int, optional
             Generic bin parameter that can be the name of a reference rule, the number of bins, or the breaks of the bins. Passed to numpy.histogram_bin_edges().
         norm_hist : bool, optional
