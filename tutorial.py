@@ -583,7 +583,7 @@ regplot.regression_heat_plot(XGBRegressor(), x=['2_between_30to60', '3_male_rati
                                          'eval_set': [(df[['2_between_30to60', '3_male_ratio', '5_household_member', 'latitude']].values, df['approval_rate'].values)],
                                          'verbose': 1})
 
-# %%
+# %% muscle-brain-tuningのテスト用
 from seaborn_analyzer import regplot
 from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
@@ -610,7 +610,8 @@ axes1[0].set_title(f'SVM\n\n{title_before}')
 axes2[0].set_title('RandomForest')
 plt.tight_layout()
 plt.show()
-# %%
+
+# %% legend_kws引数テスト用
 from seaborn_analyzer import regplot
 from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
