@@ -231,6 +231,7 @@ classplot.class_separator_plot(clf, ['petal_width', 'petal_length'], 'species', 
 |subplot_kws|オプション|dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
 |contourf_kws|オプション|dict|None|グラフ表示用の[matplotlib.pyplot.contourf](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.contourf.html)に渡す引数|
 |scatter_kws|オプション|dict|None|散布図用の[matplotlib.pyplot.scatter](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.scatter.html)に渡す引数|
+|legend_kws|オプション|dict|None|凡例用の[matplotlib.axes.Axes.legend](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html)に渡す引数|
 <br>
 
 ### class_proba_plotメソッド
@@ -276,6 +277,7 @@ classplot.class_proba_plot(clf, ['petal_width', 'petal_length'], 'species', iris
 |proba_cmap_dict|オプション|dict[str, str]|None|クラス確率図のカラーマップ(クラス名と[colormap](https://matplotlib.org/stable/tutorials/colors/colormaps.html)をdict指定)|
 |proba_type|オプション|str|'contourf'|クラス確率図の描画種類<br>(等高線'contourf', 'contour', or RGB画像'imshow')|
 |imshow_kws|オプション|dict|None|proba_type='imshow'のとき[matplotlib.pyplot.imshow](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.imshow.html)に渡す引数|
+|legend_kws|オプション|dict|None|凡例用の[matplotlib.axes.Axes.legend](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html)に渡す引数|
 <br>
 
 ### classplotクラス使用法詳細
@@ -318,6 +320,7 @@ regplot.linear_plot(x='petal_length', y='sepal_length', data=iris)
 |rounddigit|オプション|int|5|表示指標の小数丸め桁数|
 |plot_scores|オプション|bool|True|回帰式、ピアソンの相関係数およびp値の表示有無|
 |scatter_kws|オプション|dict|None|[seaborn.scatterplot](https://seaborn.pydata.org/generated/seaborn.scatterplot.html)に渡す引数|
+|legend_kws|オプション|dict|None|凡例用の[matplotlib.axes.Axes.legend](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html)に渡す引数|
 <br>
 
 ### regression_pred_trueメソッド
@@ -351,6 +354,7 @@ regplot.regression_pred_true(LinearRegression(), x=['altitude', 'latitude'], y='
 |fit_params|オプション|dict|None|学習時のパラメータをdict指定|
 |subplot_kws|オプション|dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
 |scatter_kws|オプション|dict|None|[seaborn.scatterplot](https://seaborn.pydata.org/generated/seaborn.scatterplot.html)に渡す引数|
+|legend_kws|オプション|dict|None|凡例用の[matplotlib.axes.Axes.legend](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html)に渡す引数|
 <br>
 
 ### regression_plot_1dメソッド
@@ -383,6 +387,7 @@ regplot.regression_plot_1d(SVR(), x='petal_length', y='sepal_length', data=iris)
 |fit_params|オプション|dict|None|学習時のパラメータをdict指定|
 |subplot_kws|オプション|dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
 |scatter_kws|オプション|dict|None|[seaborn.scatterplot](https://seaborn.pydata.org/generated/seaborn.scatterplot.html)に渡す引数|
+|legend_kws|オプション|dict|None|凡例用の[matplotlib.axes.Axes.legend](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html)に渡す引数|
 <br>
 
 ### regression_heat_plotメソッド
@@ -424,6 +429,7 @@ regplot.regression_heat_plot(LinearRegression(), x=['altitude', 'latitude'], y='
 |subplot_kws|オプション|dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
 |heat_kws|オプション|dict|None|ヒートマップ用の[seaborn.heatmap](https://seaborn.pydata.org/generated/seaborn.heatmap.html)に渡す引数|
 |scatter_kws|オプション|dict|None|散布図用の[matplotlib.pyplot.scatter](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.scatter.html)に渡す引数|
+|legend_kws|オプション|dict|None|凡例用の[matplotlib.axes.Axes.legend](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html)に渡す引数|
 <br>
 
 ### regplotクラス使用法詳細
