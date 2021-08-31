@@ -120,7 +120,7 @@ class regplot():
                 ax.text(x[i], y_true[i], rank_text, verticalalignment='center', horizontalalignment='left')
     
     @classmethod
-    def _scatterplot_ndarray(cls, x, x_name, y, y_name, hue_data, hue_name, ax, scatter_kws):
+    def _scatterplot_ndarray(cls, x, x_name, y, y_name, hue_data, hue_name, ax, scatter_kws, legend_kws):
         """
         np.ndarrayを入力として散布図表示(scatterplot)
         """
@@ -134,10 +134,14 @@ class regplot():
             data[hue_name] = pd.Series(hue_data)
         # 散布図プロット
         sns.scatterplot(x=x_name, y=y_name, data=data, ax=ax, hue=hue_name, **scatter_kws)
+        # 凡例追加
+        if 'title' not in legend_kws.keys():
+            legend_kws['title'] = hue_name 
+        ax.legend(**legend_kws)
 
     @classmethod
     def _plot_pred_true(cls, y_true, y_pred, hue_data=None, hue_name=None, ax=None, linecolor='red', linesplit=200, rounddigit=None,
-                        score_dict=None, scatter_kws=None):
+                        score_dict=None, scatter_kws=None, legend_kws=None):
         """
         予測値と実測値を、回帰評価指標とともにプロット
 
@@ -161,6 +165,10 @@ class regplot():
             表示指標の小数丸め桁数
         score_dict : dict[str, float]
             算出した評価指標一覧
+        scatter_kws : dict
+            Additional parameters passed to sns.scatterplot(), e.g. ``alpha``. See https://seaborn.pydata.org/generated/seaborn.scatterplot.html
+        legend_kws : dict
+            Additional parameters passed to ax.legend(), e.g. ``loc``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html
         """
         # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
         if ax is None:
@@ -173,7 +181,7 @@ class regplot():
             scatter_kws = {}
         
         # 散布図プロット
-        cls._scatterplot_ndarray(y_true, 'y_true', y_pred, 'y_pred', hue_data, hue_name, ax, scatter_kws)
+        cls._scatterplot_ndarray(y_true, 'y_true', y_pred, 'y_pred', hue_data, hue_name, ax, scatter_kws, legend_kws)
 
         # 予測値=実測値の線を作成
         true_min = np.amin(y_true)
@@ -189,7 +197,7 @@ class regplot():
     @classmethod
     def regression_pred_true(cls, estimator, x: List[str], y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=3,
                              rank_number=None, rank_col=None, scores='mae', cv_stats='mean', cv=None, cv_seed=42, ax=None,
-                             estimator_params=None, fit_params=None, subplot_kws=None, scatter_kws=None):
+                             estimator_params=None, fit_params=None, subplot_kws=None, scatter_kws=None, legend_kws=None):
 
         """
         Plot prediction vs. true scatter plots of any scikit-learn regression estimator
@@ -231,7 +239,9 @@ class regplot():
         subplot_kws : dict, optional
             Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize. Available only if ``axes`` is None. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
         scatter_kws: dict, optional
-            Additional parameters passed to sns.scatterplot(), e.g. alpha. See https://seaborn.pydata.org/generated/seaborn.scatterplot.html
+            Additional parameters passed to sns.scatterplot(), e.g. ``alpha``. See https://seaborn.pydata.org/generated/seaborn.scatterplot.html
+        legend_kws : dict
+            Additional parameters passed to ax.legend(), e.g. ``loc``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html
 
         Returns
         ----------
@@ -257,6 +267,9 @@ class regplot():
         # scatter_kwsがNoneなら空のdictを入力
         if scatter_kws is None:
             scatter_kws = {}
+        # legend_kwsがNoneなら空のdictを入力
+        if legend_kws is None:
+            legend_kws = {}
 
         # xをndarray化
         if isinstance(x, list):
@@ -290,7 +303,8 @@ class regplot():
                     rank_col_data = data[rank_col].values
             # 予測値と実測値プロット
             cls._plot_pred_true(y_true, y_pred, hue_data=hue_data, hue_name=hue_name, ax=ax,
-                                linecolor=linecolor, rounddigit=rounddigit, score_dict=score_dict, scatter_kws=scatter_kws)
+                                linecolor=linecolor, rounddigit=rounddigit, score_dict=score_dict,
+                                scatter_kws=scatter_kws, legend_kws=legend_kws)
             # 誤差上位を文字表示
             if rank_number is not None:
                 cls._rank_display(y_true, y_pred, rank_number, rank_col, rank_col_data, rounddigit=rounddigit)
@@ -397,7 +411,7 @@ class regplot():
                     score_cv_dict = {k: v[i] for k, v in score_all_dict.items()}
                     cls._plot_pred_true(y_test, y_pred, hue_data=hue_test, hue_name=hue_name, ax=ax[i],
                                         linecolor=linecolor, rounddigit=rounddigit, score_dict=score_cv_dict,
-                                        scatter_kws=scatter_kws)
+                                        scatter_kws=scatter_kws, legend_kws=legend_kws)
                     ax[i].set_title(f'Cross Validation No{i}')
                 # 全体プロット用データに追加
                 y_true_all.append(y_test)
@@ -430,7 +444,7 @@ class regplot():
             ax_all = ax if isLeaveOneOut else ax[cv_num]
             cls._plot_pred_true(y_true_all, y_pred_all, hue_data=hue_all, hue_name=hue_name, ax=ax_all,
                                linecolor=linecolor, rounddigit=rounddigit, score_dict=score_stats_dict,
-                               scatter_kws=scatter_kws)
+                               scatter_kws=scatter_kws, legend_kws=legend_kws)
             ax_all.set_title('All Cross Validations')
             # 誤差上位を文字表示
             if rank_number is not None:
@@ -440,7 +454,7 @@ class regplot():
 
     @classmethod
     def linear_plot(cls, x: str, y: str, data: pd.DataFrame, ax=None, hue=None, linecolor='red',
-                    rounddigit=5, plot_scores=True, scatter_kws=None):
+                    rounddigit=5, plot_scores=True, scatter_kws=None, legend_kws=None):
         """
         Plot linear regression line and calculate Pearson correlation coefficient.
 
@@ -463,7 +477,9 @@ class regplot():
         plot_scores: bool, optional
             If True, display Pearson correlation coefficient and the p-value.
         scatter_kws: dict, optional
-            Additional parameters passed to sns.scatterplot(), e.g. alpha. See https://seaborn.pydata.org/generated/seaborn.scatterplot.html
+            Additional parameters passed to sns.scatterplot(), e.g. ``alpha``. See https://seaborn.pydata.org/generated/seaborn.scatterplot.html
+        legend_kws : dict
+            Additional parameters passed to ax.legend(), e.g. ``loc``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html
 
         Returns
         ----------
@@ -473,6 +489,9 @@ class regplot():
         # scatter_kwsがNoneなら空のdictを入力
         if scatter_kws is None:
             scatter_kws = {}
+        # legend_kwsがNoneなら空のdictを入力
+        if legend_kws is None:
+            legend_kws = {}
 
         # xをndarray化
         if isinstance(x, str):
@@ -487,6 +506,10 @@ class regplot():
 
         # まずは散布図プロット
         ax = sns.scatterplot(x=x, y=y, data=data, ax=ax, hue=hue, **scatter_kws)
+        # 凡例追加
+        if 'title' not in legend_kws.keys():
+            legend_kws['title'] = hue 
+        ax.legend(**legend_kws)
 
         # 線形回帰モデル作成
         lr = LinearRegression()
@@ -517,7 +540,7 @@ class regplot():
 
     @classmethod
     def _estimator_plot_1d(cls, trained_estimator, X, y_true, hue_data=None, hue_name=None, ax=None, linecolor='red', linesplit=1000, rounddigit=None,
-                       score_dict=None, scatter_kws=None):
+                       score_dict=None, scatter_kws=None, legend_kws=None):
         """
         1次説明変数回帰曲線を、回帰評価指標とともにプロット
 
@@ -544,7 +567,9 @@ class regplot():
         score_dict : dict[str, float]
             算出した評価指標一覧
         scatter_kws: dict, optional
-            散布図用のsns.scatterplot()に渡す引数
+            Additional parameters passed to sns.scatterplot(), e.g. ``alpha``. See https://seaborn.pydata.org/generated/seaborn.scatterplot.html
+        legend_kws : dict
+            Additional parameters passed to ax.legend(), e.g. ``loc``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html
         """
         # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
         if ax is None:
@@ -555,9 +580,12 @@ class regplot():
         # scatter_kwsがNoneなら空のdictを入力
         if scatter_kws is None:
             scatter_kws = {}
+        # legend_kwsがNoneなら空のdictを入力
+        if legend_kws is None:
+            legend_kws = {}
         
         # 散布図プロット
-        cls._scatterplot_ndarray(np.ravel(X), 'X', y_true, 'Y', hue_data, hue_name, ax, scatter_kws)
+        cls._scatterplot_ndarray(np.ravel(X), 'X', y_true, 'Y', hue_data, hue_name, ax, scatter_kws, legend_kws)
 
         # 回帰モデルの線を作成
         xmin = np.amin(X)
@@ -575,7 +603,7 @@ class regplot():
     @classmethod
     def regression_plot_1d(cls, estimator, x: str, y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=3,
                            rank_number=None, rank_col=None, scores='mae', cv_stats='mean', cv=None, cv_seed=42,
-                           estimator_params=None, fit_params=None, subplot_kws=None, scatter_kws=None):
+                           estimator_params=None, fit_params=None, subplot_kws=None, scatter_kws=None, legend_kws=None):
         """
         Plot regression lines of any scikit-learn regressor with 1D explanatory variable.
 
@@ -596,7 +624,7 @@ class regplot():
         rounddigit: int, optional
             Round a number of score to a given precision in decimal digits.
         rank_number : int, optional
-            Number of emphasized data that are in the top posiotions for regression error.
+            Number of emphasized data that are in the top positions for regression error.
         rank_col : list[str], optional
             Variables that are displayed with emphasized data that are in the top posiotions for regression error.
         scores : {'r2', 'mae', 'mse', 'rmse', 'rmsle', 'mape', 'max_error'} or list,, optional
@@ -612,9 +640,11 @@ class regplot():
         fit_params : dict, optional
             Parameters passed to the fit() method of the regression estimator, e.g. ``early_stopping_round`` and ``eval_set`` of XGBRegressor. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         subplot_kws : dict, optional
-            Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
+            Additional parameters passed to matplotlib.pyplot.subplots(), e.g. ``figsize``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
         scatter_kws: dict, optional
-            Additional parameters passed to sns.scatterplot(), e.g. alpha. See https://seaborn.pydata.org/generated/seaborn.scatterplot.html
+            Additional parameters passed to sns.scatterplot(), e.g. ``alpha``. See https://seaborn.pydata.org/generated/seaborn.scatterplot.html
+        legend_kws : dict
+            Additional parameters passed to ax.legend(), e.g. ``loc``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html
 
         Returns
         ----------
@@ -640,6 +670,9 @@ class regplot():
         # scatter_kwsがNoneなら空のdictを入力
         if scatter_kws is None:
             scatter_kws = {}
+        # legend_kwsがNoneなら空のdictを入力
+        if legend_kws is None:
+            legend_kws = {}
         
         # xをndarray化
         if isinstance(x, str):
@@ -671,7 +704,8 @@ class regplot():
                     rank_col_data = data[rank_col].values
             # 回帰線プロット
             cls._estimator_plot_1d(estimator, X, y_true, hue_data=hue_data, hue_name=hue_name,
-                               linecolor=linecolor, rounddigit=rounddigit, score_dict=score_dict, scatter_kws=scatter_kws)
+                               linecolor=linecolor, rounddigit=rounddigit, score_dict=score_dict,
+                               scatter_kws=scatter_kws, legend_kws=legend_kws)
             # 誤差上位を文字表示
             if rank_number is not None:
                 cls._rank_display(y_true, y_pred, rank_number, rank_col, rank_col_data, x=X, rounddigit=rounddigit)
@@ -761,7 +795,8 @@ class regplot():
                 # CV内結果をプロット
                 score_cv_dict = {k: v[i] for k, v in score_all_dict.items()}
                 cls._estimator_plot_1d(estimator, X_test, y_test, hue_data=hue_test, hue_name=hue_name, ax=axes[i],
-                                   linecolor=linecolor, rounddigit=rounddigit, score_dict=score_cv_dict, scatter_kws=scatter_kws)
+                                   linecolor=linecolor, rounddigit=rounddigit, score_dict=score_cv_dict,
+                                   scatter_kws=scatter_kws, legend_kws=legend_kws)
                 # 誤差上位を文字表示
                 if rank_number is not None:
                     cls._rank_display(y_test, estimator.predict(X_test), rank_number, rank_col, rank_col_test, x=X_test, ax=axes[i], rounddigit=rounddigit)
@@ -789,7 +824,8 @@ class regplot():
             # 全体プロット
             ax_all = axes[cv_num]
             cls._estimator_plot_1d(estimator, X, y_true, hue_data=hue_data, hue_name=hue_name, ax=ax_all,
-                               linecolor=linecolor, rounddigit=rounddigit, score_dict=score_stats_dict, scatter_kws=scatter_kws)
+                               linecolor=linecolor, rounddigit=rounddigit, score_dict=score_stats_dict,
+                               scatter_kws=scatter_kws, legend_kws=legend_kws)
             ax_all.set_title('All Cross Validations')
             return score_stats_dict
 
@@ -798,7 +834,7 @@ class regplot():
                           x1_start, x1_end, x2_start, x2_end, heat_division, other_x,
                           vmin, vmax, ax, plot_scatter, maxerror, rank_dict, scatter_hue_dict,
                           rounddigit_rank, rounddigit_x1, rounddigit_x2,
-                          heat_kws=None, scatter_kws=None):
+                          heat_kws=None, scatter_kws=None, legend_kws=None):
         """
         回帰予測値ヒートマップと各種散布図の表示
         (regression_heat_plotメソッドの描画処理部分)
@@ -878,7 +914,7 @@ class regplot():
                 scatter_data = pd.DataFrame(np.stack([x1_scatter, x2_scatter, data[hue_name]], 1), columns=['x1', 'x2', hue_name])
                 for name, group in scatter_data.groupby(hue_name):
                     ax.scatter(group['x1'].values, group['x2'].values, label=name, c=scatter_hue_dict[name], **scatter_kws)
-                ax.legend()
+                ax.legend(**legend_kws)
         
         # 誤差上位を文字表示
         df_rank = data[data.index.isin(rank_dict.keys())]
@@ -899,7 +935,7 @@ class regplot():
                        vmin=None, vmax=None, plot_scatter='true', maxerror=None,
                        rank_number=None, rank_col=None, rank_col_data=None, scatter_hue_dict=None,
                        rounddigit_rank=None, rounddigit_x1=None, rounddigit_x2=None, rounddigit_x3=None,
-                       cv_index=None, subplot_kws=None, heat_kws=None, scatter_kws=None):
+                       cv_index=None, subplot_kws=None, heat_kws=None, scatter_kws=None, legend_kws=None):
         """
         回帰予測値ヒートマップ表示の、説明変数の数に応じた分岐処理
         (regression_heat_plotメソッド処理のうち、説明変数の数に応じたデータ分割等を行う)
@@ -1032,7 +1068,7 @@ class regplot():
                                       x1_start, x1_end, x2_start, x2_end, heat_division, other_x,
                                       vmin, vmax, ax, plot_scatter, maxerror, rank_dict, scatter_hue_dict,
                                       rounddigit_rank, rounddigit_x1, rounddigit_x2,
-                                      heat_kws=heat_kws, scatter_kws=scatter_kws)
+                                      heat_kws=heat_kws, scatter_kws=scatter_kws, legend_kws=legend_kws)
 
                 # グラフタイトルとして、ヒートマップ非使用変数の範囲を記載（説明変数が3次元以上のとき）
                 if x_num == 3:
@@ -1049,11 +1085,15 @@ class regplot():
         plt.tight_layout()
 
     @classmethod
-    def regression_heat_plot(cls, estimator, x: List[str], y: str, data: pd.DataFrame, x_heat: List[str] = None, scatter_hue=None,
-                             pair_sigmarange = 1.5, pair_sigmainterval = 0.5, heat_extendsigma = 0.5, heat_division = 30, color_extendsigma = 0.5,
-                             plot_scatter = 'true', rounddigit_rank=3, rounddigit_x1=2, rounddigit_x2=2, rounddigit_x3=2, rank_number=None, rank_col=None,
+    def regression_heat_plot(cls, estimator, x: List[str], y: str, data: pd.DataFrame,
+                             x_heat: List[str] = None, scatter_hue=None,
+                             pair_sigmarange = 1.5, pair_sigmainterval = 0.5, heat_extendsigma = 0.5, 
+                             heat_division = 30, color_extendsigma = 0.5,
+                             plot_scatter = 'true', rounddigit_rank=3, rounddigit_x1=2, rounddigit_x2=2, rounddigit_x3=2,
+                             rank_number=None, rank_col=None,
                              cv=None, cv_seed=42, display_cv_indices = 0,
-                             estimator_params=None, fit_params=None, subplot_kws=None, heat_kws=None, scatter_kws=None):
+                             estimator_params=None, fit_params=None,
+                             subplot_kws=None, heat_kws=None, scatter_kws=None, legend_kws=None):
         """
         Plot regression heatmaps of any scikit-learn regressor with 2 to 4D explanatory variables.
 
@@ -1068,19 +1108,19 @@ class regplot():
         data : pd.DataFrame
             Input data structure.
         x_heat: List[str], optional
-            X-axis and y-axis variables of heatmap. If None, use two variables in x from the front.
+            X-axis and y-axis variables of heatmap. If None, use two variables in ``x`` from the front.
         scatter_hue : str, optional
             Grouping variable that will produce points with different colors. Available only if plot_scatter is set to ``hue``.
         pair_sigmarange: float, optional
-            Set the range of subplots. The lower limit is mean({x3, x4}) - pair_sigmarange * std({x3, x4}). The higher limit is mean({x3, x4}) + pair_sigmarange * std({x3, x4}). Available only if len(x) is bigger than 2.
+            Set the range of subplots. The lower limit is mean({x3, x4}) - ``pair_sigmarange`` * std({x3, x4}). The higher limit is mean({x3, x4}) + ``pair_sigmarange`` * std({x3, x4}). Available only if len(x) is bigger than 2.
         pair_sigmainterval: float, optional
-            Set the interval of subplots. For example, if pair_sigmainterval is set to 0.5 and pair_sigmarange is set to 1.0, The ranges of subplots are lower than μ-1σ, μ-1σ to μ-0.5σ, μ-0.5σ to μ, μ to μ+0.5σ, μ+0.5σ to μ+1σ, and higher than μ+1σ. Available only if len(x) is bigger than 2.
+            Set the interval of subplots. For example, if ``pair_sigmainterval`` is set to 0.5 and ``pair_sigmarange`` is set to 1.0, The ranges of subplots are lower than μ-1σ, μ-1σ to μ-0.5σ, μ-0.5σ to μ, μ to μ+0.5σ, μ+0.5σ to μ+1σ, and higher than μ+1σ. Available only if len(x) is bigger than 2.
         heat_extendsigma: float, optional
-            Set the axis view limits of the heatmap. The lower limit is min({x1, x2}) - std({x1, x2}) * heat_extendsigma. The higher limit is max({x1, x2}) + std({x1, x2}) * heat_extendsigma
+            Set the axis view limits of the heatmap. The lower limit is min({x1, x2}) - std({x1, x2}) * ``heat_extendsigma``. The higher limit is max({x1, x2}) + std({x1, x2}) * ``heat_extendsigma``
         heat_division: int, optional
             Resolution of the heatmap.
         color_extendsigma: float, optional
-            Set the colormap limits of the heatmap. The lower limit is min(y_ture) - std(y_ture) * color_extendsigma. The higher limit is max(y_ture) - std(y_ture) * color_extendsigma.
+            Set the colormap limits of the heatmap. The lower limit is min(y_ture) - std(y_ture) * ``color_extendsigma``. The higher limit is max(y_ture) - std(y_ture) * ``color_extendsigma``.
         plot_scatter: {'error', 'true', 'hue'}, optional
             Color decision of scatter plot. If 'error', to be mapped to colors using error value. If 'true', to be mapped to colors using y_ture value. If 'hue', to be mapped to colors using scatter_hue variable. If None, no scatter.
         rounddigit_rank: int, optional
@@ -1106,11 +1146,13 @@ class regplot():
         fit_params : dict, optional
             Parameters passed to the fit() method of the regression estimator, e.g. ``early_stopping_round`` and ``eval_set`` of XGBRegressor. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         subplot_kws: dict, optional
-            Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
+            Additional parameters passed to matplotlib.pyplot.subplots(), e.g. ``figsize``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
         heat_kws: dict, optional
-            Additional parameters passed to sns.heatmap(), e.g. cmap. See https://seaborn.pydata.org/generated/seaborn.heatmap.html
+            Additional parameters passed to sns.heatmap(), e.g. ``cmap``. See https://seaborn.pydata.org/generated/seaborn.heatmap.html
         scatter_kws: dict, optional
-            Additional parameters passed to matplotlib.pyplot.scatter(), e.g. alpha. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.scatter.html
+            Additional parameters passed to matplotlib.pyplot.scatter(), e.g. ``alpha``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.scatter.html
+        legend_kws : dict
+            Additional parameters passed to ax.legend(), e.g. ``loc``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html
         """
         # 説明変数xの次元が2～4以外ならエラーを出す
         if len(x) < 2 or len(x) > 4:
@@ -1136,6 +1178,9 @@ class regplot():
         # scatter_kwsがNoneなら空のdictを入力
         if scatter_kws is None:
             scatter_kws = {}
+        # legend_kwsがNoneなら空のdictを入力
+        if legend_kws is None:
+            legend_kws = {}
             
         # xをndarray化
         if isinstance(x, list):
@@ -1204,7 +1249,7 @@ class regplot():
                                vmin=vmin, vmax=vmax, plot_scatter=plot_scatter, maxerror=maxerror,
                                rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_data, scatter_hue_dict=scatter_hue_dict,
                                rounddigit_rank=rounddigit_rank, rounddigit_x1=rounddigit_x1, rounddigit_x2=rounddigit_x2, rounddigit_x3=rounddigit_x3,
-                               cv_index=None, subplot_kws=subplot_kws, heat_kws=heat_kws, scatter_kws=scatter_kws)
+                               cv_index=None, subplot_kws=subplot_kws, heat_kws=heat_kws, scatter_kws=scatter_kws, legend_kws=legend_kws)
             
         # クロスバリデーション実施時(分割ごとに別々にプロット＆指標算出)
         if cv is not None:
@@ -1260,7 +1305,7 @@ class regplot():
                                    vmin=vmin, vmax=vmax, plot_scatter = plot_scatter, maxerror=maxerror,
                                    rank_number=rank_number, rank_col=rank_col, rank_col_data=rank_col_test, scatter_hue_dict=scatter_hue_dict,
                                    rounddigit_rank=rounddigit_rank, rounddigit_x1=rounddigit_x1, rounddigit_x2=rounddigit_x2, rounddigit_x3=rounddigit_x3,
-                                   cv_index=i, subplot_kws=subplot_kws, heat_kws=heat_kws, scatter_kws=scatter_kws)
+                                   cv_index=i, subplot_kws=subplot_kws, heat_kws=heat_kws, scatter_kws=scatter_kws, legend_kws=legend_kws)
 
 
 class classplot():
@@ -1306,7 +1351,7 @@ class classplot():
                        x1_start, x1_end, x2_start, x2_end, other_x, chart_scale,
                        proba_pred_col, proba_class_indices, ax, plot_border, plot_scatter,
                        scatter_color_dict, scatter_marker_dict, proba_cmap_dict, proba_type,
-                       contourf_kws=None, imshow_kws=None, scatter_kws=None):
+                       contourf_kws=None, imshow_kws=None, scatter_kws=None, legend_kws=None):
         """
         分類チャート（決定境界図 or クラス確率図）と各種散布図の表示
         (class_separator_plotあるいはclass_prob_plotメソッドの描画処理部分)
@@ -1456,7 +1501,7 @@ class classplot():
                                marker=scatter_marker_dict[name[1]],
                                **scatter_kws)
             # 凡例表示
-            ax.legend()
+            ax.legend(**legend_kws)
 
         # 軸ラベルを追加
         ax.set_xlabel(x_chart[0])
@@ -1466,9 +1511,9 @@ class classplot():
     def _class_chart_plot(cls, trained_clf, X, y_pred, y_true, x_chart, x_not_chart, x_chart_indices,
                        pair_sigmarange=2.0, pair_sigmainterval=0.5, chart_extendsigma=0.5, chart_scale=1,
                        proba_pred = None, proba_class_indices = None, plot_border=True, plot_scatter='class', 
-                       scatter_color_dict=None, scatter_marker_dict=None, proba_cmap_dict=None,  proba_type=None,
-                       rounddigit_x3=None,
-                       cv_index=None, subplot_kws=None, contourf_kws=None, imshow_kws=None, scatter_kws=None):
+                       scatter_color_dict=None, scatter_marker_dict=None, proba_cmap_dict=None, proba_type=None,
+                       rounddigit_x3=None, cv_index=None,
+                       subplot_kws=None, contourf_kws=None, imshow_kws=None, scatter_kws=None, legend_kws=None):
         """
         分類チャート（決定境界図 or クラス確率図）表示の、説明変数の数に応じた分岐処理
         (class_separator_plotあるいはclass_prob_plotメソッド処理のうち、説明変数の数に応じたデータ分割等を行う)
@@ -1593,7 +1638,8 @@ class classplot():
                                       x1_start, x1_end, x2_start, x2_end, other_x, chart_scale,
                                       proba_pred_col, proba_class_indices, ax, plot_border, plot_scatter,
                                       scatter_color_dict, scatter_marker_dict, proba_cmap_dict,  proba_type,
-                                      contourf_kws=contourf_kws, imshow_kws=imshow_kws, scatter_kws=scatter_kws)
+                                      contourf_kws=contourf_kws, imshow_kws=imshow_kws, scatter_kws=scatter_kws,
+                                      legend_kws=legend_kws)
 
                 # グラフタイトルとして、チャート非使用変数の範囲を記載（説明変数が3次元以上のとき）
                 if x_num == 3:
@@ -1615,7 +1661,8 @@ class classplot():
                              plot_scatter = 'class_error', rounddigit_x3 = 2,
                              scatter_colors = None, true_marker = 'o', false_marker = 'x',
                              cv=None, cv_seed=42, cv_group=None, display_cv_indices = 0,
-                             clf_params=None, fit_params=None, subplot_kws=None, contourf_kws=None, scatter_kws=None):
+                             clf_params=None, fit_params=None,
+                             subplot_kws=None, contourf_kws=None, scatter_kws=None, legend_kws=None):
         """
         Plot class separation lines of any scikit-learn classifier with 2 to 4D explanatory variables.
 
@@ -1630,11 +1677,11 @@ class classplot():
         data: pd.DataFrame
             Input data structure.
         x_chart: List[str], optional
-            X-axis and y-axis variables of separation map. If None, use two variables in x from the front.
+            X-axis and y-axis variables of separation map. If None, use two variables in ``x`` from the front.
         pair_sigmarange: float, optional
-            Set the range of subplots. The lower limit is mean({x3, x4}) - pair_sigmarange * std({x3, x4}). The higher limit is mean({x3, x4}) + pair_sigmarange * std({x3, x4}). Available only if len(x) is bigger than 2.
+            Set the range of subplots. The lower limit is mean({x3, x4}) - ``pair_sigmarange`` * std({x3, x4}). The higher limit is mean({x3, x4}) + ``pair_sigmarange`` * std({x3, x4}). Available only if len(x) is bigger than 2.
         pair_sigmainterval: float, optional
-            Set the interval of subplots. For example, if pair_sigmainterval is set to 0.5 and pair_sigmarange is set to 1.0, The ranges of subplots are lower than μ-1σ, μ-1σ to μ-0.5σ, μ-0.5σ to μ, μ to μ+0.5σ, μ+0.5σ to μ+1σ, and higher than μ+1σ. Available only if len(x) is bigger than 2.
+            Set the interval of subplots. For example, if ``pair_sigmainterval`` is set to 0.5 and ``pair_sigmarange`` is set to 1.0, The ranges of subplots are lower than μ-1σ, μ-1σ to μ-0.5σ, μ-0.5σ to μ, μ to μ+0.5σ, μ+0.5σ to μ+1σ, and higher than μ+1σ. Available only if len(x) is bigger than 2.
         chart_extendsigma: float, optional
             Set the axis view limits of the separation map. The lower limit is min({x1, x2}) - std({x1, x2}) * chart_extendsigma. The higher limit is max({x1, x2}) + std({x1, x2}) * chart_extendsigma
         chart_scale: int, optional
@@ -1654,7 +1701,7 @@ class classplot():
         cv_seed: int, optional
             Seed for random number generator of cross validation.
         cv_group: str, optional
-            Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to ``groups`` argument of cv.split(). Available only if cv is GroupKFold or LeaveOneGroupOut
+            Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to ``groups`` argument of cv.split(). Available only if ``cv`` is GroupKFold or LeaveOneGroupOut
         display_cv_indices: int, optional
             Cross validation index or indices to display.
         clf_params: dict, optional
@@ -1662,11 +1709,13 @@ class classplot():
         fit_params: dict, optional
             Parameters passed to the fit() method of the classifier, e.g. ``early_stopping_round`` and ``eval_set`` of XGBClassifier. If the classifier is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         subplot_kws: dict, optional
-            Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
+            Additional parameters passed to matplotlib.pyplot.subplots(), e.g. ``figsize.`` See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
         contourf_kws: dict, optional
-            Additional parameters passed to matplotlib.pyplot.contourf(), e.g. alpha. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.contourf.html
+            Additional parameters passed to matplotlib.pyplot.contourf(), e.g. ``alpha``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.contourf.html
         scatter_kws: dict, optional
-            Additional parameters passed to matplotlib.pyplot.scatter(), e.g. alpha. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.scatter.html
+            Additional parameters passed to matplotlib.pyplot.scatter(), e.g. ``alpha``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.scatter.html
+        legend_kws : dict
+            Additional parameters passed to ax.legend(), e.g. ``loc``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html
         """
         # 説明変数xの次元が2～4以外ならエラーを出す
         if len(x) < 2 or len(x) > 4:
@@ -1692,6 +1741,9 @@ class classplot():
         # scatter_kwsがNoneなら空のdictを入力
         if scatter_kws is None:
             scatter_kws = {}
+        # legend_kwsがNoneなら空のdictを入力
+        if legend_kws is None:
+            legend_kws = {}
         
         # xをndarray化
         if isinstance(x, list):
@@ -1743,8 +1795,8 @@ class classplot():
                                pair_sigmarange = pair_sigmarange, pair_sigmainterval=pair_sigmainterval, chart_extendsigma=chart_extendsigma, chart_scale=chart_scale,
                                proba_pred = None, proba_class_indices = None, plot_border = True, plot_scatter = plot_scatter,
                                scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict, proba_cmap_dict=None, proba_type=None,
-                               rounddigit_x3=rounddigit_x3,
-                               cv_index=None, subplot_kws=subplot_kws, contourf_kws=contourf_kws, imshow_kws=None, scatter_kws=scatter_kws)
+                               rounddigit_x3=rounddigit_x3, cv_index=None,
+                               subplot_kws=subplot_kws, contourf_kws=contourf_kws, imshow_kws=None, scatter_kws=scatter_kws, legend_kws=legend_kws)
             
         # クロスバリデーション実施時(分割ごとに別々にプロット＆指標算出)
         if cv is not None:
@@ -1791,8 +1843,8 @@ class classplot():
                                    pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, chart_extendsigma=chart_extendsigma, chart_scale=chart_scale,
                                    proba_pred = None, proba_class_indices = None, plot_border = True, plot_scatter = plot_scatter,
                                    scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict, proba_cmap_dict=None, proba_type=None,
-                                   rounddigit_x3=rounddigit_x3,
-                                   cv_index=cv_index, subplot_kws=subplot_kws, contourf_kws=contourf_kws, imshow_kws=None, scatter_kws=scatter_kws)
+                                   rounddigit_x3=rounddigit_x3, cv_index=cv_index,
+                                   subplot_kws=subplot_kws, contourf_kws=contourf_kws, imshow_kws=None, scatter_kws=scatter_kws, legend_kws=legend_kws)
 
     @classmethod
     def class_proba_plot(cls, clf, x: List[str], y: str, data: pd.DataFrame, x_chart: List[str] = None,
@@ -1801,7 +1853,8 @@ class classplot():
                          proba_class = None, proba_cmap_dict = None, proba_type = 'contourf',
                          scatter_colors = None, true_marker = 'o', false_marker = 'x',
                          cv=None, cv_seed=42, cv_group=None, display_cv_indices = 0,
-                         clf_params=None, fit_params=None, subplot_kws=None, contourf_kws=None, imshow_kws=None, scatter_kws=None):
+                         clf_params=None, fit_params=None,
+                         subplot_kws=None, contourf_kws=None, imshow_kws=None, scatter_kws=None, legend_kws=None):
         """
         Plot class prediction probability of any scikit-learn classifier with 2 to 4D explanatory variables.
 
@@ -1816,13 +1869,13 @@ class classplot():
         data: pd.DataFrame
             Input data structure.
         x_chart: List[str], optional
-            X-axis and y-axis variables of separation map. If None, use two variables in x from the front.
+            X-axis and y-axis variables of separation map. If None, use two variables in ``x`` from the front.
         pair_sigmarange: float, optional
-            Set the range of subplots. The lower limit is mean({x3, x4}) - pair_sigmarange * std({x3, x4}). The higher limit is mean({x3, x4}) + pair_sigmarange * std({x3, x4}). Available only if len(x) is bigger than 2.
+            Set the range of subplots. The lower limit is mean({x3, x4}) - ``pair_sigmarange`` * std({x3, x4}). The higher limit is mean({x3, x4}) + ``pair_sigmarange`` * std({x3, x4}). Available only if len(x) is bigger than 2.
         pair_sigmainterval: float, optional
-            Set the interval of subplots. For example, if pair_sigmainterval is set to 0.5 and pair_sigmarange is set to 1.0, The ranges of subplots are lower than μ-1σ, μ-1σ to μ-0.5σ, μ-0.5σ to μ, μ to μ+0.5σ, μ+0.5σ to μ+1σ, and higher than μ+1σ. Available only if len(x) is bigger than 2.
+            Set the interval of subplots. For example, if ``pair_sigmainterval`` is set to 0.5 and ``pair_sigmarange`` is set to 1.0, The ranges of subplots are lower than μ-1σ, μ-1σ to μ-0.5σ, μ-0.5σ to μ, μ to μ+0.5σ, μ+0.5σ to μ+1σ, and higher than μ+1σ. Available only if len(x) is bigger than 2.
         chart_extendsigma: float, optional
-            Set the axis view limits of the separation map. The lower limit is min({x1, x2}) - std({x1, x2}) * chart_extendsigma. The higher limit is max({x1, x2}) + std({x1, x2}) * chart_extendsigma
+            Set the axis view limits of the separation map. The lower limit is min({x1, x2}) - std({x1, x2}) * ``chart_extendsigma``. The higher limit is max({x1, x2}) + std({x1, x2}) * ``chart_extendsigma``
         chart_scale: int, optional
             Set the resolution of the separation lines. If plotting speed is slow, we reccomend setting chart_scale to 2. We DON'T reccomend setting it to larger than 3 because of jaggies.
         plot_border: bool, optional
@@ -1848,7 +1901,7 @@ class classplot():
         cv_seed: int, optional
             Seed for random number generator of cross validation.
         cv_group: str, optional
-            Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to ``groups`` argument of cv.split(). Available only if cv is GroupKFold or LeaveOneGroupOut
+            Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to ``groups`` argument of cv.split(). Available only if ``cv`` is GroupKFold or LeaveOneGroupOut
         display_cv_indices: int, optional
             Cross validation index or indices to display.
         clf_params: dict, optional
@@ -1856,13 +1909,15 @@ class classplot():
         fit_params: dict, optional
             Parameters passed to the fit() method of the classifier, e.g. ``early_stopping_round`` and ``eval_set`` of XGBClassifier. If the classifier is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         subplot_kws: dict, optional
-            Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
+            Additional parameters passed to matplotlib.pyplot.subplots(), e.g. ``figsize``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
         contourf_kws: dict, optional
             Additional parameters passed to matplotlib.pyplot.contourf() if proba_type is set to 'contourf', or additional parameters passed to matplotlib.pyplot.contour() if proba_type is set to 'contour'. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.contourf.html or https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.contour.html
         imshow_kws: dict, optional
-            Additional parameters passed to matplotlib.pyplot.imshow(), e.g. alpha. Available only if proba_type is set to 'imshow'. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.imshow.html
+            Additional parameters passed to matplotlib.pyplot.imshow(), e.g. ``alpha``. Available only if proba_type is set to 'imshow'. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.imshow.html
         scatter_kws: dict, optional
-            Additional parameters passed to matplotlib.pyplot.scatter(), e.g. alpha. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.scatter.html
+            Additional parameters passed to matplotlib.pyplot.scatter(), e.g. ``alpha``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.scatter.html
+        legend_kws : dict
+            Additional parameters passed to ax.legend(), e.g. ``loc``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html
         """
         # 説明変数xの次元が2～4以外ならエラーを出す
         if len(x) < 2 or len(x) > 4:
@@ -1891,6 +1946,9 @@ class classplot():
         # scatter_kwsがNoneなら空のdictを入力
         if scatter_kws is None:
             scatter_kws = {}
+        # legend_kwsがNoneなら空のdictを入力
+        if legend_kws is None:
+            legend_kws = {}
 
         # xをndarray化
         if isinstance(x, list):
@@ -1970,11 +2028,11 @@ class classplot():
             # https://qiita.com/rawHam/items/3bcb6a68a533f2b82a85
             # クラス確率図をプロット
             cls._class_chart_plot(clf, X, y_pred, y_true, x_chart, x_not_chart, x_chart_indices,
-                               pair_sigmarange = pair_sigmarange, pair_sigmainterval=pair_sigmainterval, chart_extendsigma=chart_extendsigma, chart_scale=chart_scale,
-                               proba_pred = proba_pred, proba_class_indices = proba_class_indices, plot_border = plot_border, plot_scatter = plot_scatter,
-                               scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict, proba_cmap_dict=proba_cmap_dict, proba_type = proba_type,
-                               rounddigit_x3=rounddigit_x3,
-                               cv_index=None, subplot_kws=subplot_kws, contourf_kws=contourf_kws, imshow_kws=imshow_kws, scatter_kws=scatter_kws)
+                                pair_sigmarange = pair_sigmarange, pair_sigmainterval=pair_sigmainterval, chart_extendsigma=chart_extendsigma, chart_scale=chart_scale,
+                                proba_pred = proba_pred, proba_class_indices = proba_class_indices, plot_border = plot_border, plot_scatter = plot_scatter,
+                                scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict, proba_cmap_dict=proba_cmap_dict, proba_type = proba_type,
+                                rounddigit_x3=rounddigit_x3, cv_index=None,
+                                subplot_kws=subplot_kws, contourf_kws=contourf_kws, imshow_kws=imshow_kws, scatter_kws=scatter_kws, legend_kws=legend_kws)
             
         # クロスバリデーション実施時(分割ごとに別々にプロット＆指標算出)
         if cv is not None:
@@ -2029,8 +2087,8 @@ class classplot():
                 proba_pred = clf.predict_proba(X_test)[:, proba_class_indices]
                 # クラス確率図をプロット
                 cls._class_chart_plot(clf, X_test, y_pred, y_test, x_chart, x_not_chart, x_chart_indices,
-                                   pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, chart_extendsigma=chart_extendsigma, chart_scale=chart_scale,
-                                   proba_pred = proba_pred, proba_class_indices = proba_class_indices, plot_border = plot_border, plot_scatter = plot_scatter,
-                                   scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict, proba_cmap_dict=proba_cmap_dict, proba_type = proba_type,
-                                   rounddigit_x3=rounddigit_x3,
-                                   cv_index=cv_index, subplot_kws=subplot_kws, contourf_kws=contourf_kws, imshow_kws=imshow_kws, scatter_kws=scatter_kws)
+                                    pair_sigmarange = pair_sigmarange, pair_sigmainterval = pair_sigmainterval, chart_extendsigma=chart_extendsigma, chart_scale=chart_scale,
+                                    proba_pred = proba_pred, proba_class_indices = proba_class_indices, plot_border = plot_border, plot_scatter = plot_scatter,
+                                    scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict, proba_cmap_dict=proba_cmap_dict, proba_type = proba_type,
+                                    rounddigit_x3=rounddigit_x3, cv_index=cv_index,
+                                    subplot_kws=subplot_kws, contourf_kws=contourf_kws, imshow_kws=imshow_kws, scatter_kws=scatter_kws, legend_kws=legend_kws)
