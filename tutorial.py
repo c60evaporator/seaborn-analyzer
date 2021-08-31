@@ -582,3 +582,46 @@ regplot.regression_heat_plot(XGBRegressor(), x=['2_between_30to60', '3_male_rati
                              fit_params={'early_stopping_rounds': 20,
                                          'eval_set': [(df[['2_between_30to60', '3_male_ratio', '5_household_member', 'latitude']].values, df['approval_rate'].values)],
                                          'verbose': 1})
+
+# %%
+from seaborn_analyzer import regplot
+from sklearn.svm import SVR
+from sklearn.ensemble import RandomForestRegressor
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_boston
+import pandas as pd
+# Load dataset
+USE_EXPLANATORY = ['NOX', 'RM', 'DIS', 'LSTAT']
+df_boston = pd.DataFrame(load_boston().data, columns=load_boston().feature_names)
+X = df_boston[USE_EXPLANATORY].values
+y = load_boston().target
+df_boston['price'] = y
+
+estimator1 = SVR()
+estimator2 = RandomForestRegressor()
+fig, axes = plt.subplots(4, 2, figsize=(8, 16))
+fig.suptitle(f'prediction vs ')
+axes1 = [row[0] for row in axes]
+axes2 = [row[1] for row in axes]
+regplot.regression_pred_true(estimator1, USE_EXPLANATORY, 'price', df_boston, cv=3, ax=axes1, scores='mape')
+regplot.regression_pred_true(estimator2, USE_EXPLANATORY, 'price', df_boston, cv=3, ax=axes2, scores='mape')
+title_before = axes1[0].title._text
+axes1[0].set_title(f'SVM\n\n{title_before}')
+axes2[0].set_title('RandomForest')
+plt.tight_layout()
+plt.show()
+# %%
+from seaborn_analyzer import regplot
+from sklearn.svm import SVR
+from sklearn.ensemble import RandomForestRegressor
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_boston
+import pandas as pd
+# Load dataset
+USE_EXPLANATORY = ['NOX', 'RM', 'DIS', 'LSTAT', 'CHAS']
+df_boston = pd.DataFrame(load_boston().data, columns=load_boston().feature_names)
+X = df_boston[USE_EXPLANATORY].values
+y = load_boston().target
+df_boston['price'] = y
+regplot.linear_plot('NOX', 'price', df_boston, hue='CHAS', legend_kws={'loc': 5})
+# %%
