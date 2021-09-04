@@ -80,6 +80,46 @@ class regplot():
                 score_dict['max_error'] = max([abs(p - r) for r, p in zip(y_true, y_pred)])
         return score_dict
 
+    def _reshape_input_data(x, y, data, x_colnames):
+        """
+        入力データの形式統一(pd.DataFrame or np.ndarray)
+        """
+        # dataがpd.DataFrameのとき
+        if isinstance(data, pd.DataFrame):
+            if not isinstance(x, list):
+                raise Exception('`x` argument should be list[str] if `data` is pd.DataFrame')
+            if not isinstance(y, str):
+                raise Exception('`y` argument should be str if `data` is pd.DataFrame')
+            if x_colnames is not None:
+                raise Exception('`x_colnames` argument should be None if `data` is pd.DataFrame')
+            X = data[x].values
+            y_true = data[y].values
+            x_colnames = x
+            y_colname = y
+            
+        # dataがNoneのとき(x, y, cv_groupがnp.ndarray)
+        elif data is None:
+            if not isinstance(x, np.ndarray):
+                raise Exception('`x` argument should be np.ndarray if `data` is None')
+            if not isinstance(y, np.ndarray):
+                raise Exception('`y` argument should be np.ndarray if `data` is None')
+            X = x if len(x.shape) == 2 else x.reshape([x.shape[0], 1])
+            y_true = y.ravel()
+            # x_colnameとXの整合性確認
+            if x_colnames is None:
+                x_colnames = list(range(X.shape[1]))
+            elif X.shape[1] != len(x_colnames):
+                raise Exception('width of X must be equal to length of x_colnames')
+            else:
+                x_colnames = x_colnames
+            y_colname = 'objective_variable'
+            data = pd.DataFrame(np.column_stack((X, y)),
+                                columns=x_colnames + [y_colname])
+        else:
+            raise Exception('`data` argument should be pd.DataFrame or None')
+
+        return X, y_true, data, x_colnames, y_colname
+
     @classmethod
     def _rank_display(cls, y_true, y_pred, rank_number, rank_col, rank_col_data, x=None, ax=None, rounddigit=None):
         """
@@ -195,7 +235,8 @@ class regplot():
         ax.text(true_max, np.amin(y_pred), score_text, verticalalignment='bottom', horizontalalignment='right')
     
     @classmethod
-    def regression_pred_true(cls, estimator, x: List[str], y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=3,
+    def regression_pred_true(cls, estimator, x: List[str], y: str, data: pd.DataFrame = None,
+                             x_colnames: List[str] = None, hue=None, linecolor='red', rounddigit=3,
                              rank_number=None, rank_col=None, scores='mae', cv_stats='mean', cv=None, cv_seed=42, ax=None,
                              estimator_params=None, fit_params=None, subplot_kws=None, scatter_kws=None, legend_kws=None):
 
@@ -248,6 +289,11 @@ class regplot():
         score_dict : dict
             Validation scores, e.g. r2, mae and rmse
         """
+
+        # 入力データの形式統一
+        X, y_true, data, x_colnames, y_colname = cls._reshape_input_data([x] if isinstance(x, str) else x,
+                                                                         y, data,
+                                                                         x_colnames)
         # scoresの型をListに統一
         if scores is None:
             scores = []
@@ -270,19 +316,6 @@ class regplot():
         # legend_kwsがNoneなら空のdictを入力
         if legend_kws is None:
             legend_kws = {}
-
-        # xをndarray化
-        if isinstance(x, list):
-            X = data[x].values
-        elif isinstance(x, str):
-            X = data[[x]].values
-        else:
-            raise Exception('the "x" argument must be str or list[str]')
-        # yをndarray化
-        if isinstance(y, str):
-            y_true = data[y].values
-        else:
-            raise Exception('the "y" argument must be str')
         
         # クロスバリデーション有無で場合分け
         # クロスバリデーション未実施時(学習データからプロット＆指標算出)
@@ -453,7 +486,9 @@ class regplot():
             return score_stats_dict
 
     @classmethod
-    def linear_plot(cls, x: str, y: str, data: pd.DataFrame, ax=None, hue=None, linecolor='red',
+    def linear_plot(cls, x: str, y: str, data: pd.DataFrame = None,
+                    x_colname: str = None,
+                    ax=None, hue=None, linecolor='red',
                     rounddigit=5, plot_scores=True, scatter_kws=None, legend_kws=None):
         """
         Plot linear regression line and calculate Pearson correlation coefficient.
@@ -466,6 +501,8 @@ class regplot():
             Variable that specify positions on the y.
         data : pd.DataFrame
             Input data structure.
+        x_colname: str, optional
+            Names of explanatory variable. Available only if ``data`` is NOT pd.DataFrame
         ax : matplotlib.axes.Axes, optional
             Pre-existing axes for the plot. Otherwise, call matplotlib.pyplot.gca() internally.
         hue : str, optional
@@ -486,6 +523,13 @@ class regplot():
         ax : matplotlib.axes.Axes
             Returns the Axes object with the plot drawn onto it.
         """
+
+        # 入力データの形式統一
+        X, y_true, data, x_colnames, y_colname = cls._reshape_input_data([x] if isinstance(x, str) else x, 
+                                                                         y, data,
+                                                                         [x_colname] if x_colname is not None else x_colname)
+        if x_colname is None:
+            x_colname = x_colnames[0]
         # scatter_kwsがNoneなら空のdictを入力
         if scatter_kws is None:
             scatter_kws = {}
@@ -493,19 +537,8 @@ class regplot():
         if legend_kws is None:
             legend_kws = {}
 
-        # xをndarray化
-        if isinstance(x, str):
-            X = data[[x]].values
-        else:
-            raise Exception('the "x" argument must be str')
-        # yをndarray化
-        if isinstance(y, str):
-            y_true = data[y].values
-        else:
-            raise Exception('the "y" argument must be str')
-
         # まずは散布図プロット
-        ax = sns.scatterplot(x=x, y=y, data=data, ax=ax, hue=hue, **scatter_kws)
+        ax = sns.scatterplot(x=x_colname, y=y_colname, data=data, ax=ax, hue=hue, **scatter_kws)
         # 凡例追加
         if 'title' not in legend_kws.keys():
             legend_kws['title'] = hue 
@@ -529,7 +562,7 @@ class regplot():
             intercept = cls._round_digits(lr.intercept_, rounddigit=rounddigit, method="decimal")
             equation = f'y={coef}x+{intercept}' if intercept >= 0 else f'y={coef}x-{-intercept}'
             # ピアソン相関係数
-            pearsonr = stats.pearsonr(data[x], data[y])
+            pearsonr = stats.pearsonr(data[x_colname], data[y_colname])
             r = cls._round_digits(pearsonr[0], rounddigit=rounddigit, method="decimal")
             pvalue = cls._round_digits(pearsonr[1], rounddigit=rounddigit, method="decimal")            
             # プロット
@@ -601,7 +634,8 @@ class regplot():
         ax.text(xmax, np.amin(y_true), score_text, verticalalignment='bottom', horizontalalignment='right')
 
     @classmethod
-    def regression_plot_1d(cls, estimator, x: str, y: str, data: pd.DataFrame, hue=None, linecolor='red', rounddigit=3,
+    def regression_plot_1d(cls, estimator, x: str, y: str, data: pd.DataFrame = None, x_colname: str = None,
+                           hue=None, linecolor='red', rounddigit=3,
                            rank_number=None, rank_col=None, scores='mae', cv_stats='mean', cv=None, cv_seed=42,
                            estimator_params=None, fit_params=None, subplot_kws=None, scatter_kws=None, legend_kws=None):
         """
@@ -611,12 +645,14 @@ class regplot():
         ----------
         estimator : estimator object implementing ``fit``
             Regression estimator. This is assumed to implement the scikit-learn estimator interface.
-        x : str
-            Explanatory variable.
-        y : str
-            Objective variable.
-        data : pd.DataFrame
+        x : str, or np.ndarray
+            Explanatory variables. Should be str if ``data`` is pd.DataFrame. Should be np.ndarray if ``data`` is None
+        y : str or np.ndarray
+            Objective variable. Should be str if ``data`` is pd.DataFrame. Should be np.ndarray if ``data`` is None
+        data: pd.DataFrame
             Input data structure.
+        x_colname: str, optional
+            Names of explanatory variable. Available only if ``data`` is NOT pd.DataFrame
         hue : str, optional
             Grouping variable that will produce points with different colors.
         linecolor : str, optional
@@ -651,6 +687,12 @@ class regplot():
         score_dict : dict
             Validation scores, e.g. r2, mae and rmse
         """
+
+        # 入力データの形式統一
+        X, y_true, data, x_colnames, y_colname = cls._reshape_input_data([x] if isinstance(x, str) else x,
+                                                                         y, data,
+                                                                         [x_colname] if x_colname is not None else x_colname
+                                                                         )
         # scoresの型をListに統一
         if scores is None:
             scores = []
@@ -673,17 +715,6 @@ class regplot():
         # legend_kwsがNoneなら空のdictを入力
         if legend_kws is None:
             legend_kws = {}
-        
-        # xをndarray化
-        if isinstance(x, str):
-            X = data[[x]].values
-        else:
-            raise Exception('the "x" argument must be str')
-        # yをndarray化
-        if isinstance(y, str):
-            y_true = data[y].values
-        else:
-            raise Exception('the "y" argument must be str')
         
         # クロスバリデーション有無で場合分け
         # クロスバリデーション未実施時(学習データからプロット＆指標算出)
@@ -1085,8 +1116,8 @@ class regplot():
         plt.tight_layout()
 
     @classmethod
-    def regression_heat_plot(cls, estimator, x: List[str], y: str, data: pd.DataFrame,
-                             x_heat: List[str] = None, scatter_hue=None,
+    def regression_heat_plot(cls, estimator, x: List[str], y: str, data: pd.DataFrame = None,
+                             x_colnames: List[str] = None, x_heat: List[str] = None, scatter_hue=None,
                              pair_sigmarange = 1.5, pair_sigmainterval = 0.5, heat_extendsigma = 0.5, 
                              heat_division = 30, color_extendsigma = 0.5,
                              plot_scatter = 'true', rounddigit_rank=3, rounddigit_x1=2, rounddigit_x2=2, rounddigit_x3=2,
@@ -1101,12 +1132,14 @@ class regplot():
         ----------
         estimator : estimator object implementing ``fit``
             Regression estimator. This is assumed to implement the scikit-learn estimator interface.
-        x : List[str]
-            Explanatory variables.
-        y : str
-            Objective variable.
-        data : pd.DataFrame
+        x : list[str] or np.ndarray
+            Explanatory variables. Should be list[str] if ``data`` is pd.DataFrame. Should be np.ndarray if ``data`` is None
+        y : str or np.ndarray
+            Objective variable. Should be str if ``data`` is pd.DataFrame. Should be np.ndarray if ``data`` is None
+        data: pd.DataFrame
             Input data structure.
+        x_colnames: List[str], optional
+            Names of explanatory variables. Available only if ``data`` is NOT pd.DataFrame
         x_heat: List[str], optional
             X-axis and y-axis variables of heatmap. If None, use two variables in ``x`` from the front.
         scatter_hue : str, optional
@@ -1154,14 +1187,18 @@ class regplot():
         legend_kws : dict
             Additional parameters passed to ax.legend(), e.g. ``loc``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html
         """
+
+        # 入力データの形式統一
+        X, y_true, data, x_colnames, y_colname = cls._reshape_input_data(x, y, data,
+                                                                         x_colnames)
         # 説明変数xの次元が2～4以外ならエラーを出す
-        if len(x) < 2 or len(x) > 4:
-            raise Exception('length of x must be 2 to 4')
+        if len(x_colnames) < 2 or len(x_colnames) > 4:
+            raise Exception('Dimension of x must be 2 to 4')
         
         # display_cv_indicesをList化
         if isinstance(display_cv_indices, int):
             display_cv_indices = [display_cv_indices]
-        elif not isinstance(x, list):
+        elif not isinstance(x_colnames, list):
             raise Exception('the "cv_display_num" argument must be int or List[int]')
         # 学習器パラメータがあれば適用
         if estimator_params is not None:
@@ -1181,30 +1218,19 @@ class regplot():
         # legend_kwsがNoneなら空のdictを入力
         if legend_kws is None:
             legend_kws = {}
-            
-        # xをndarray化
-        if isinstance(x, list):
-            X = data[x].values
-        else:
-            raise Exception('the "x" argument must be str or str')
-        # yをndarray化
-        if isinstance(y, str):
-            y_true = data[y].values
-        else:
-            raise Exception('the "y" argument must be str')
         
         # ヒートマップ表示用の列を抽出
         if x_heat is None:  # 列名指定していないとき、前から2列を抽出
-            x_heat = x[:2]
+            x_heat = x_colnames[:2]
             x_heat_indices = [0, 1]
         else:  # 列名指定しているとき、該当列のXにおけるインデックス(0～3)を保持
             if len(x_heat) != 2:
                 raise Exception('length of x_heat must be 2')
             x_heat_indices = []
             for colname in x_heat:
-                x_heat_indices.append(x.index(colname))
+                x_heat_indices.append(x_colnames.index(colname))
         # ヒートマップ表示以外の列
-        x_not_heat = [colname for colname in x if colname not in x_heat]        
+        x_not_heat = [colname for colname in x_colnames if colname not in x_heat]        
         # ヒートマップの色分け最大最小値(y_trueの最大最小値 ± y_trueの標準偏差 × color_extendsigma)
         y_true_std = np.std(y_true)
         vmin = np.min(y_true) - y_true_std * color_extendsigma
@@ -1767,10 +1793,11 @@ class classplot():
         legend_kws : dict
             Additional parameters passed to ax.legend(), e.g. ``loc``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html
         """
+
+        # 入力データの形式統一
         X, y_true, data, x_colnames, y_colname, cv_group_colname = cls._reshape_input_data(x, y, data,
                                                                                            x_colnames,
                                                                                            cv_group)
-
         # 説明変数xの次元が2～4以外ならエラーを出す
         if len(x_colnames) < 2 or len(x_colnames) > 4:
             raise Exception('Dimension of x must be 2 to 4')
@@ -1966,10 +1993,10 @@ class classplot():
             Additional parameters passed to ax.legend(), e.g. ``loc``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html
         """
 
+        # 入力データの形式統一
         X, y_true, data, x_colnames, y_colname, cv_group_colname = cls._reshape_input_data(x, y, data,
                                                                                            x_colnames,
                                                                                            cv_group)
-
         # 説明変数xの次元が2～4以外ならエラーを出す
         if len(x_colnames) < 2 or len(x_colnames) > 4:
             raise Exception('Dimension of x must be 2 to 4')
