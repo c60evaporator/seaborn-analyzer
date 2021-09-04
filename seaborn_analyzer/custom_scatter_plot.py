@@ -1345,6 +1345,53 @@ class classplot():
                 return ctx.create_decimal(src)
         elif method == 'format':
             return '{:.{width}g}'.format(src, width=rounddigit)
+    
+    def _reshape_input_data(x, y, data, x_colnames, cv_group):
+        """
+        入力データの形式統一(pd.DataFrame or np.ndarray)
+        """
+        # dataがpd.DataFrameのとき
+        if isinstance(data, pd.DataFrame):
+            if not isinstance(x, list):
+                raise Exception('`x` argument should be list[str] if `data` is pd.DataFrame')
+            if not isinstance(y, str):
+                raise Exception('`y` argument should be str if `data` is pd.DataFrame')
+            if x_colnames is not None:
+                raise Exception('`x_colnames` argument should be None if `data` is pd.DataFrame')
+            X = data[x].values
+            y_true = data[y].values
+            x_colnames = x
+            y_colname = y
+            cv_group_colname = cv_group
+            
+        # dataがNoneのとき(x, y, cv_groupがnp.ndarray)
+        elif data is None:
+            if not isinstance(x, np.ndarray):
+                raise Exception('`x` argument should be np.ndarray if `data` is None')
+            if not isinstance(y, np.ndarray):
+                raise Exception('`y` argument should be np.ndarray if `data` is None')
+            X = x
+            y_true = y.ravel()
+            # x_colnameとXの整合性確認
+            if x_colnames is None:
+                x_colnames = list(range(x.shape[1]))
+            elif x.shape[1] != len(x_colnames):
+                raise Exception('width of X must be equal to length of x_colnames')
+            else:
+                x_colnames = x_colnames
+            y_colname = 'objective_variable'
+            if cv_group is not None:  # cv_group指定時
+                cv_group_colname = 'group'
+                data = pd.DataFrame(np.column_stack((X, y_true, cv_group)),
+                                    columns=x_colnames + [y_colname] + [cv_group_colname])
+            else:
+                cv_group_colname = None
+                data = pd.DataFrame(np.column_stack((X, y)),
+                                    columns=x_colnames + [y_colname])
+        else:
+            raise Exception('`data` argument should be pd.DataFrame or None')
+
+        return X, y_true, data, x_colnames, y_colname, cv_group_colname
 
     @classmethod
     def _chart_plot_2d(cls, trained_clf, x_chart, y_true_col, y_pred_col, data, x_chart_indices,
@@ -1656,7 +1703,8 @@ class classplot():
         plt.tight_layout()
 
     @classmethod
-    def class_separator_plot(cls, clf, x: List[str], y: str, data: pd.DataFrame, x_chart: List[str] = None,
+    def class_separator_plot(cls, clf, x: List[str], y: str, data: pd.DataFrame = None,
+                             x_colnames: List[str] = None, x_chart: List[str] = None,
                              pair_sigmarange = 1.5, pair_sigmainterval = 0.5, chart_extendsigma = 0.5, chart_scale = 1,
                              plot_scatter = 'class_error', rounddigit_x3 = 2,
                              scatter_colors = None, true_marker = 'o', false_marker = 'x',
@@ -1670,14 +1718,16 @@ class classplot():
         ----------
         clf: classifier object implementing ``fit``
             Classifier. This is assumed to implement the scikit-learn estimator interface.
-        x: List[str]
-            Explanatory variables.
-        y: str
-            Objective variable.
+        x : list[str], or np.ndarray
+            Explanatory variables. Should be list[str] if ``data`` is pd.DataFrame. Should be np.ndarray if ``data`` is None
+        y : str or np.ndarray
+            Objective variable. Should be str if ``data`` is pd.DataFrame. Should be np.ndarray if ``data`` is None
         data: pd.DataFrame
             Input data structure.
+        x_colnames: List[str], optional
+            Names of explanatory variables. Available only if ``data`` is NOT pd.DataFrame
         x_chart: List[str], optional
-            X-axis and y-axis variables of separation map. If None, use two variables in ``x`` from the front.
+            X-axis . If None, use two variables in ``x`` from the front.
         pair_sigmarange: float, optional
             Set the range of subplots. The lower limit is mean({x3, x4}) - ``pair_sigmarange`` * std({x3, x4}). The higher limit is mean({x3, x4}) + ``pair_sigmarange`` * std({x3, x4}). Available only if len(x) is bigger than 2.
         pair_sigmainterval: float, optional
@@ -1717,14 +1767,18 @@ class classplot():
         legend_kws : dict
             Additional parameters passed to ax.legend(), e.g. ``loc``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html
         """
+        X, y_true, data, x_colnames, y_colname, cv_group_colname = cls._reshape_input_data(x, y, data,
+                                                                                           x_colnames,
+                                                                                           cv_group)
+
         # 説明変数xの次元が2～4以外ならエラーを出す
-        if len(x) < 2 or len(x) > 4:
-            raise Exception('length of x must be 2 to 4')
+        if len(x_colnames) < 2 or len(x_colnames) > 4:
+            raise Exception('Dimension of x must be 2 to 4')
         
         # display_cv_indicesをList化
         if isinstance(display_cv_indices, int):
             display_cv_indices = [display_cv_indices]
-        elif not isinstance(x, list):
+        elif not isinstance(x_colnames, list):
             raise Exception('the "cv_display_num" argument must be int or List[int]')
         # 学習器パラメータがあれば適用
         if clf_params is not None:
@@ -1745,34 +1799,23 @@ class classplot():
         if legend_kws is None:
             legend_kws = {}
         
-        # xをndarray化
-        if isinstance(x, list):
-            X = data[x].values
-        else:
-            raise Exception('the "x" argument must be str or str')
-        # yをndarray化
-        if isinstance(y, str):
-            y_true = data[y].values
-        else:
-            raise Exception('the "y" argument must be str')
-        
         # 決定境界図表示用の列を抽出
         if x_chart is None:  # 列名指定していないとき、前から2列を抽出
-            x_chart = x[:2]
+            x_chart = x_colnames[:2]
             x_chart_indices = [0, 1]
         else:  # 列名指定しているとき、該当列のXにおけるインデックス(0～3)を保持
             if len(x_chart) != 2:
                 raise Exception('length of x_chart must be 2')
             x_chart_indices = []
             for colname in x_chart:
-                x_chart_indices.append(x.index(colname))
+                x_chart_indices.append(x_colnames.index(colname))
         # 決定境界図表示以外の列
-        x_not_chart = [colname for colname in x if colname not in x_chart]
+        x_not_chart = [colname for colname in x_colnames if colname not in x_chart]
 
         # クラス名と散布図色を紐づけ(色分けを全ての図で統一用)
         if scatter_colors is None:
             scatter_colors = cls._SCATTER_COLORS
-        class_list = data[y].values.tolist()
+        class_list = data[y_colname].values.tolist()
         class_list = sorted(set(class_list), key=class_list.index)
         scatter_color_dict = dict(zip(class_list, scatter_colors[0:len(class_list)]))
         # 散布図マーカー形状をdict化
@@ -1805,17 +1848,17 @@ class classplot():
                 cv = KFold(n_splits=cv, shuffle=True, random_state=cv_seed)
             # LeaveOneOutのときエラーを出す
             if isinstance(cv, LeaveOneOut):
-                raise Exception('"regression_heat_plot" method does not support "LeaveOneOut" cross validation')
+                raise Exception('"regression_heat_plot" method does not support ``LeaveOneOut`` cross validation')
             # GroupKFold、LeaveOneGroupOutのとき、cv_groupをグルーピング対象に指定
             split_kws={}
             if isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
-                if cv_group is not None:
-                    split_kws['groups'] = data[cv_group].values
+                if cv_group_colname is not None:
+                    split_kws['groups'] = data[cv_group_colname].values
                 else:
-                    raise Exception('"GroupKFold" and "LeaveOneGroupOut" cross validations need "cv_group" argument')
+                    raise Exception('"GroupKFold" and "LeaveOneGroupOut" cross validations need ``cv_group`` argument')
             # LeaveOneGroupOutのとき、クロスバリデーション分割数をcv_groupの数に指定
             if isinstance(cv, LeaveOneGroupOut):
-                cv_num = len(set(data[cv_group].values))
+                cv_num = len(set(data[cv_group_colname].values))
             else:
                 cv_num = cv.n_splits
 
@@ -1827,7 +1870,7 @@ class classplot():
                 print(f'cv_number={i}/{cv_num}')
                 # グラフタイトル(CV番号を指定。グルーピング系CVのときはグループ名を指定)
                 if isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
-                    cv_index = f'No.{i}  {cv_group}={data[cv_group].values[test][0]}'
+                    cv_index = f'No.{i}  {cv_group_colname}={data[cv_group_colname].values[test][0]}'
                 else:
                     cv_index = f'No.{i}'
                 # 表示用にテストデータと学習データ分割
@@ -1847,7 +1890,8 @@ class classplot():
                                    subplot_kws=subplot_kws, contourf_kws=contourf_kws, imshow_kws=None, scatter_kws=scatter_kws, legend_kws=legend_kws)
 
     @classmethod
-    def class_proba_plot(cls, clf, x: List[str], y: str, data: pd.DataFrame, x_chart: List[str] = None,
+    def class_proba_plot(cls, clf, x: List[str], y: str, data: pd.DataFrame = None,
+                         x_colnames: List[str] = None, x_chart: List[str] = None,
                          pair_sigmarange = 1.5, pair_sigmainterval = 0.5, chart_extendsigma = 0.5, chart_scale = 1,
                          plot_border = True, plot_scatter = 'class', rounddigit_x3 = 2,
                          proba_class = None, proba_cmap_dict = None, proba_type = 'contourf',
@@ -1862,12 +1906,14 @@ class classplot():
         ----------
         clf: classifier object implementing ``fit``
             Classifier. This is assumed to implement the scikit-learn estimator interface.
-        x: List[str]
-            Explanatory variables.
-        y: str
-            Objective variable.
+        x : list[str], or np.ndarray
+            Explanatory variables. Should be list[str] if ``data`` is pd.DataFrame. Should be np.ndarray if ``data`` is None
+        y : str or np.ndarray
+            Objective variable. Should be str if ``data`` is pd.DataFrame. Should be np.ndarray if ``data`` is None
         data: pd.DataFrame
             Input data structure.
+        x_colnames: List[str], optional
+            Names of explanatory variables. Available only if ``data`` is NOT pd.DataFrame
         x_chart: List[str], optional
             X-axis and y-axis variables of separation map. If None, use two variables in ``x`` from the front.
         pair_sigmarange: float, optional
@@ -1919,14 +1965,19 @@ class classplot():
         legend_kws : dict
             Additional parameters passed to ax.legend(), e.g. ``loc``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html
         """
+
+        X, y_true, data, x_colnames, y_colname, cv_group_colname = cls._reshape_input_data(x, y, data,
+                                                                                           x_colnames,
+                                                                                           cv_group)
+
         # 説明変数xの次元が2～4以外ならエラーを出す
-        if len(x) < 2 or len(x) > 4:
-            raise Exception('length of x must be 2 to 4')
+        if len(x_colnames) < 2 or len(x_colnames) > 4:
+            raise Exception('Dimension of x must be 2 to 4')
         
         # display_cv_indicesをList化
         if isinstance(display_cv_indices, int):
             display_cv_indices = [display_cv_indices]
-        elif not isinstance(x, list):
+        elif not isinstance(x_colnames, list):
             raise Exception('the "cv_display_num" argument must be int or List[int]')
         # 学習器パラメータがあれば適用
         if clf_params is not None:
@@ -1950,35 +2001,24 @@ class classplot():
         if legend_kws is None:
             legend_kws = {}
 
-        # xをndarray化
-        if isinstance(x, list):
-            X = data[x].values
-        else:
-            raise Exception('the "x" argument must be str or str')
-        # yをndarray化
-        if isinstance(y, str):
-            y_true = data[y].values
-        else:
-            raise Exception('the "y" argument must be str')
-
         # クラス確率図表示用の列を抽出
         if x_chart is None:  # 列名指定していないとき、前から2列を抽出
-            x_chart = x[:2]
+            x_chart = x_colnames[:2]
             x_chart_indices = [0, 1]
         else:  # 列名指定しているとき、該当列のXにおけるインデックス(0～3)を保持
             if len(x_chart) != 2:
                 raise Exception('length of x_chart must be 2')
             x_chart_indices = []
             for colname in x_chart:
-                x_chart_indices.append(x.index(colname))
+                x_chart_indices.append(x_colnames.index(colname))
         # クラス確率図表示以外の列
-        x_not_chart = [colname for colname in x if colname not in x_chart]
+        x_not_chart = [colname for colname in x_colnames if colname not in x_chart]
 
         # scatter_colors未指定のとき、デフォルト値を使用
         if scatter_colors is None:
             scatter_colors = cls._SCATTER_COLORS
         # クラス名と散布図色を紐づけ(色分けを全ての図で統一用)
-        class_list = data[y].values.tolist()
+        class_list = data[y_colname].values.tolist()
         class_list = sorted(set(class_list), key=class_list.index)
         scatter_color_dict = dict(zip(class_list, scatter_colors[0:len(class_list)]))
         # 散布図マーカー形状をdict化
@@ -1990,13 +2030,13 @@ class classplot():
         # proba_classをList化
         if isinstance(proba_class, int) or isinstance(proba_class, str) or isinstance(proba_class, bool):
             proba_class = [proba_class]
-        elif not isinstance(x, list):
+        elif not isinstance(x_colnames, list):
             raise Exception('the "proba_class" argument must be int, str, bool or List')
         # List化したproba_classを走査してデータ上でのインデックスを取得
         proba_class_indices = []
         for pc in proba_class:
             if pc not in class_list:  # 指定したproba_classがデータ上に存在しないとき、エラーを出す
-                raise Exception(f'"{proba_class}"" is not in the "{y}" column')
+                raise Exception(f'"{proba_class}"" is not in the "{y_colname}" column')
             proba_class_indices.append(class_list.index(pc))
         # proba_cmap_dict未指定のとき、デフォルト値を使用
         if proba_cmap_dict is None:
@@ -2045,13 +2085,13 @@ class classplot():
             # GroupKFold、LeaveOneGroupOutのとき、cv_groupをグルーピング対象に指定
             split_kws={}
             if isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
-                if cv_group is not None:
-                    split_kws['groups'] = data[cv_group].values
+                if cv_group_colname is not None:
+                    split_kws['groups'] = data[cv_group_colname].values
                 else:
-                    raise Exception('"GroupKFold" and "LeaveOneGroupOut" cross validations need "cv_group" argument')
+                    raise Exception('"GroupKFold" and "LeaveOneGroupOut" cross validations need ``cv_group`` argument')
             # LeaveOneGroupOutのとき、クロスバリデーション分割数をcv_groupの数に指定
             if isinstance(cv, LeaveOneGroupOut):
-                cv_num = len(set(data[cv_group].values))
+                cv_num = len(set(data[cv_group_colname].values))
             else:
                 cv_num = cv.n_splits
 
@@ -2063,7 +2103,7 @@ class classplot():
                 print(f'cv_number={i}/{cv_num}')
                 # グラフタイトル(CV番号を指定。グルーピング系CVのときはグループ名を指定)
                 if isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
-                    cv_index = f'No.{i}  {cv_group}={data[cv_group].values[test][0]}'
+                    cv_index = f'No.{i}  {cv_group_colname}={data[cv_group_colname].values[test][0]}'
                 else:
                     cv_index = f'No.{i}'
                 # 表示用にテストデータと学習データ分割
