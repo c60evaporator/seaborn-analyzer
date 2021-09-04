@@ -625,4 +625,201 @@ X = df_boston[USE_EXPLANATORY].values
 y = load_boston().target
 df_boston['price'] = y
 regplot.linear_plot('NOX', 'price', df_boston, hue='CHAS', legend_kws={'loc': 5})
+
+# %% ROC曲線
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+import seaborn as sns
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+from typing import List
+import numbers
+from sklearn.metrics import auc, plot_roc_curve
+from sklearn.model_selection import KFold, LeaveOneOut, GroupKFold, LeaveOneGroupOut
+
+def _reshape_input_data(x, y, data, x_colnames, cv_group):
+    """
+    入力データの形式統一(pd.DataFrame or np.ndarray)
+    """
+    # dataがpd.DataFrameのとき
+    if isinstance(data, pd.DataFrame):
+        if not isinstance(x, list):
+            raise Exception('`x` argument should be list[str] if `data` is pd.DataFrame')
+        if not isinstance(y, str):
+            raise Exception('`y` argument should be str if `data` is pd.DataFrame')
+        if x_colnames is not None:
+            raise Exception('`x_colnames` argument should be None if `data` is pd.DataFrame')
+        X = data[x].values
+        y_true = data[y].values
+        x_colnames = x
+        y_colname = y
+        cv_group_colname = cv_group
+        
+    # dataがNoneのとき(x, y, cv_groupがnp.ndarray)
+    elif data is None:
+        if not isinstance(x, np.ndarray):
+            raise Exception('`x` argument should be np.ndarray if `data` is None')
+        if not isinstance(y, np.ndarray):
+            raise Exception('`y` argument should be np.ndarray if `data` is None')
+        X = x
+        y_true = y.ravel()
+        # x_colnameとXの整合性確認
+        if x_colnames is None:
+            x_colnames = list(range(x.shape[1]))
+        elif x.shape[1] != len(x_colnames):
+            raise Exception('width of X must be equal to length of x_colnames')
+        else:
+            x_colnames = x_colnames
+        y_colname = 'objective_variable'
+        if cv_group is not None:  # cv_group指定時
+            cv_group_colname = 'group'
+            data = pd.DataFrame(np.column_stack((X, y_true, cv_group)),
+                                columns=x_colnames + [y_colname] + [cv_group_colname])
+        else:
+            cv_group_colname = None
+            data = pd.DataFrame(np.column_stack((X, y)),
+                                columns=x_colnames + [y_colname])
+    else:
+        raise Exception('`data` argument should be pd.DataFrame or None')
+
+    return X, y_true, data, x_colnames, y_colname, cv_group_colname
+
+def roc_plot(clf, x: List[str], y: str, data: pd.DataFrame = None,
+            x_colnames: List[str] = None, 
+            cv=None, cv_seed=42, cv_group=None,
+            clf_params=None, fit_params=None,
+            ax=None,
+            plot_roc_kws=None, mean_plot_kws=None, chance_plot_kws=None):
+    # 入力データの形式統一
+    X, y_true, data, x_colnames, y_colname, cv_group_colname = _reshape_input_data(x, y, data,
+                                                                                    x_colnames,
+                                                                                    cv_group)
+
+    # 学習器パラメータがあれば適用
+    if clf_params is not None:
+        clf.set_params(**clf_params)
+    # 学習時パラメータがNoneなら空のdictを入力
+    if fit_params is None:
+        fit_params = {}
+    # plot_roc_kwsがNoneなら空のdictを入力
+    if plot_roc_kws is None:
+        plot_roc_kws = {}
+    # mean_plot_kwsがNoneなら空のdictを入力
+    if mean_plot_kws is None:
+        mean_plot_kws = {}
+    # chance_plot_kwsがNoneなら空のdictを入力
+    if chance_plot_kws is None:
+        chance_plot_kws = {}
+
+    # クロスバリデーション有無で場合分け
+    # クロスバリデーション未実施時(学習データから学習してプロット)
+    if cv is None:
+        # 学習実行
+        clf.fit(X, y, **fit_params)
+        # plot_roc_curveに渡す引数
+        if 'name' not in plot_roc_kws.keys():
+            plot_roc_kws['name'] = 'ROC'
+        if 'alpha' not in plot_roc_kws.keys():
+            plot_roc_kws['alpha'] = 0.8
+        if 'lw' not in plot_roc_kws.keys():
+            plot_roc_kws['lw'] = 2
+        # ROC曲線をプロット
+        viz = plot_roc_curve(clf, X, y_true,
+                             ax=ax,
+                             **plot_roc_kws
+                             )
+    
+    # クロスバリデーション実施時(分割ごとに別々にプロット＆指標算出)
+    if cv is not None:
+        # 分割法未指定時、cv_numとseedに基づきKFoldでランダムに分割
+        if isinstance(cv, numbers.Integral):
+            cv = KFold(n_splits=cv, shuffle=True, random_state=cv_seed)
+        # LeaveOneOutのときエラーを出す
+        if isinstance(cv, LeaveOneOut):
+            raise Exception('"regression_heat_plot" method does not support "LeaveOneOut" cross validation')
+        # GroupKFold、LeaveOneGroupOutのとき、cv_groupをグルーピング対象に指定
+        split_kws={}
+        if isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
+            if cv_group_colname is not None:
+                split_kws['groups'] = data[cv_group_colname].values
+            else:
+                raise Exception('"GroupKFold" and "LeaveOneGroupOut" cross validations need ``cv_group`` argument')
+        # LeaveOneGroupOutのとき、クロスバリデーション分割数をcv_groupの数に指定
+        if isinstance(cv, LeaveOneGroupOut):
+            cv_num = len(set(data[cv_group_colname].values))
+        else:
+            cv_num = cv.n_splits
+
+        # 平均ROC曲線算出用のリスト
+        tprs = []
+        aucs = []
+        mean_fpr = np.linspace(0, 1, 100)
+        # クロスバリデーション
+        for i, (train, test) in enumerate(cv.split(X, y_true, **split_kws)):
+            # 学習実行
+            clf.fit(X[train], y_true[train], **fit_params)
+            # plot_roc_curveに渡す引数
+            plot_roc_kws['name'] = 'ROC fold {}'.format(i)
+            if 'alpha' not in plot_roc_kws.keys():
+                plot_roc_kws['alpha'] = 0.3
+            if 'lw' not in plot_roc_kws.keys():
+                plot_roc_kws['lw'] = 1
+            # ROC曲線をプロット
+            viz = plot_roc_curve(clf, X[test], y_true[test],
+                                ax=ax,
+                                **plot_roc_kws
+                                )
+            # TPRとAUCを保持
+            interp_tpr = np.interp(mean_fpr, viz.fpr, viz.tpr)
+            interp_tpr[0] = 0.0
+            tprs.append(interp_tpr)
+            aucs.append(viz.roc_auc)
+        
+        # 平均ROC曲線を計算
+        mean_tpr = np.mean(tprs, axis=0)
+        mean_tpr[-1] = 1.0
+        mean_auc = auc(mean_fpr, mean_tpr)
+        std_auc = np.std(aucs)
+        # 平均ROC曲線plotに渡す引数
+        if 'label' not in mean_plot_kws.keys():
+                mean_plot_kws['label'] = r'Mean ROC (AUC = %0.2f $\pm$ %0.2f)' % (mean_auc, std_auc)
+        if 'alpha' not in mean_plot_kws.keys():
+            mean_plot_kws['alpha'] = 0.8
+        if 'lw' not in mean_plot_kws.keys():
+            mean_plot_kws['lw'] = 2
+        if 'color' not in mean_plot_kws.keys():
+            mean_plot_kws['color'] = 'blue'
+        # 平均ROC曲線プロット
+        ax.plot(mean_fpr, mean_tpr, **mean_plot_kws)
+
+    # ランダム時の直線描画に渡す引数
+    if 'label' not in chance_plot_kws.keys():
+            chance_plot_kws['label'] = 'Chance'
+    if 'alpha' not in chance_plot_kws.keys():
+        chance_plot_kws['alpha'] = 0.8
+    if 'lw' not in chance_plot_kws.keys():
+        chance_plot_kws['lw'] = 2
+    if 'color' not in chance_plot_kws.keys():
+        chance_plot_kws['color'] = 'red'
+    if 'linestyle' not in chance_plot_kws.keys():
+        chance_plot_kws['linestyle'] = '--'
+    # ランダム時の直線描画
+    ax.plot([0, 1], [0, 1], **chance_plot_kws)
+    ax.legend(loc='lower right')
+    ax.set(xlim=[-0.05, 1.05], ylim=[-0.05, 1.05])
+
+iris = sns.load_dataset("iris")
+#iris = iris[iris['species'] != 'setosa']
+OBJECTIVE_VARIALBLE = 'species'  # 目的変数
+USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # 説明変数
+y = iris[OBJECTIVE_VARIALBLE].values
+X = iris[USE_EXPLANATORY].values
+
+estimator1 = SVC(probability=True)
+estimator2 = RandomForestClassifier()
+fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+roc_plot(estimator1, X, y, ax=axes[0], cv=5)
+roc_plot(estimator2, X, y, ax=axes[1], cv=5)
 # %%
