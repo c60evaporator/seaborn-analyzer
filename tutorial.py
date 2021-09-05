@@ -690,15 +690,22 @@ def _reshape_input_data(x, y, data, x_colnames, cv_group):
 
     return X, y_true, data, x_colnames, y_colname, cv_group_colname
 
-def plot_roc_curve_multiclass(estimator, X_train, y_train, X_test, y_test, *,
+def plot_roc_curve_multiclass(estimator, X_train, y_train, *,
+                              X_test=None, y_test=None,
                               sample_weight=None, drop_intermediate=True,
                               response_method="auto", name=None, ax=None, pos_label=None,
                               average='macro', fit_params=None,
                               plot_roc_kws=None, class_average_kws=None,
                               ):
+    # X_testがNoneのとき、X_trainを使用
+    if X_test is None:
+        X_test = X_train
+    # y_testがNoneのとき、y_trainを使用
+    if y_test is None:
+        y_test = y_train
     # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
     if ax is None:
-        ax=plt.gca()
+        ax = plt.gca()
     # 学習時パラメータがNoneなら空のdictを入力
     if fit_params is None:
         fit_params = {}
@@ -756,11 +763,13 @@ def plot_roc_curve_multiclass(estimator, X_train, y_train, X_test, y_test, *,
         fpr_avg = fpr[average]
         tpr_avg = tpr[average]
         roc_auc_avg = roc_auc[average]
+        fpr_avg_graph = np.concatenate([np.array([0]), fpr_avg])  # グラフ表示用に端点を追加
+        tpr_avg_graph = np.concatenate([np.array([0]), tpr_avg])  # グラフ表示用に端点を追加
         
         # 平均ROC曲線をプロット
-        ax.plot(fpr_avg, tpr_avg,
-                label=f'{average}-average ROC (area = {0:0.2f})'
-                    ''.format(roc_auc["micro"]),
+        ax.plot(fpr_avg_graph, tpr_avg_graph,
+                label=f'{average}' + '-average ROC (area = {0:0.2f})'
+                    ''.format(roc_auc_avg),
                 **class_average_kws)
         # クラスごとのROC曲線をプロット
         color_list = list(colors.TABLEAU_COLORS.values())
@@ -784,7 +793,7 @@ def plot_roc_curve_multiclass(estimator, X_train, y_train, X_test, y_test, *,
 
 def roc_plot(clf, x: List[str], y: str, data: pd.DataFrame = None,
             x_colnames: List[str] = None, 
-            cv=None, cv_seed=42, cv_group=None,
+            cv=5, cv_seed=42, cv_group=None,
             ax=None,
             clf_params=None, fit_params=None,
             subplot_kws=None,
@@ -829,7 +838,7 @@ def roc_plot(clf, x: List[str], y: str, data: pd.DataFrame = None,
         if 'lw' not in plot_roc_kws.keys():
             plot_roc_kws['lw'] = 1
         # ROC曲線をプロット
-        viz = plot_roc_curve_multiclass(clf, X, y_true, X, y_true,
+        viz = plot_roc_curve_multiclass(clf, X, y_true,
                             name=name, ax=ax, fit_params = fit_params,
                             plot_roc_kws=plot_roc_kws,
                             class_average_kws=class_average_kws
@@ -884,7 +893,8 @@ def roc_plot(clf, x: List[str], y: str, data: pd.DataFrame = None,
                 class_average_kws['linestyle'] = ':'
             class_average_kws['color'] = color_list[i]
             # CVごとのROC曲線をプロット
-            viz = plot_roc_curve_multiclass(clf, X[train], y_true[train], X[test], y_true[test],
+            viz = plot_roc_curve_multiclass(clf, X[train], y_true[train], 
+                                          X_test=X[test], y_test=y_true[test],
                                           name=name, ax=ax[i], fit_params=fit_params,
                                           plot_roc_kws=plot_roc_kws,
                                           class_average_kws=class_average_kws
