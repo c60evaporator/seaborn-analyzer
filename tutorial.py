@@ -629,6 +629,7 @@ regplot.linear_plot('NOX', 'price', df_boston, hue='CHAS', legend_kws={'loc': 5}
 # %% ROC曲線
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
+from lightgbm import LGBMClassifier
 import seaborn as sns
 import pandas as pd
 import numpy as np
@@ -636,8 +637,11 @@ import matplotlib.pyplot as plt
 
 from typing import List
 import numbers
-from sklearn.metrics import auc, plot_roc_curve
+from sklearn.metrics import auc, plot_roc_curve, roc_curve, RocCurveDisplay
 from sklearn.model_selection import KFold, LeaveOneOut, GroupKFold, LeaveOneGroupOut
+from sklearn.preprocessing import label_binarize
+from sklearn.multiclass import OneVsRestClassifier
+from matplotlib import colors
 
 def _reshape_input_data(x, y, data, x_colnames, cv_group):
     """
@@ -686,12 +690,105 @@ def _reshape_input_data(x, y, data, x_colnames, cv_group):
 
     return X, y_true, data, x_colnames, y_colname, cv_group_colname
 
+def plot_roc_curve_multiclass(estimator, X_train, y_train, X_test, y_test, *,
+                              sample_weight=None, drop_intermediate=True,
+                              response_method="auto", name=None, ax=None, pos_label=None,
+                              average='macro', fit_params=None,
+                              plot_roc_kws=None, class_average_kws=None,
+                              ):
+    # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
+    if ax is None:
+        ax=plt.gca()
+    # 学習時パラメータがNoneなら空のdictを入力
+    if fit_params is None:
+        fit_params = {}
+    # plot_roc_kwsがNoneなら空のdictを入力
+    if plot_roc_kws is None:
+        plot_roc_kws = {}
+    # class_average_kwsがNoneなら空のdictを入力
+    if class_average_kws is None:
+        class_average_kws = {}
+    # 目的変数のクラス一覧
+    y_labels = sorted(np.unique(np.concatenate([y_train, y_test], 0)).tolist())
+    n_classes = len(y_labels)
+    
+    # 2クラス分類のとき
+    if n_classes == 2:
+        estimator.fit(X_train, y_train, **fit_params)
+        viz = plot_roc_curve(estimator, X_test, y_test,
+                             sample_weight=sample_weight, drop_intermediate=drop_intermediate,
+                             response_method=response_method, name=name, ax=ax, pos_label=pos_label,
+                             **class_average_kws
+                             )
+    # 多クラス分類のとき
+    elif n_classes >= 3:
+        # label_binarize()で目的変数を二値化
+        y_train_binarize = label_binarize(y_train, classes=y_labels)
+        y_test_binarize = label_binarize(y_test, classes=y_labels)
+        # fit_paramsにeval_setがあるとき、二値化
+        if 'eval_set' in fit_params:
+            fit_params['eval_set'] = [(fit_params['eval_set'][0][0], label_binarize(fit_params['eval_set'][0][1], classes=y_labels))]
+        # One vs Restの分類器を作成
+        clf_ovr = OneVsRestClassifier(estimator)
+        clf_ovr.fit(X_train, y_train_binarize) #TODO:あとでfit_paramsを追加 https://github.com/scikit-learn/scikit-learn/issues/10882
+        y_score = clf_ovr.predict_proba(X_test)
+        # クラスごとのROC曲線を算出
+        fpr = {}
+        tpr = {}
+        roc_auc = {}
+        for i in range(n_classes):
+            fpr[i], tpr[i], _ = roc_curve(y_test_binarize[:, i], y_score[:, i])
+            roc_auc[i] = auc(fpr[i], tpr[i])
+        # micro-averageしたROC曲線を算出
+        fpr["micro"], tpr["micro"], _ = roc_curve(y_test_binarize.ravel(), y_score.ravel())
+        roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
+        # macro-averageしたROC曲線を算出
+        all_fpr = np.unique(np.concatenate([fpr[i] for i in range(n_classes)]))  # FPRのユニーク値を抽出
+        mean_tpr = np.zeros_like(all_fpr)  # Then interpolate all ROC curves at this points
+        for i in range(n_classes):
+            mean_tpr += np.interp(all_fpr, fpr[i], tpr[i])
+        mean_tpr /= n_classes
+        fpr["macro"] = all_fpr
+        tpr["macro"] = mean_tpr
+        roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
+
+        # Micro、Macroを選択
+        fpr_avg = fpr[average]
+        tpr_avg = tpr[average]
+        roc_auc_avg = roc_auc[average]
+        
+        # 平均ROC曲線をプロット
+        ax.plot(fpr_avg, tpr_avg,
+                label=f'{average}-average ROC (area = {0:0.2f})'
+                    ''.format(roc_auc["micro"]),
+                **class_average_kws)
+        # クラスごとのROC曲線をプロット
+        color_list = list(colors.TABLEAU_COLORS.values())
+        for i, color in zip(range(n_classes), color_list):
+            ax.plot(fpr[i], tpr[i], color=color,
+                    label='ROC class {0} (area = {1:0.2f})'
+                    ''.format(y_labels[i], roc_auc[i]),
+                    **plot_roc_kws)
+
+        # FPR、TPR、ROC曲線を保持
+        name = estimator.__class__.__name__ if name is None else name
+        viz = RocCurveDisplay(
+            fpr=fpr_avg,
+            tpr=tpr_avg,
+            roc_auc=roc_auc_avg,
+            estimator_name=name,
+            pos_label=pos_label
+        )
+    
+    return viz
+
 def roc_plot(clf, x: List[str], y: str, data: pd.DataFrame = None,
             x_colnames: List[str] = None, 
             cv=None, cv_seed=42, cv_group=None,
-            clf_params=None, fit_params=None,
             ax=None,
-            plot_roc_kws=None, mean_plot_kws=None, chance_plot_kws=None):
+            clf_params=None, fit_params=None,
+            subplot_kws=None,
+            plot_roc_kws=None, class_average_kws=None, cv_mean_kws=None, chance_plot_kws=None):
     # 入力データの形式統一
     X, y_true, data, x_colnames, y_colname, cv_group_colname = _reshape_input_data(x, y, data,
                                                                                     x_colnames,
@@ -703,12 +800,18 @@ def roc_plot(clf, x: List[str], y: str, data: pd.DataFrame = None,
     # 学習時パラメータがNoneなら空のdictを入力
     if fit_params is None:
         fit_params = {}
+    # subplot_kwsがNoneなら空のdictを入力
+    if subplot_kws is None:
+        subplot_kws = {}
     # plot_roc_kwsがNoneなら空のdictを入力
     if plot_roc_kws is None:
         plot_roc_kws = {}
-    # mean_plot_kwsがNoneなら空のdictを入力
-    if mean_plot_kws is None:
-        mean_plot_kws = {}
+    # class_average_kwsがNoneなら空のdictを入力
+    if class_average_kws is None:
+        class_average_kws = {}
+    # cv_mean_kwsがNoneなら空のdictを入力
+    if cv_mean_kws is None:
+        cv_mean_kws = {}
     # chance_plot_kwsがNoneなら空のdictを入力
     if chance_plot_kws is None:
         chance_plot_kws = {}
@@ -716,20 +819,21 @@ def roc_plot(clf, x: List[str], y: str, data: pd.DataFrame = None,
     # クロスバリデーション有無で場合分け
     # クロスバリデーション未実施時(学習データから学習してプロット)
     if cv is None:
-        # 学習実行
-        clf.fit(X, y, **fit_params)
+        # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
+        if ax is None:
+            ax=plt.gca()
         # plot_roc_curveに渡す引数
-        if 'name' not in plot_roc_kws.keys():
-            plot_roc_kws['name'] = 'ROC'
+        name = 'ROC'
         if 'alpha' not in plot_roc_kws.keys():
-            plot_roc_kws['alpha'] = 0.8
+            plot_roc_kws['alpha'] = 0.5
         if 'lw' not in plot_roc_kws.keys():
-            plot_roc_kws['lw'] = 2
+            plot_roc_kws['lw'] = 1
         # ROC曲線をプロット
-        viz = plot_roc_curve(clf, X, y_true,
-                             ax=ax,
-                             **plot_roc_kws
-                             )
+        viz = plot_roc_curve_multiclass(clf, X, y_true, X, y_true,
+                            name=name, ax=ax, fit_params = fit_params,
+                            plot_roc_kws=plot_roc_kws,
+                            class_average_kws=class_average_kws
+                            )
     
     # クロスバリデーション実施時(分割ごとに別々にプロット＆指標算出)
     if cv is not None:
@@ -752,47 +856,67 @@ def roc_plot(clf, x: List[str], y: str, data: pd.DataFrame = None,
         else:
             cv_num = cv.n_splits
 
+        # 表示用のax作成
+        if ax is None:
+            if 'figsize' not in subplot_kws.keys():
+                subplot_kws['figsize'] = (6, (cv_num + 1) * 6)
+            fig, ax = plt.subplots(cv_num + 1, 1, **subplot_kws)
+
         # 平均ROC曲線算出用のリスト
         tprs = []
         aucs = []
         mean_fpr = np.linspace(0, 1, 100)
+        color_list = list(colors.TABLEAU_COLORS.values())
         # クロスバリデーション
         for i, (train, test) in enumerate(cv.split(X, y_true, **split_kws)):
-            # 学習実行
-            clf.fit(X[train], y_true[train], **fit_params)
-            # plot_roc_curveに渡す引数
-            plot_roc_kws['name'] = 'ROC fold {}'.format(i)
+            name = 'ROC fold {}'.format(i)
+            # plot_roc_curveに渡す引数            
             if 'alpha' not in plot_roc_kws.keys():
                 plot_roc_kws['alpha'] = 0.3
             if 'lw' not in plot_roc_kws.keys():
                 plot_roc_kws['lw'] = 1
-            # ROC曲線をプロット
-            viz = plot_roc_curve(clf, X[test], y_true[test],
-                                ax=ax,
-                                **plot_roc_kws
-                                )
+            # class_average_kwsに渡す引数
+            if 'alpha' not in class_average_kws.keys():
+                class_average_kws['alpha'] = 0.6
+            if 'lw' not in class_average_kws.keys():
+                class_average_kws['lw'] = 2
+            if 'linestyle' not in class_average_kws.keys():
+                class_average_kws['linestyle'] = ':'
+            class_average_kws['color'] = color_list[i]
+            # CVごとのROC曲線をプロット
+            viz = plot_roc_curve_multiclass(clf, X[train], y_true[train], X[test], y_true[test],
+                                          name=name, ax=ax[i], fit_params=fit_params,
+                                          plot_roc_kws=plot_roc_kws,
+                                          class_average_kws=class_average_kws
+                                          )
+            ax[i].set_title(f'Cross Validation Fold{i}')
             # TPRとAUCを保持
-            interp_tpr = np.interp(mean_fpr, viz.fpr, viz.tpr)
+            interp_tpr = np.interp(mean_fpr, viz.fpr, viz.tpr)  # データが存在しない部分を補完
             interp_tpr[0] = 0.0
             tprs.append(interp_tpr)
             aucs.append(viz.roc_auc)
+            # CVごとのROC曲線を全体図にプロット
+            ax[cv_num].plot(mean_fpr, interp_tpr,
+                            label=name, color=color_list[i],
+                            **plot_roc_kws)
         
-        # 平均ROC曲線を計算
+        # CV平均ROC曲線を計算
         mean_tpr = np.mean(tprs, axis=0)
         mean_tpr[-1] = 1.0
         mean_auc = auc(mean_fpr, mean_tpr)
         std_auc = np.std(aucs)
-        # 平均ROC曲線plotに渡す引数
-        if 'label' not in mean_plot_kws.keys():
-                mean_plot_kws['label'] = r'Mean ROC (AUC = %0.2f $\pm$ %0.2f)' % (mean_auc, std_auc)
-        if 'alpha' not in mean_plot_kws.keys():
-            mean_plot_kws['alpha'] = 0.8
-        if 'lw' not in mean_plot_kws.keys():
-            mean_plot_kws['lw'] = 2
-        if 'color' not in mean_plot_kws.keys():
-            mean_plot_kws['color'] = 'blue'
+        # CV平均ROC曲線plotに渡す引数
+        if 'label' not in cv_mean_kws.keys():
+                cv_mean_kws['label'] = r'Mean ROC (AUC = %0.2f $\pm$ %0.2f)' % (mean_auc, std_auc)
+        if 'alpha' not in cv_mean_kws.keys():
+            cv_mean_kws['alpha'] = 0.8
+        if 'lw' not in cv_mean_kws.keys():
+            cv_mean_kws['lw'] = 2
+        if 'color' not in cv_mean_kws.keys():
+            cv_mean_kws['color'] = 'blue'
         # 平均ROC曲線プロット
-        ax.plot(mean_fpr, mean_tpr, **mean_plot_kws)
+        ax[cv_num].plot(mean_fpr, mean_tpr, **cv_mean_kws)
+        ax[cv_num].set_title('All Cross Validations')
 
     # ランダム時の直線描画に渡す引数
     if 'label' not in chance_plot_kws.keys():
@@ -806,9 +930,10 @@ def roc_plot(clf, x: List[str], y: str, data: pd.DataFrame = None,
     if 'linestyle' not in chance_plot_kws.keys():
         chance_plot_kws['linestyle'] = '--'
     # ランダム時の直線描画
-    ax.plot([0, 1], [0, 1], **chance_plot_kws)
-    ax.legend(loc='lower right')
-    ax.set(xlim=[-0.05, 1.05], ylim=[-0.05, 1.05])
+    for ax_cv in ax if cv is not None else [ax]:
+        ax_cv.plot([0, 1], [0, 1], **chance_plot_kws)
+        ax_cv.legend(loc='lower right')
+        ax_cv.set(xlim=[-0.05, 1.05], ylim=[-0.05, 1.05])
 
 iris = sns.load_dataset("iris")
 #iris = iris[iris['species'] != 'setosa']
@@ -817,9 +942,17 @@ USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']
 y = iris[OBJECTIVE_VARIALBLE].values
 X = iris[USE_EXPLANATORY].values
 
+fit_params = {'verbose': 0,
+              'early_stopping_rounds': 10,
+              'eval_metric': 'rmse',
+              'eval_set': [(X, y)]
+              }
+
+#estimator1 = LGBMClassifier(random_state=42, n_estimators=10000)
 estimator1 = SVC(probability=True)
-estimator2 = RandomForestClassifier()
-fig, axes = plt.subplots(1, 2, figsize=(12, 6))
-roc_plot(estimator1, X, y, ax=axes[0], cv=5)
-roc_plot(estimator2, X, y, ax=axes[1], cv=5)
+estimator2 = RandomForestClassifier(random_state=42)
+fig, axes = plt.subplots(6, 2, figsize=(12, 36))
+ax_pred = [[row[i] for row in axes] for i in range(2)]
+roc_plot(estimator1, X, y, ax=ax_pred[0], cv=5)
+roc_plot(estimator2, X, y, ax=ax_pred[1], cv=5)
 # %%
