@@ -445,7 +445,7 @@ class regplot():
                     cls._plot_pred_true(y_test, y_pred, hue_data=hue_test, hue_name=hue_name, ax=ax[i],
                                         linecolor=linecolor, rounddigit=rounddigit, score_dict=score_cv_dict,
                                         scatter_kws=scatter_kws, legend_kws=legend_kws)
-                    ax[i].set_title(f'Cross Validation No{i}')
+                    ax[i].set_title(f'Cross Validation Fold{i}')
                 # 全体プロット用データに追加
                 y_true_all.append(y_test)
                 y_pred_all.append(y_pred)
@@ -831,7 +831,7 @@ class regplot():
                 # 誤差上位を文字表示
                 if rank_number is not None:
                     cls._rank_display(y_test, estimator.predict(X_test), rank_number, rank_col, rank_col_test, x=X_test, ax=axes[i], rounddigit=rounddigit)
-                axes[i].set_title(f'Cross Validation No{i}')
+                axes[i].set_title(f'Cross Validation Fold{i}')
 
             # 指標の統計値を計算
             if cv_stats == 'mean':
