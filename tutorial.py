@@ -637,11 +637,51 @@ import matplotlib.pyplot as plt
 
 from typing import List
 import numbers
+import warnings
+
+import copy
 from sklearn.metrics import auc, plot_roc_curve, roc_curve, RocCurveDisplay
 from sklearn.model_selection import KFold, LeaveOneOut, GroupKFold, LeaveOneGroupOut
-from sklearn.preprocessing import label_binarize
-from sklearn.multiclass import OneVsRestClassifier
+from sklearn.preprocessing import label_binarize, LabelBinarizer
+from sklearn.multiclass import OneVsRestClassifier, _ConstantPredictor
+from sklearn.utils.fixes import delayed
+from sklearn import clone
+from joblib import Parallel
 from matplotlib import colors
+
+def _fit_binary(estimator, X, y, classes=None, **kwargs):
+    """Fit a single binary estimator."""
+    unique_y = np.unique(y)
+    if len(unique_y) == 1:
+        if classes is not None:
+            if y[0] == -1:
+                c = 0
+            else:
+                c = y[0]
+            warnings.warn("Label %s is present in all training examples." % str(classes[c]))
+        estimator = _ConstantPredictor().fit(X, unique_y)
+    else:
+        estimator = clone(estimator)
+        estimator.fit(X, y, **kwargs)
+    return estimator
+
+class OneVsRestClassifierPatched(OneVsRestClassifier):
+    """One-vs-the-rest (OvR) multiclass strategy with ``fit_params``"""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def fit(self, X, y, fit_params_list):
+        self.label_binarizer_ = LabelBinarizer(sparse_output=True)
+        Y = self.label_binarizer_.fit_transform(y)
+        Y = Y.tocsc()
+        self.classes_ = self.label_binarizer_.classes_
+        columns = (col.toarray().ravel() for col in Y.T)
+        self.estimators_ = Parallel(n_jobs=self.n_jobs)(delayed(_fit_binary)(
+            self.estimator, X, column, classes=[
+                "not %s" % self.label_binarizer_.classes_[i],
+                self.label_binarizer_.classes_[i]], **fit_params_list[i])
+            for i, column in enumerate(columns))
+        return self
 
 def _reshape_input_data(x, y, data, x_colnames, cv_group):
     """
@@ -734,10 +774,20 @@ def plot_roc_curve_multiclass(estimator, X_train, y_train, *,
         y_test_binarize = label_binarize(y_test, classes=y_labels)
         # fit_paramsにeval_setがあるとき、二値化
         if 'eval_set' in fit_params:
-            fit_params['eval_set'] = [(fit_params['eval_set'][0][0], label_binarize(fit_params['eval_set'][0][1], classes=y_labels))]
+            eval_set_y_binarized = label_binarize(fit_params['eval_set'][0][1], classes=y_labels)
+        # fit_paramsをクラス数で分割
+        fit_params_list = []
+        for i in range(n_classes):
+            fit_params_cls = copy.deepcopy(fit_params)
+            # fit_paramsにeval_setがあるとき
+            if 'eval_set' in fit_params_cls:
+                fit_params_cls['eval_set'] = [(fit_params['eval_set'][0][0], eval_set_y_binarized[:, i])]
+            fit_params_list.append(fit_params_cls)
+            
         # One vs Restの分類器を作成
-        clf_ovr = OneVsRestClassifier(estimator)
-        clf_ovr.fit(X_train, y_train_binarize) #TODO:あとでfit_paramsを追加 https://github.com/scikit-learn/scikit-learn/issues/10882
+        clf_ovr = OneVsRestClassifierPatched(estimator)
+        clf_ovr.fit(X_train, y_train_binarize,
+                    fit_params_list) #TODO:あとでfit_paramsを追加 https://github.com/scikit-learn/scikit-learn/issues/10882
         y_score = clf_ovr.predict_proba(X_test)
         # クラスごとのROC曲線を算出
         fpr = {}
@@ -958,11 +1008,12 @@ fit_params = {'verbose': 0,
               'eval_set': [(X, y)]
               }
 
-#estimator1 = LGBMClassifier(random_state=42, n_estimators=10000)
-estimator1 = SVC(probability=True)
-estimator2 = RandomForestClassifier(random_state=42)
-fig, axes = plt.subplots(6, 2, figsize=(12, 36))
-ax_pred = [[row[i] for row in axes] for i in range(2)]
-roc_plot(estimator1, X, y, ax=ax_pred[0], cv=5)
+estimator1 = LGBMClassifier(random_state=42, n_estimators=10000)
+estimator2 = SVC(probability=True)
+estimator3 = RandomForestClassifier(random_state=42)
+fig, axes = plt.subplots(6, 3, figsize=(18, 36))
+ax_pred = [[row[i] for row in axes] for i in range(3)]
+roc_plot(estimator1, X, y, ax=ax_pred[0], cv=5, fit_params=fit_params)
 roc_plot(estimator2, X, y, ax=ax_pred[1], cv=5)
+roc_plot(estimator3, X, y, ax=ax_pred[2], cv=5)
 # %%
