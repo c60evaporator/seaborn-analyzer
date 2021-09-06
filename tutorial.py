@@ -637,17 +637,20 @@ import matplotlib.pyplot as plt
 
 from typing import List
 import numbers
-import warnings
-
 import copy
 from sklearn.metrics import auc, plot_roc_curve, roc_curve, RocCurveDisplay
 from sklearn.model_selection import KFold, LeaveOneOut, GroupKFold, LeaveOneGroupOut
 from sklearn.preprocessing import label_binarize, LabelBinarizer
 from sklearn.multiclass import OneVsRestClassifier, _ConstantPredictor
+from sklearn.metrics._plot.base import _check_classifier_response_method
+from matplotlib import colors
+
+import warnings
 from sklearn.utils.fixes import delayed
 from sklearn import clone
 from joblib import Parallel
-from matplotlib import colors
+
+from seaborn_analyzer import classplot
 
 def _fit_binary(estimator, X, y, classes=None, **kwargs):
     """Fit a single binary estimator."""
@@ -1011,9 +1014,9 @@ fit_params = {'verbose': 0,
 estimator1 = LGBMClassifier(random_state=42, n_estimators=10000)
 estimator2 = SVC(probability=True)
 estimator3 = RandomForestClassifier(random_state=42)
-fig, axes = plt.subplots(6, 3, figsize=(18, 36))
+fig, axes = plt.subplots(4, 3, figsize=(18, 24))
 ax_pred = [[row[i] for row in axes] for i in range(3)]
-roc_plot(estimator1, X, y, ax=ax_pred[0], cv=5, fit_params=fit_params)
-roc_plot(estimator2, X, y, ax=ax_pred[1], cv=5)
-roc_plot(estimator3, X, y, ax=ax_pred[2], cv=5)
+classplot.roc_plot(estimator1, X, y, ax=ax_pred[0], cv=3, fit_params=fit_params)
+classplot.roc_plot(estimator2, X, y, ax=ax_pred[1], cv=3)
+classplot.roc_plot(estimator3, X, y, ax=ax_pred[2], cv=3)
 # %%

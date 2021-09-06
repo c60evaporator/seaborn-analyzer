@@ -5,10 +5,15 @@ import numbers
 import numpy as np
 import pandas as pd
 from scipy import stats
-from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error, mean_squared_log_error, mean_absolute_percentage_error
-from sklearn.model_selection import KFold, LeaveOneOut, GroupKFold, LeaveOneGroupOut, cross_val_score
 from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error, mean_squared_log_error, mean_absolute_percentage_error, auc, plot_roc_curve, roc_curve, RocCurveDisplay
+from sklearn.model_selection import KFold, LeaveOneOut, GroupKFold, LeaveOneGroupOut, cross_val_score
+from sklearn.preprocessing import label_binarize
+from matplotlib import colors
+import copy
 import decimal
+
+from .multiclass_fitparams import OneVsRestClassifierPatched
 
 class regplot():
     # regression_heat_plotメソッド (回帰モデルヒートマップ表示)における、散布図カラーマップ
@@ -1937,7 +1942,7 @@ class classplot():
             Explanatory variables. Should be list[str] if ``data`` is pd.DataFrame. Should be np.ndarray if ``data`` is None
         y : str or np.ndarray
             Objective variable. Should be str if ``data`` is pd.DataFrame. Should be np.ndarray if ``data`` is None
-        data: pd.DataFrame
+        data: pd.DataFrame, optional
             Input data structure.
         x_colnames: List[str], optional
             Names of explanatory variables. Available only if ``data`` is NOT pd.DataFrame
@@ -2159,3 +2164,454 @@ class classplot():
                                     scatter_color_dict=scatter_color_dict, scatter_marker_dict=scatter_marker_dict, proba_cmap_dict=proba_cmap_dict, proba_type = proba_type,
                                     rounddigit_x3=rounddigit_x3, cv_index=cv_index,
                                     subplot_kws=subplot_kws, contourf_kws=contourf_kws, imshow_kws=imshow_kws, scatter_kws=scatter_kws, legend_kws=legend_kws)
+    
+    @classmethod
+    def plot_roc_curve_multiclass(cls, estimator, X_train, y_train, *,
+                                  X_test=None, y_test=None,
+                                  sample_weight=None, drop_intermediate=True,
+                                  response_method="predict_proba", name=None, ax=None, pos_label=None,
+                                  average='macro', fit_params=None,
+                                  plot_roc_kws=None, class_average_kws=None,
+                                  ):
+        """Plot Receiver operating characteristic (ROC) curve.
+
+        Available both 
+
+        Extra keyword arguments will be passed to matplotlib's `plot`.
+
+        Parameters
+        ----------
+        estimator : estimator instance
+            Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
+            in which the last estimator is a classifier.
+
+        X_train : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Input values of train data.
+
+        y_train : array-like of shape (n_samples,)
+            Target values of train data.
+
+        X_test : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Input values of test data.
+
+        y_test : array-like of shape (n_samples,)
+            Target values of test data.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
+
+        drop_intermediate : boolean, default=True
+            Whether to drop some suboptimal thresholds which would not appear
+            on a plotted ROC curve. This is useful in order to create lighter
+            ROC curves.
+
+        response_method : {'predict_proba', 'decision_function'}, default='predict_proba'
+            Specifies whether to use for calcurating class probability.
+
+        name : str, default=None
+            Name of ROC Curve for labeling. If `None`, use the name of the
+            estimator.
+
+        ax : matplotlib axes, default=None
+            Axes object to plot on. If `None`, a new figure and axes is created.
+
+        pos_label : str or int, default=None
+            The class considered as the positive class when computing the roc auc
+            metrics. By default, `estimators.classes_[1]` is considered
+            as the positive class.
+
+        average : {'macro', 'micro'}, default='micro'
+            Specifies whether to use for calcurating average of tpr and fpr.
+
+        fit_params : dict, default=None
+            Parameters passed to the fit() method of the classifier, e.g. ``early_stopping_round`` and ``eval_set`` of XGBClassifier. If the classifier is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+
+        plot_roc_kws : dict, optional
+            Additional parameters passed to matplotlib.pyplot.plot() that draws ROC curve of each classes, e.g. ``lw``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.plot.html
+        
+        class_average_kws : dict, optional
+            Additional parameters passed to matplotlib.pyplot.plot() or sklearn.metrics.plot_roc_curve() that draws ROC curve of average, e.g. ``alpha``. See https://scikit-learn.org/stable/modules/generated/sklearn.metrics.plot_roc_curve.html
+
+        Returns
+        -------
+        display : :class:`~sklearn.metrics.RocCurveDisplay`
+            Object that stores computed values.
+        """
+
+        # X_testがNoneのとき、X_trainを使用
+        if X_test is None:
+            X_test = X_train
+        # y_testがNoneのとき、y_trainを使用
+        if y_test is None:
+            y_test = y_train
+        # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
+        if ax is None:
+            ax = plt.gca()
+        # 学習時パラメータがNoneなら空のdictを入力
+        if fit_params is None:
+            fit_params = {}
+        # plot_roc_kwsがNoneなら空のdictを入力
+        if plot_roc_kws is None:
+            plot_roc_kws = {}
+        # class_average_kwsがNoneなら空のdictを入力
+        if class_average_kws is None:
+            class_average_kws = {}
+        # 目的変数のクラス一覧
+        y_labels = sorted(np.unique(np.concatenate([y_train, y_test], 0)).tolist())
+        n_classes = len(y_labels)
+        
+        # 2クラス分類のとき
+        if n_classes == 2:
+            estimator.fit(X_train, y_train, **fit_params)
+            viz = plot_roc_curve(estimator, X_test, y_test,
+                                sample_weight=sample_weight, drop_intermediate=drop_intermediate,
+                                response_method=response_method, name=name, ax=ax, pos_label=pos_label,
+                                **class_average_kws
+                                )
+        # 多クラス分類のとき
+        elif n_classes >= 3:
+            # label_binarize()で目的変数を二値化
+            y_train_binarize = label_binarize(y_train, classes=y_labels)
+            y_test_binarize = label_binarize(y_test, classes=y_labels)
+            # fit_paramsにeval_setがあるとき、二値化
+            if 'eval_set' in fit_params:
+                eval_set_y_binarized = label_binarize(fit_params['eval_set'][0][1], classes=y_labels)
+            # fit_paramsをクラス数で分割
+            fit_params_list = []
+            for i in range(n_classes):
+                fit_params_cls = copy.deepcopy(fit_params)
+                # fit_paramsにeval_setがあるとき
+                if 'eval_set' in fit_params_cls:
+                    fit_params_cls['eval_set'] = [(fit_params['eval_set'][0][0], eval_set_y_binarized[:, i])]
+                fit_params_list.append(fit_params_cls)
+                
+            # One vs Restの分類器を作成
+            clf_ovr = OneVsRestClassifierPatched(estimator)
+            clf_ovr.fit(X_train, y_train_binarize,
+                        fit_params_list) #TODO:あとでfit_paramsを追加 https://github.com/scikit-learn/scikit-learn/issues/10882
+            # predict_probaまたはdecision_functionでクラス確率を取得
+            if response_method == 'predict_proba':
+                y_score = clf_ovr.predict_proba(X_test)
+            elif response_method == 'decision_function':
+                y_score = clf_ovr.decision_function(X_test)
+            else:
+                raise Exception('The `response_method` argument should be `predict_proba` or `decision_function`')
+            # クラスごとのROC曲線を算出
+            fpr = {}
+            tpr = {}
+            roc_auc = {}
+            for i in range(n_classes):
+                fpr[i], tpr[i], _ = roc_curve(y_test_binarize[:, i], y_score[:, i],
+                                              pos_label=pos_label,
+                                              sample_weight=sample_weight,
+                                              drop_intermediate=drop_intermediate)
+                roc_auc[i] = auc(fpr[i], tpr[i])
+            # micro-averageしたROC曲線を算出
+            fpr["micro"], tpr["micro"], _ = roc_curve(y_test_binarize.ravel(), y_score.ravel(),
+                                                      pos_label=pos_label,
+                                                      sample_weight=sample_weight,
+                                                      drop_intermediate=drop_intermediate)
+            roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
+            # macro-averageしたROC曲線を算出
+            all_fpr = np.unique(np.concatenate([fpr[i] for i in range(n_classes)]))  # FPRのユニーク値を抽出
+            mean_tpr = np.zeros_like(all_fpr)  # Then interpolate all ROC curves at this points
+            for i in range(n_classes):
+                mean_tpr += np.interp(all_fpr, fpr[i], tpr[i])
+            mean_tpr /= n_classes
+            fpr["macro"] = all_fpr
+            tpr["macro"] = mean_tpr
+            roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
+
+            # Micro、Macroを選択
+            fpr_avg = fpr[average]
+            tpr_avg = tpr[average]
+            roc_auc_avg = roc_auc[average]
+            fpr_avg_graph = np.concatenate([np.array([0]), fpr_avg])  # グラフ表示用に端点を追加
+            tpr_avg_graph = np.concatenate([np.array([0]), tpr_avg])  # グラフ表示用に端点を追加
+            
+            # 平均ROC曲線をプロット
+            ax.plot(fpr_avg_graph, tpr_avg_graph,
+                    label=f'{average}' + '-average ROC (area = {0:0.2f})'
+                        ''.format(roc_auc_avg),
+                    **class_average_kws)
+            # クラスごとのROC曲線をプロット
+            color_list = list(colors.TABLEAU_COLORS.values())
+            for i, color in zip(range(n_classes), color_list):
+                ax.plot(fpr[i], tpr[i], color=color,
+                        label='ROC class {0} (area = {1:0.2f})'
+                        ''.format(y_labels[i], roc_auc[i]),
+                        **plot_roc_kws)
+            # 軸ラベルを追加
+            ax.set_xlabel('False Positive rate')
+            ax.set_ylabel('True Positive Rate')
+
+            # FPR、TPR、ROC曲線を保持
+            name = estimator.__class__.__name__ if name is None else name
+            viz = RocCurveDisplay(
+                fpr=fpr_avg,
+                tpr=tpr_avg,
+                roc_auc=roc_auc_avg,
+                estimator_name=name,
+                pos_label=pos_label
+            )
+        
+        return viz
+
+    @classmethod
+    def roc_plot(cls, clf, x: List[str], y: str, data: pd.DataFrame = None,
+                 x_colnames: List[str] = None, 
+                 cv=5, cv_seed=42, cv_group=None,
+                 ax=None,
+                 sample_weight=None, drop_intermediate=True,
+                 response_method="predict_proba", pos_label=None, average='macro',
+                 clf_params=None, fit_params=None,
+                 draw_grid=True, grid_kws=None, subplot_kws=None,
+                 plot_roc_kws=None, class_average_kws=None, cv_mean_kws=None, chance_plot_kws=None):
+        """Plot Receiver operating characteristic (ROC) curve with cross validation.
+
+        Available both binary and multiclass classifiction.
+
+        Extra keyword arguments will be passed to matplotlib's ``plot``.
+
+        Parameters
+        ----------
+        clf: classifier object implementing ``fit``
+            Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
+            in which the last estimator is a classifier.
+
+        x : list[str], or np.ndarray
+            Explanatory variables. Should be list[str] if ``data`` is pd.DataFrame. Should be np.ndarray if ``data`` is None
+
+        y : str or np.ndarray
+            Objective variable. Should be str if ``data`` is pd.DataFrame. Should be np.ndarray if ``data`` is None
+
+        data: pd.DataFrame, default=None
+            Input data structure.
+
+        x_colnames: List[str], default=None
+            Names of explanatory variables. Available only if ``data`` is NOT pd.DataFrame
+
+        cv: int or sklearn.model_selection.*, default=5
+            Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
+
+        cv_seed: int, default=42
+            Seed for random number generator of cross validation.
+
+        cv_group: str, default=None
+            Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to ``groups`` argument of cv.split(). Available only if ``cv`` is GroupKFold or LeaveOneGroupOut
+
+        ax : {matplotlib.axes.Axes, list[matplotlib.axes.Axes]}, default=None
+            Pre-existing axes for the plot or list of it. Otherwise, call matplotlib.pyplot.subplot() internally.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
+
+        drop_intermediate : boolean, default=True
+            Whether to drop some suboptimal thresholds which would not appear
+            on a plotted ROC curve. This is useful in order to create lighter
+            ROC curves.
+
+        response_method : {'predict_proba', 'decision_function'}, default='predict_proba'
+            Specifies whether to use for calcurating class probability.
+
+        pos_label : str or int, default=None
+            The class considered as the positive class when computing the roc auc
+            metrics. By default, `estimators.classes_[1]` is considered
+            as the positive class.
+
+        average : {'macro', 'micro'}, default='micro'
+            Specifies whether to use for calcurating average of tpr and fpr.
+
+        clf_params: dict, default=None
+            Parameters passed to the classifier. If the classifier is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+
+        fit_params : dict, default=None
+            Parameters passed to the fit() method of the classifier, e.g. ``early_stopping_round`` and ``eval_set`` of XGBClassifier. If the classifier is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+
+        draw_grid: bool, default=True
+            If True, grid lines are drawn.
+
+        grid_kws: dict, default=None
+            Additional parameters passed to matplotlib.pyplot.grid() that draws grid lines, e.g. ``color``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.grid.html
+
+        subplot_kws: dict, default=None
+            Additional parameters passed to matplotlib.pyplot.subplots(), e.g. ``figsize`` See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
+
+        plot_roc_kws : dict, default=None
+            Additional parameters passed to matplotlib.pyplot.plot() that draws ROC curve of each classes, e.g. ``lw``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.plot.html
+        
+        class_average_kws : dict, default=None
+            Additional parameters passed to matplotlib.pyplot.plot() or sklearn.metrics.plot_roc_curve() that draws average ROC curve of all classes, e.g. ``lw``. See https://scikit-learn.org/stable/modules/generated/sklearn.metrics.plot_roc_curve.html
+        
+        cv_mean_kws : dict, default=None
+            Additional parameters passed to matplotlib.pyplot.plot() that draws mean ROC curve of all folds of cross validation, e.g. ``lw``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.plot.html
+        
+        chance_plot_kws : dict, default=None
+            Additional parameters passed to matplotlib.pyplot.plot() that draws chance line, e.g. ``lw``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.plot.html
+        """
+        # 入力データの形式統一
+        X, y_true, data, x_colnames, y_colname, cv_group_colname = cls._reshape_input_data(x, y, data,
+                                                                                        x_colnames,
+                                                                                        cv_group)
+
+        # 学習器パラメータがあれば適用
+        if clf_params is not None:
+            clf.set_params(**clf_params)
+        # 学習時パラメータがNoneなら空のdictを入力
+        if fit_params is None:
+            fit_params = {}
+        # grid_kwsがNoneなら空のdictを入力
+        if grid_kws is None:
+            grid_kws = {}
+        # subplot_kwsがNoneなら空のdictを入力
+        if subplot_kws is None:
+            subplot_kws = {}
+        # plot_roc_kwsがNoneなら空のdictを入力
+        if plot_roc_kws is None:
+            plot_roc_kws = {}
+        # class_average_kwsがNoneなら空のdictを入力
+        if class_average_kws is None:
+            class_average_kws = {}
+        # cv_mean_kwsがNoneなら空のdictを入力
+        if cv_mean_kws is None:
+            cv_mean_kws = {}
+        # chance_plot_kwsがNoneなら空のdictを入力
+        if chance_plot_kws is None:
+            chance_plot_kws = {}
+
+        # クロスバリデーション有無で場合分け
+        # クロスバリデーション未実施時(学習データから学習してプロット)
+        if cv is None:
+            # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
+            if ax is None:
+                ax=plt.gca()
+            # plot_roc_curveに渡す引数
+            name = 'ROC'
+            if 'alpha' not in plot_roc_kws.keys():
+                plot_roc_kws['alpha'] = 0.5
+            if 'lw' not in plot_roc_kws.keys():
+                plot_roc_kws['lw'] = 1
+            # ROC曲線をプロット
+            viz = cls.plot_roc_curve_multiclass(clf, X, y_true,
+                                                sample_weight=sample_weight, drop_intermediate=drop_intermediate,
+                                                response_method=response_method, name=name, ax=ax,
+                                                pos_label=pos_label, average=average,
+                                                fit_params = fit_params,
+                                                plot_roc_kws=plot_roc_kws,
+                                                class_average_kws=class_average_kws
+                                                )
+                                  
+        # クロスバリデーション実施時(分割ごとに別々にプロット＆指標算出)
+        if cv is not None:
+            # 分割法未指定時、cv_numとseedに基づきKFoldでランダムに分割
+            if isinstance(cv, numbers.Integral):
+                cv = KFold(n_splits=cv, shuffle=True, random_state=cv_seed)
+            # LeaveOneOutのときエラーを出す
+            if isinstance(cv, LeaveOneOut):
+                raise Exception('"regression_heat_plot" method does not support "LeaveOneOut" cross validation')
+            # GroupKFold、LeaveOneGroupOutのとき、cv_groupをグルーピング対象に指定
+            split_kws={}
+            if isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
+                if cv_group_colname is not None:
+                    split_kws['groups'] = data[cv_group_colname].values
+                else:
+                    raise Exception('"GroupKFold" and "LeaveOneGroupOut" cross validations need ``cv_group`` argument')
+            # LeaveOneGroupOutのとき、クロスバリデーション分割数をcv_groupの数に指定
+            if isinstance(cv, LeaveOneGroupOut):
+                cv_num = len(set(data[cv_group_colname].values))
+            else:
+                cv_num = cv.n_splits
+
+            # 表示用のax作成
+            if ax is None:
+                if 'figsize' not in subplot_kws.keys():
+                    subplot_kws['figsize'] = (6, (cv_num + 1) * 6)
+                fig, ax = plt.subplots(cv_num + 1, 1, **subplot_kws)
+
+            # 平均ROC曲線算出用のリスト
+            tprs = []
+            aucs = []
+            mean_fpr = np.linspace(0, 1, 100)
+            color_list = list(colors.TABLEAU_COLORS.values())
+            # クロスバリデーション
+            for i, (train, test) in enumerate(cv.split(X, y_true, **split_kws)):
+                name = 'ROC fold {}'.format(i)
+                # plot_roc_curveに渡す引数            
+                if 'alpha' not in plot_roc_kws.keys():
+                    plot_roc_kws['alpha'] = 0.3
+                if 'lw' not in plot_roc_kws.keys():
+                    plot_roc_kws['lw'] = 1
+                # class_average_kwsに渡す引数
+                if 'alpha' not in class_average_kws.keys():
+                    class_average_kws['alpha'] = 0.6
+                if 'lw' not in class_average_kws.keys():
+                    class_average_kws['lw'] = 2
+                if 'linestyle' not in class_average_kws.keys():
+                    class_average_kws['linestyle'] = ':'
+                class_average_kws['color'] = color_list[i]
+                # CVごとのROC曲線をプロット
+                viz = cls.plot_roc_curve_multiclass(clf, X[train], y_true[train], 
+                                                    X_test=X[test], y_test=y_true[test],
+                                                    name=name, ax=ax[i], fit_params=fit_params,
+                                                    plot_roc_kws=plot_roc_kws,
+                                                    class_average_kws=class_average_kws
+                                                    )
+                ax[i].set_title(f'Cross Validation Fold{i}')
+                # TPRとAUCを保持
+                interp_tpr = np.interp(mean_fpr, viz.fpr, viz.tpr)  # データが存在しない部分を補完
+                interp_tpr[0] = 0.0
+                tprs.append(interp_tpr)
+                aucs.append(viz.roc_auc)
+                # CVごとのROC曲線を全体図にプロット
+                ax[cv_num].plot(mean_fpr, interp_tpr,
+                                label=name, color=color_list[i],
+                                **plot_roc_kws)
+            
+            # CV平均ROC曲線を計算
+            mean_tpr = np.mean(tprs, axis=0)
+            mean_tpr[-1] = 1.0
+            mean_auc = auc(mean_fpr, mean_tpr)
+            std_auc = np.std(aucs)
+            # CV平均ROC曲線plotに渡す引数
+            if 'label' not in cv_mean_kws.keys():
+                    cv_mean_kws['label'] = r'Mean ROC (AUC = %0.2f $\pm$ %0.2f)' % (mean_auc, std_auc)
+            if 'alpha' not in cv_mean_kws.keys():
+                cv_mean_kws['alpha'] = 0.8
+            if 'lw' not in cv_mean_kws.keys():
+                cv_mean_kws['lw'] = 2
+            if 'color' not in cv_mean_kws.keys():
+                cv_mean_kws['color'] = 'blue'
+            # 平均ROC曲線プロット
+            ax[cv_num].plot(mean_fpr, mean_tpr, **cv_mean_kws)
+            ax[cv_num].set_title('All Cross Validations')
+            # 軸ラベルを追加
+            ax[cv_num].set_xlabel('False Positive rate')
+            ax[cv_num].set_ylabel('True Positive Rate')
+
+        # ランダム時の直線描画に渡す引数
+        if 'label' not in chance_plot_kws.keys():
+                chance_plot_kws['label'] = 'Chance'
+        if 'alpha' not in chance_plot_kws.keys():
+            chance_plot_kws['alpha'] = 0.8
+        if 'lw' not in chance_plot_kws.keys():
+            chance_plot_kws['lw'] = 2
+        if 'color' not in chance_plot_kws.keys():
+            chance_plot_kws['color'] = 'red'
+        if 'linestyle' not in chance_plot_kws.keys():
+            chance_plot_kws['linestyle'] = '--'
+        # ランダム時の直線描画
+        for ax_cv in ax if cv is not None else [ax]:
+            ax_cv.plot([0, 1], [0, 1], **chance_plot_kws)
+            ax_cv.legend(loc='lower right')
+            ax_cv.set(xlim=[-0.05, 1.05], ylim=[-0.05, 1.05])
+
+        # グリッド線描画
+        if draw_grid:
+            if 'which' not in grid_kws.keys():
+                grid_kws['which'] = 'major'
+            if 'color' not in grid_kws.keys():
+                grid_kws['color'] = 'lightgrey'
+            if 'linestyle' not in grid_kws.keys():
+                grid_kws['linestyle'] = '-'
+            for ax_cv in ax if cv is not None else [ax]:
+                ax_cv.grid(**grid_kws)
