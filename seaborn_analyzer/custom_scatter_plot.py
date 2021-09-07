@@ -2329,11 +2329,24 @@ class classplot():
             fpr_avg_graph = np.concatenate([np.array([0]), fpr_avg])  # グラフ表示用に端点を追加
             tpr_avg_graph = np.concatenate([np.array([0]), tpr_avg])  # グラフ表示用に端点を追加
             
+            # class_average_kwsに渡す引数
+            if 'alpha' not in class_average_kws.keys():
+                class_average_kws['alpha'] = 0.8
+            if 'lw' not in class_average_kws.keys():
+                class_average_kws['lw'] = 3
+            if 'linestyle' not in class_average_kws.keys():
+                class_average_kws['linestyle'] = ':'
             # 平均ROC曲線をプロット
             ax.plot(fpr_avg_graph, tpr_avg_graph,
                     label=f'{average}' + '-average ROC (area = {0:0.2f})'
                         ''.format(roc_auc_avg),
                     **class_average_kws)
+
+            # plot_roc_curveに渡す引数            
+            if 'alpha' not in plot_roc_kws.keys():
+                plot_roc_kws['alpha'] = 0.4
+            if 'lw' not in plot_roc_kws.keys():
+                plot_roc_kws['lw'] = 2
             # クラスごとのROC曲線をプロット
             color_list = list(colors.TABLEAU_COLORS.values())
             for i, color in zip(range(n_classes), color_list):
@@ -2341,9 +2354,10 @@ class classplot():
                         label='ROC class {0} (area = {1:0.2f})'
                         ''.format(y_labels[i], roc_auc[i]),
                         **plot_roc_kws)
-            # 軸ラベルを追加
+            # 軸ラベルと凡例を追加
             ax.set_xlabel('False Positive rate')
             ax.set_ylabel('True Positive Rate')
+            ax.legend()
 
             # FPR、TPR、ROC曲線を保持
             name = estimator.__class__.__name__ if name is None else name
@@ -2365,7 +2379,7 @@ class classplot():
                  sample_weight=None, drop_intermediate=True,
                  response_method="predict_proba", pos_label=None, average='macro',
                  clf_params=None, fit_params=None,
-                 draw_grid=True, grid_kws=None, subplot_kws=None,
+                 draw_grid=True, grid_kws=None, subplot_kws=None, legend_kws=None,
                  plot_roc_kws=None, class_average_kws=None, cv_mean_kws=None, chance_plot_kws=None):
         """Plot Receiver operating characteristic (ROC) curve with cross validation.
 
@@ -2437,6 +2451,9 @@ class classplot():
         subplot_kws: dict, default=None
             Additional parameters passed to matplotlib.pyplot.subplots(), e.g. ``figsize`` See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
 
+        legend_kws : dict
+            Additional parameters passed to ax.legend(), e.g. ``loc``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html
+
         plot_roc_kws : dict, default=None
             Additional parameters passed to matplotlib.pyplot.plot() that draws ROC curve of each classes, e.g. ``lw``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.plot.html
         
@@ -2466,6 +2483,9 @@ class classplot():
         # subplot_kwsがNoneなら空のdictを入力
         if subplot_kws is None:
             subplot_kws = {}
+        # legend_kwsがNoneなら空のdictを入力
+        if legend_kws is None:
+            legend_kws = {}
         # plot_roc_kwsがNoneなら空のdictを入力
         if plot_roc_kws is None:
             plot_roc_kws = {}
@@ -2602,7 +2622,10 @@ class classplot():
         # ランダム時の直線描画
         for ax_cv in ax if cv is not None else [ax]:
             ax_cv.plot([0, 1], [0, 1], **chance_plot_kws)
-            ax_cv.legend(loc='lower right')
+            # 凡例追加
+            if 'loc' not in legend_kws.keys():
+                legend_kws['loc'] = 'lower right'
+            ax_cv.legend(**legend_kws)
             ax_cv.set(xlim=[-0.05, 1.05], ylim=[-0.05, 1.05])
 
         # グリッド線描画
