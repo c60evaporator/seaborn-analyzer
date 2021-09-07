@@ -583,427 +583,155 @@ regplot.regression_heat_plot(XGBRegressor(), x=['2_between_30to60', '3_male_rati
                                          'eval_set': [(df[['2_between_30to60', '3_male_ratio', '5_household_member', 'latitude']].values, df['approval_rate'].values)],
                                          'verbose': 1})
 
-# %% muscle-brain-tuningのテスト用
-from seaborn_analyzer import regplot
-from sklearn.svm import SVR
-from sklearn.ensemble import RandomForestRegressor
-import matplotlib.pyplot as plt
-from sklearn.datasets import load_boston
-import pandas as pd
-# Load dataset
-USE_EXPLANATORY = ['NOX', 'RM', 'DIS', 'LSTAT']
-df_boston = pd.DataFrame(load_boston().data, columns=load_boston().feature_names)
-X = df_boston[USE_EXPLANATORY].values
-y = load_boston().target
-df_boston['price'] = y
 
-estimator1 = SVR()
-estimator2 = RandomForestRegressor()
-fig, axes = plt.subplots(4, 2, figsize=(8, 16))
-fig.suptitle(f'prediction vs ')
-axes1 = [row[0] for row in axes]
-axes2 = [row[1] for row in axes]
-regplot.regression_pred_true(estimator1, USE_EXPLANATORY, 'price', df_boston, cv=3, ax=axes1, scores='mape')
-regplot.regression_pred_true(estimator2, USE_EXPLANATORY, 'price', df_boston, cv=3, ax=axes2, scores='mape')
-title_before = axes1[0].title._text
-axes1[0].set_title(f'SVM\n\n{title_before}')
-axes2[0].set_title('RandomForest')
-plt.tight_layout()
-plt.show()
-
-# %% legend_kws引数テスト用
-from seaborn_analyzer import regplot
-from sklearn.svm import SVR
-from sklearn.ensemble import RandomForestRegressor
-import matplotlib.pyplot as plt
-from sklearn.datasets import load_boston
-import pandas as pd
-# Load dataset
-USE_EXPLANATORY = ['NOX', 'RM', 'DIS', 'LSTAT', 'CHAS']
-df_boston = pd.DataFrame(load_boston().data, columns=load_boston().feature_names)
-X = df_boston[USE_EXPLANATORY].values
-y = load_boston().target
-df_boston['price'] = y
-regplot.linear_plot('NOX', 'price', df_boston, hue='CHAS', legend_kws={'loc': 5})
-
-# %% ROC曲線
-from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier
-from lightgbm import LGBMClassifier
+# %% 2クラス分類でのROC曲線(plot_roc_curve使用)
 import seaborn as sns
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
+from sklearn.svm import SVC
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import plot_roc_curve
 
-from typing import List
-import numbers
-import copy
-from sklearn.metrics import auc, plot_roc_curve, roc_curve, RocCurveDisplay
-from sklearn.model_selection import KFold, LeaveOneOut, GroupKFold, LeaveOneGroupOut
-from sklearn.preprocessing import label_binarize, LabelBinarizer
-from sklearn.multiclass import OneVsRestClassifier, _ConstantPredictor
-from sklearn.metrics._plot.base import _check_classifier_response_method
-from matplotlib import colors
-
-import warnings
-from sklearn.utils.fixes import delayed
-from sklearn import clone
-from joblib import Parallel
-
-from seaborn_analyzer import classplot
-
-def _fit_binary(estimator, X, y, classes=None, **kwargs):
-    """Fit a single binary estimator."""
-    unique_y = np.unique(y)
-    if len(unique_y) == 1:
-        if classes is not None:
-            if y[0] == -1:
-                c = 0
-            else:
-                c = y[0]
-            warnings.warn("Label %s is present in all training examples." % str(classes[c]))
-        estimator = _ConstantPredictor().fit(X, unique_y)
-    else:
-        estimator = clone(estimator)
-        estimator.fit(X, y, **kwargs)
-    return estimator
-
-class OneVsRestClassifierPatched(OneVsRestClassifier):
-    """One-vs-the-rest (OvR) multiclass strategy with ``fit_params``"""
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def fit(self, X, y, fit_params_list):
-        self.label_binarizer_ = LabelBinarizer(sparse_output=True)
-        Y = self.label_binarizer_.fit_transform(y)
-        Y = Y.tocsc()
-        self.classes_ = self.label_binarizer_.classes_
-        columns = (col.toarray().ravel() for col in Y.T)
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(delayed(_fit_binary)(
-            self.estimator, X, column, classes=[
-                "not %s" % self.label_binarizer_.classes_[i],
-                self.label_binarizer_.classes_[i]], **fit_params_list[i])
-            for i, column in enumerate(columns))
-        return self
-
-def _reshape_input_data(x, y, data, x_colnames, cv_group):
-    """
-    入力データの形式統一(pd.DataFrame or np.ndarray)
-    """
-    # dataがpd.DataFrameのとき
-    if isinstance(data, pd.DataFrame):
-        if not isinstance(x, list):
-            raise Exception('`x` argument should be list[str] if `data` is pd.DataFrame')
-        if not isinstance(y, str):
-            raise Exception('`y` argument should be str if `data` is pd.DataFrame')
-        if x_colnames is not None:
-            raise Exception('`x_colnames` argument should be None if `data` is pd.DataFrame')
-        X = data[x].values
-        y_true = data[y].values
-        x_colnames = x
-        y_colname = y
-        cv_group_colname = cv_group
-        
-    # dataがNoneのとき(x, y, cv_groupがnp.ndarray)
-    elif data is None:
-        if not isinstance(x, np.ndarray):
-            raise Exception('`x` argument should be np.ndarray if `data` is None')
-        if not isinstance(y, np.ndarray):
-            raise Exception('`y` argument should be np.ndarray if `data` is None')
-        X = x
-        y_true = y.ravel()
-        # x_colnameとXの整合性確認
-        if x_colnames is None:
-            x_colnames = list(range(x.shape[1]))
-        elif x.shape[1] != len(x_colnames):
-            raise Exception('width of X must be equal to length of x_colnames')
-        else:
-            x_colnames = x_colnames
-        y_colname = 'objective_variable'
-        if cv_group is not None:  # cv_group指定時
-            cv_group_colname = 'group'
-            data = pd.DataFrame(np.column_stack((X, y_true, cv_group)),
-                                columns=x_colnames + [y_colname] + [cv_group_colname])
-        else:
-            cv_group_colname = None
-            data = pd.DataFrame(np.column_stack((X, y)),
-                                columns=x_colnames + [y_colname])
-    else:
-        raise Exception('`data` argument should be pd.DataFrame or None')
-
-    return X, y_true, data, x_colnames, y_colname, cv_group_colname
-
-def plot_roc_curve_multiclass(estimator, X_train, y_train, *,
-                              X_test=None, y_test=None,
-                              sample_weight=None, drop_intermediate=True,
-                              response_method="auto", name=None, ax=None, pos_label=None,
-                              average='macro', fit_params=None,
-                              plot_roc_kws=None, class_average_kws=None,
-                              ):
-    # X_testがNoneのとき、X_trainを使用
-    if X_test is None:
-        X_test = X_train
-    # y_testがNoneのとき、y_trainを使用
-    if y_test is None:
-        y_test = y_train
-    # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
-    if ax is None:
-        ax = plt.gca()
-    # 学習時パラメータがNoneなら空のdictを入力
-    if fit_params is None:
-        fit_params = {}
-    # plot_roc_kwsがNoneなら空のdictを入力
-    if plot_roc_kws is None:
-        plot_roc_kws = {}
-    # class_average_kwsがNoneなら空のdictを入力
-    if class_average_kws is None:
-        class_average_kws = {}
-    # 目的変数のクラス一覧
-    y_labels = sorted(np.unique(np.concatenate([y_train, y_test], 0)).tolist())
-    n_classes = len(y_labels)
-    
-    # 2クラス分類のとき
-    if n_classes == 2:
-        estimator.fit(X_train, y_train, **fit_params)
-        viz = plot_roc_curve(estimator, X_test, y_test,
-                             sample_weight=sample_weight, drop_intermediate=drop_intermediate,
-                             response_method=response_method, name=name, ax=ax, pos_label=pos_label,
-                             **class_average_kws
-                             )
-    # 多クラス分類のとき
-    elif n_classes >= 3:
-        # label_binarize()で目的変数を二値化
-        y_train_binarize = label_binarize(y_train, classes=y_labels)
-        y_test_binarize = label_binarize(y_test, classes=y_labels)
-        # fit_paramsにeval_setがあるとき、二値化
-        if 'eval_set' in fit_params:
-            eval_set_y_binarized = label_binarize(fit_params['eval_set'][0][1], classes=y_labels)
-        # fit_paramsをクラス数で分割
-        fit_params_list = []
-        for i in range(n_classes):
-            fit_params_cls = copy.deepcopy(fit_params)
-            # fit_paramsにeval_setがあるとき
-            if 'eval_set' in fit_params_cls:
-                fit_params_cls['eval_set'] = [(fit_params['eval_set'][0][0], eval_set_y_binarized[:, i])]
-            fit_params_list.append(fit_params_cls)
-            
-        # One vs Restの分類器を作成
-        clf_ovr = OneVsRestClassifierPatched(estimator)
-        clf_ovr.fit(X_train, y_train_binarize,
-                    fit_params_list) #TODO:あとでfit_paramsを追加 https://github.com/scikit-learn/scikit-learn/issues/10882
-        y_score = clf_ovr.predict_proba(X_test)
-        # クラスごとのROC曲線を算出
-        fpr = {}
-        tpr = {}
-        roc_auc = {}
-        for i in range(n_classes):
-            fpr[i], tpr[i], _ = roc_curve(y_test_binarize[:, i], y_score[:, i])
-            roc_auc[i] = auc(fpr[i], tpr[i])
-        # micro-averageしたROC曲線を算出
-        fpr["micro"], tpr["micro"], _ = roc_curve(y_test_binarize.ravel(), y_score.ravel())
-        roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
-        # macro-averageしたROC曲線を算出
-        all_fpr = np.unique(np.concatenate([fpr[i] for i in range(n_classes)]))  # FPRのユニーク値を抽出
-        mean_tpr = np.zeros_like(all_fpr)  # Then interpolate all ROC curves at this points
-        for i in range(n_classes):
-            mean_tpr += np.interp(all_fpr, fpr[i], tpr[i])
-        mean_tpr /= n_classes
-        fpr["macro"] = all_fpr
-        tpr["macro"] = mean_tpr
-        roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
-
-        # Micro、Macroを選択
-        fpr_avg = fpr[average]
-        tpr_avg = tpr[average]
-        roc_auc_avg = roc_auc[average]
-        fpr_avg_graph = np.concatenate([np.array([0]), fpr_avg])  # グラフ表示用に端点を追加
-        tpr_avg_graph = np.concatenate([np.array([0]), tpr_avg])  # グラフ表示用に端点を追加
-        
-        # 平均ROC曲線をプロット
-        ax.plot(fpr_avg_graph, tpr_avg_graph,
-                label=f'{average}' + '-average ROC (area = {0:0.2f})'
-                    ''.format(roc_auc_avg),
-                **class_average_kws)
-        # クラスごとのROC曲線をプロット
-        color_list = list(colors.TABLEAU_COLORS.values())
-        for i, color in zip(range(n_classes), color_list):
-            ax.plot(fpr[i], tpr[i], color=color,
-                    label='ROC class {0} (area = {1:0.2f})'
-                    ''.format(y_labels[i], roc_auc[i]),
-                    **plot_roc_kws)
-
-        # FPR、TPR、ROC曲線を保持
-        name = estimator.__class__.__name__ if name is None else name
-        viz = RocCurveDisplay(
-            fpr=fpr_avg,
-            tpr=tpr_avg,
-            roc_auc=roc_auc_avg,
-            estimator_name=name,
-            pos_label=pos_label
-        )
-    
-    return viz
-
-def roc_plot(clf, x: List[str], y: str, data: pd.DataFrame = None,
-            x_colnames: List[str] = None, 
-            cv=5, cv_seed=42, cv_group=None,
-            ax=None,
-            clf_params=None, fit_params=None,
-            subplot_kws=None,
-            plot_roc_kws=None, class_average_kws=None, cv_mean_kws=None, chance_plot_kws=None):
-    # 入力データの形式統一
-    X, y_true, data, x_colnames, y_colname, cv_group_colname = _reshape_input_data(x, y, data,
-                                                                                    x_colnames,
-                                                                                    cv_group)
-
-    # 学習器パラメータがあれば適用
-    if clf_params is not None:
-        clf.set_params(**clf_params)
-    # 学習時パラメータがNoneなら空のdictを入力
-    if fit_params is None:
-        fit_params = {}
-    # subplot_kwsがNoneなら空のdictを入力
-    if subplot_kws is None:
-        subplot_kws = {}
-    # plot_roc_kwsがNoneなら空のdictを入力
-    if plot_roc_kws is None:
-        plot_roc_kws = {}
-    # class_average_kwsがNoneなら空のdictを入力
-    if class_average_kws is None:
-        class_average_kws = {}
-    # cv_mean_kwsがNoneなら空のdictを入力
-    if cv_mean_kws is None:
-        cv_mean_kws = {}
-    # chance_plot_kwsがNoneなら空のdictを入力
-    if chance_plot_kws is None:
-        chance_plot_kws = {}
-
-    # クロスバリデーション有無で場合分け
-    # クロスバリデーション未実施時(学習データから学習してプロット)
-    if cv is None:
-        # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
-        if ax is None:
-            ax=plt.gca()
-        # plot_roc_curveに渡す引数
-        name = 'ROC'
-        if 'alpha' not in plot_roc_kws.keys():
-            plot_roc_kws['alpha'] = 0.5
-        if 'lw' not in plot_roc_kws.keys():
-            plot_roc_kws['lw'] = 1
-        # ROC曲線をプロット
-        viz = plot_roc_curve_multiclass(clf, X, y_true,
-                            name=name, ax=ax, fit_params = fit_params,
-                            plot_roc_kws=plot_roc_kws,
-                            class_average_kws=class_average_kws
-                            )
-    
-    # クロスバリデーション実施時(分割ごとに別々にプロット＆指標算出)
-    if cv is not None:
-        # 分割法未指定時、cv_numとseedに基づきKFoldでランダムに分割
-        if isinstance(cv, numbers.Integral):
-            cv = KFold(n_splits=cv, shuffle=True, random_state=cv_seed)
-        # LeaveOneOutのときエラーを出す
-        if isinstance(cv, LeaveOneOut):
-            raise Exception('"regression_heat_plot" method does not support "LeaveOneOut" cross validation')
-        # GroupKFold、LeaveOneGroupOutのとき、cv_groupをグルーピング対象に指定
-        split_kws={}
-        if isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
-            if cv_group_colname is not None:
-                split_kws['groups'] = data[cv_group_colname].values
-            else:
-                raise Exception('"GroupKFold" and "LeaveOneGroupOut" cross validations need ``cv_group`` argument')
-        # LeaveOneGroupOutのとき、クロスバリデーション分割数をcv_groupの数に指定
-        if isinstance(cv, LeaveOneGroupOut):
-            cv_num = len(set(data[cv_group_colname].values))
-        else:
-            cv_num = cv.n_splits
-
-        # 表示用のax作成
-        if ax is None:
-            if 'figsize' not in subplot_kws.keys():
-                subplot_kws['figsize'] = (6, (cv_num + 1) * 6)
-            fig, ax = plt.subplots(cv_num + 1, 1, **subplot_kws)
-
-        # 平均ROC曲線算出用のリスト
-        tprs = []
-        aucs = []
-        mean_fpr = np.linspace(0, 1, 100)
-        color_list = list(colors.TABLEAU_COLORS.values())
-        # クロスバリデーション
-        for i, (train, test) in enumerate(cv.split(X, y_true, **split_kws)):
-            name = 'ROC fold {}'.format(i)
-            # plot_roc_curveに渡す引数            
-            if 'alpha' not in plot_roc_kws.keys():
-                plot_roc_kws['alpha'] = 0.3
-            if 'lw' not in plot_roc_kws.keys():
-                plot_roc_kws['lw'] = 1
-            # class_average_kwsに渡す引数
-            if 'alpha' not in class_average_kws.keys():
-                class_average_kws['alpha'] = 0.6
-            if 'lw' not in class_average_kws.keys():
-                class_average_kws['lw'] = 2
-            if 'linestyle' not in class_average_kws.keys():
-                class_average_kws['linestyle'] = ':'
-            class_average_kws['color'] = color_list[i]
-            # CVごとのROC曲線をプロット
-            viz = plot_roc_curve_multiclass(clf, X[train], y_true[train], 
-                                          X_test=X[test], y_test=y_true[test],
-                                          name=name, ax=ax[i], fit_params=fit_params,
-                                          plot_roc_kws=plot_roc_kws,
-                                          class_average_kws=class_average_kws
-                                          )
-            ax[i].set_title(f'Cross Validation Fold{i}')
-            # TPRとAUCを保持
-            interp_tpr = np.interp(mean_fpr, viz.fpr, viz.tpr)  # データが存在しない部分を補完
-            interp_tpr[0] = 0.0
-            tprs.append(interp_tpr)
-            aucs.append(viz.roc_auc)
-            # CVごとのROC曲線を全体図にプロット
-            ax[cv_num].plot(mean_fpr, interp_tpr,
-                            label=name, color=color_list[i],
-                            **plot_roc_kws)
-        
-        # CV平均ROC曲線を計算
-        mean_tpr = np.mean(tprs, axis=0)
-        mean_tpr[-1] = 1.0
-        mean_auc = auc(mean_fpr, mean_tpr)
-        std_auc = np.std(aucs)
-        # CV平均ROC曲線plotに渡す引数
-        if 'label' not in cv_mean_kws.keys():
-                cv_mean_kws['label'] = r'Mean ROC (AUC = %0.2f $\pm$ %0.2f)' % (mean_auc, std_auc)
-        if 'alpha' not in cv_mean_kws.keys():
-            cv_mean_kws['alpha'] = 0.8
-        if 'lw' not in cv_mean_kws.keys():
-            cv_mean_kws['lw'] = 2
-        if 'color' not in cv_mean_kws.keys():
-            cv_mean_kws['color'] = 'blue'
-        # 平均ROC曲線プロット
-        ax[cv_num].plot(mean_fpr, mean_tpr, **cv_mean_kws)
-        ax[cv_num].set_title('All Cross Validations')
-
-    # ランダム時の直線描画に渡す引数
-    if 'label' not in chance_plot_kws.keys():
-            chance_plot_kws['label'] = 'Chance'
-    if 'alpha' not in chance_plot_kws.keys():
-        chance_plot_kws['alpha'] = 0.8
-    if 'lw' not in chance_plot_kws.keys():
-        chance_plot_kws['lw'] = 2
-    if 'color' not in chance_plot_kws.keys():
-        chance_plot_kws['color'] = 'red'
-    if 'linestyle' not in chance_plot_kws.keys():
-        chance_plot_kws['linestyle'] = '--'
-    # ランダム時の直線描画
-    for ax_cv in ax if cv is not None else [ax]:
-        ax_cv.plot([0, 1], [0, 1], **chance_plot_kws)
-        ax_cv.legend(loc='lower right')
-        ax_cv.set(xlim=[-0.05, 1.05], ylim=[-0.05, 1.05])
-
+# データ読込
 iris = sns.load_dataset("iris")
-#iris = iris[iris['species'] != 'setosa']
+iris = iris[iris['species'] != 'setosa'] 
 OBJECTIVE_VARIALBLE = 'species'  # 目的変数
 USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # 説明変数
 y = iris[OBJECTIVE_VARIALBLE].values
 X = iris[USE_EXPLANATORY].values
+# ノイズ付加
+import numpy as np
+random_state = np.random.RandomState(0)
+n_samples, n_features = X.shape
+X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=True, random_state=42)
+estimator = SVC(probability=True, random_state=42)
+estimator.fit(X_train, y_train)
+plot_roc_curve(estimator, X_test, y_test)
+
+# %% 2クラス分類でのROC曲線(plot_roc_curve_multiclass使用)
+import seaborn as sns
+from sklearn.svm import SVC
+from sklearn.model_selection import train_test_split
+from seaborn_analyzer import classplot
+
+# データ読込
+iris = sns.load_dataset("iris")
+iris = iris[iris['species'] != 'setosa'] 
+OBJECTIVE_VARIALBLE = 'species'  # 目的変数
+USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # 説明変数
+y = iris[OBJECTIVE_VARIALBLE].values
+X = iris[USE_EXPLANATORY].values
+# ノイズ付加
+import numpy as np
+random_state = np.random.RandomState(0)
+n_samples, n_features = X.shape
+X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=True, random_state=42)
+estimator = SVC(probability=True, random_state=42)
+classplot.plot_roc_curve_multiclass(estimator, X_train, y_train, 
+                                    X_test=X_test, y_test=y_test)
+
+# %% 多クラス分類でのROC曲線(plot_roc_curve_multiclass使用)
+import seaborn as sns
+from sklearn.svm import SVC
+from sklearn.model_selection import train_test_split
+from seaborn_analyzer import classplot
+
+# データ読込
+iris = sns.load_dataset("iris")
+OBJECTIVE_VARIALBLE = 'species'  # 目的変数
+USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # 説明変数
+y = iris[OBJECTIVE_VARIALBLE].values
+X = iris[USE_EXPLANATORY].values
+# ノイズ付加
+import numpy as np
+random_state = np.random.RandomState(0)
+n_samples, n_features = X.shape
+X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=True, random_state=42)
+estimator = SVC(probability=True, random_state=42)
+classplot.plot_roc_curve_multiclass(estimator, X_train, y_train, 
+                                    X_test=X_test, y_test=y_test)
+
+# %% クロスバリデーション＆2クラス分類でのROC曲線
+from sklearn.svm import SVC
+import seaborn as sns
+import matplotlib.pyplot as plt
+from seaborn_analyzer import classplot
+
+# データ読込
+iris = sns.load_dataset("iris")
+iris = iris[iris['species'] != 'setosa'] 
+OBJECTIVE_VARIALBLE = 'species'  # 目的変数
+USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # 説明変数
+y = iris[OBJECTIVE_VARIALBLE].values
+X = iris[USE_EXPLANATORY].values
+# ROC曲線描画
+estimator = SVC(probability=True, random_state=42)
+fig, axes = plt.subplots(4, 1, figsize=(6, 24))
+classplot.roc_plot(estimator, X, y, ax=axes, cv=3)
+
+# %% クロスバリデーション＆多クラス分類でのROC曲線
+from sklearn.svm import SVC
+import seaborn as sns
+import matplotlib.pyplot as plt
+from seaborn_analyzer import classplot
+
+# データ読込
+iris = sns.load_dataset("iris")
+OBJECTIVE_VARIALBLE = 'species'  # 目的変数
+USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # 説明変数
+y = iris[OBJECTIVE_VARIALBLE].values
+X = iris[USE_EXPLANATORY].values
+# ROC曲線描画
+estimator = SVC(probability=True, random_state=42)
+fig, axes = plt.subplots(4, 1, figsize=(6, 24))
+classplot.roc_plot(estimator, X, y, ax=axes, cv=3)
+
+# %% クロスバリデーション＆多クラス分類＆fit_params適用でのROC曲線
+from lightgbm import LGBMClassifier
+import seaborn as sns
+import matplotlib.pyplot as plt
+from seaborn_analyzer import classplot
+
+# データ読込
+iris = sns.load_dataset("iris")
+OBJECTIVE_VARIALBLE = 'species'  # 目的変数
+USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # 説明変数
+y = iris[OBJECTIVE_VARIALBLE].values
+X = iris[USE_EXPLANATORY].values
+# fit_params定義
+fit_params = {'verbose': 0,
+              'early_stopping_rounds': 10,
+              'eval_metric': 'rmse',
+              'eval_set': [(X, y)]
+              }
+# ROC曲線描画
+estimator = LGBMClassifier(random_state=42, n_estimators=10000)
+fig, axes = plt.subplots(4, 1, figsize=(6, 24))
+classplot.roc_plot(estimator, X, y, ax=axes, cv=3, fit_params=fit_params)
+
+# %% 3つの分類アルゴリズムで2クラスROC曲線を描画
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+from lightgbm import LGBMClassifier
+import seaborn as sns
+import matplotlib.pyplot as plt
+from seaborn_analyzer import classplot
+# データ読込
+iris = sns.load_dataset("iris")
+iris = iris[iris['species'] != 'setosa'] 
+OBJECTIVE_VARIALBLE = 'species'  # 目的変数
+USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # 説明変数
+y = iris[OBJECTIVE_VARIALBLE].values
+X = iris[USE_EXPLANATORY].values
+# ノイズ付加
+import numpy as np
+random_state = np.random.RandomState(0)
+n_samples, n_features = X.shape
+X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
 
 fit_params = {'verbose': 0,
               'early_stopping_rounds': 10,
@@ -1012,7 +740,41 @@ fit_params = {'verbose': 0,
               }
 
 estimator1 = LGBMClassifier(random_state=42, n_estimators=10000)
-estimator2 = SVC(probability=True)
+estimator2 = SVC(probability=True, random_state=42)
+estimator3 = RandomForestClassifier(random_state=42)
+fig, axes = plt.subplots(4, 3, figsize=(18, 24))
+ax_pred = [[row[i] for row in axes] for i in range(3)]
+classplot.roc_plot(estimator1, X, y, ax=ax_pred[0], cv=3, fit_params=fit_params)
+classplot.roc_plot(estimator2, X, y, ax=ax_pred[1], cv=3)
+classplot.roc_plot(estimator3, X, y, ax=ax_pred[2], cv=3)
+
+# %% 3つの分類アルゴリズムで多クラスROC曲線を描画
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+from lightgbm import LGBMClassifier
+import seaborn as sns
+import matplotlib.pyplot as plt
+from seaborn_analyzer import classplot
+# データ読込
+iris = sns.load_dataset("iris")
+OBJECTIVE_VARIALBLE = 'species'  # 目的変数
+USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # 説明変数
+y = iris[OBJECTIVE_VARIALBLE].values
+X = iris[USE_EXPLANATORY].values
+# ノイズ付加
+import numpy as np
+random_state = np.random.RandomState(0)
+n_samples, n_features = X.shape
+X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
+
+fit_params = {'verbose': 0,
+              'early_stopping_rounds': 10,
+              'eval_metric': 'rmse',
+              'eval_set': [(X, y)]
+              }
+
+estimator1 = LGBMClassifier(random_state=42, n_estimators=10000)
+estimator2 = SVC(probability=True, random_state=42)
 estimator3 = RandomForestClassifier(random_state=42)
 fig, axes = plt.subplots(4, 3, figsize=(18, 24))
 ax_pred = [[row[i] for row in axes] for i in range(3)]
