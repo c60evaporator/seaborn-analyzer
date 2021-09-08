@@ -2175,7 +2175,7 @@ class classplot():
                                   ):
         """Plot Receiver operating characteristic (ROC) curve.
 
-        Available both 
+        Available both multiclass and binary classification
 
         Extra keyword arguments will be passed to matplotlib's `plot`.
 
@@ -2333,7 +2333,7 @@ class classplot():
             if 'alpha' not in class_average_kws.keys():
                 class_average_kws['alpha'] = 0.8
             if 'lw' not in class_average_kws.keys():
-                class_average_kws['lw'] = 3
+                class_average_kws['lw'] = 2
             if 'linestyle' not in class_average_kws.keys():
                 class_average_kws['linestyle'] = ':'
             # 平均ROC曲線をプロット
@@ -2346,7 +2346,7 @@ class classplot():
             if 'alpha' not in plot_roc_kws.keys():
                 plot_roc_kws['alpha'] = 0.4
             if 'lw' not in plot_roc_kws.keys():
-                plot_roc_kws['lw'] = 2
+                plot_roc_kws['lw'] = 1
             # クラスごとのROC曲線をプロット
             color_list = list(colors.TABLEAU_COLORS.values())
             for i, color in zip(range(n_classes), color_list):
@@ -2449,7 +2449,7 @@ class classplot():
             Additional parameters passed to matplotlib.pyplot.grid() that draws grid lines, e.g. ``color``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.grid.html
 
         subplot_kws: dict, default=None
-            Additional parameters passed to matplotlib.pyplot.subplots(), e.g. ``figsize`` See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
+            Additional parameters passed to matplotlib.pyplot.subplots(), e.g. ``figsize``. Avealable only if ``ax`` is None. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
 
         legend_kws : dict
             Additional parameters passed to ax.legend(), e.g. ``loc``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html
