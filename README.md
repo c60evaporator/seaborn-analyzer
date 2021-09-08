@@ -328,7 +328,7 @@ plt.legend(loc='lower right')
 |y_test|オプション　　|np.ndarray|None|ROC曲線評価用データのうち目的変数|
 |sample_weight|オプション|list[float]|None|ROC曲線算出時のクラスごとの重みづけ|
 |drop_intermediate|オプション|bool|True|ROC曲線の形状に影響しない点の計算を省略するか|
-|response_method|オプション|{'predict_proba', 'decision_function'}|predict_proba|クラス確率算出に使用するメソッド名|
+|response_method|オプション|{'predict_proba', 'decision_function'}|'predict_proba'|クラス確率算出に使用するメソッド名|
 |name|オプション|str|None|学習器の名称|
 |ax|オプション|matplotlib.axes.Axes|None|表示対象のax (Noneならmatplotlib.pyplot.plotで1枚ごとにプロット)|
 |pos_label|オプション|str or int|None|Positive判定するラベル番号、2クラス分類のみ有効|
@@ -372,14 +372,14 @@ classplot.roc_plot(estimator, X, y, ax=axes, cv=3, fit_params=fit_params)
 |X|必須|list[str] or np.ndarray|-|説明変数のカラム名、または入力データのうち説明変数|
 |y|必須|str or np.ndarray|-|目的変数のカラム名、または入力データのうち目的変数|
 |data|オプション　　.|pd.DataFrame|None|入力データ (`X`, `y`がstrのとき必須)|
-|x_columns|オプション|list[str]|-|説明変数の名称リスト(`data`がNoneのときのみ有効)|
-|cv|オプション|int or sklearn.model_selection.* |None|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
+|x_columns|オプション|list[str]|None|説明変数の名称リスト(`data`がNoneのときのみ有効)|
+|cv|オプション|int or sklearn.model_selection.* |5|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
 |cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
 |cv_group|オプション|str or np.ndarray|None|GroupKFold, LeaveOneGroupOutのグルーピング対象カラム名、またはグルーピングのラベルデータ|
 |ax|オプション|matplotlib.axes.Axes|None|表示対象のax (Noneならmatplotlib.pyplot.plotで1枚ごとにプロット)|
 |sample_weight|オプション|list[float]|None|ROC曲線算出時のクラスごとの重みづけ|
 |drop_intermediate|オプション|bool|True|ROC曲線の形状に影響しない点の計算を省略するか|
-|response_method|オプション|{'predict_proba', 'decision_function'}|predict_proba|クラス確率算出に使用するメソッド名|
+|response_method|オプション|{'predict_proba', 'decision_function'}|'predict_proba'|クラス確率算出に使用するメソッド名|
 |pos_label|オプション|str or int|None|Positive判定するラベル番号、2クラス分類のみ有効|
 |average|オプション|list[str]|None|クラスごとのプロット色のリスト|
 |clf_params|オプション|dict|None|学習器に渡すパラメータ|
