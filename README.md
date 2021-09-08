@@ -196,6 +196,8 @@ Scikit-Learn APIに対応した分類モデル (例: XGBoostパッケージのXG
 |---|---|
 |class_separator_plot|決定境界プロット|
 |class_proba_plot|クラス確率プロット|
+|plot_roc_curve_multiclass|マルチクラス分類におけるROC曲線をプロット|
+|roc_plot|クロスバリデーションにおけるROC曲線をプロット|
 
 ### class_separator_plotメソッド
 #### 実行例
@@ -286,6 +288,7 @@ classplot.class_proba_plot(clf, ['petal_width', 'petal_length'], 'species', iris
 <br>
 
 ### plot_roc_curve_multiclassメソッド
+マルチクラス分類でのROC曲線をプロットします（2クラス分類もプロット可）
 #### 実行例
 ```python
 import seaborn as sns
@@ -313,7 +316,7 @@ plt.plot([0, 1], [0, 1], label='Chance', alpha=0.8,
          lw=2, color='red', linestyle='--')
 plt.legend(loc='lower right')
 ```
-![image](https://user-images.githubusercontent.com/59557625/117276085-a1a35f80-ae99-11eb-8368-cdd1cfa78346.png)
+![outputmulti](https://user-images.githubusercontent.com/59557625/132558369-c6bfee32-156b-4043-bedb-5b1854b00660.png)
 
 #### 引数一覧
 |引数名|必須引数orオプション|型|デフォルト値|内容|
@@ -337,6 +340,7 @@ plt.legend(loc='lower right')
 <br>
 
 ### roc_plotメソッド
+クロスバリデーションにおけるROC曲線をプロットします。通常の多クラス分類では渡せないfit_paramsを渡すこともできます
 #### 実行例
 ```python
 from lightgbm import LGBMClassifier
@@ -359,7 +363,7 @@ estimator = LGBMClassifier(random_state=42, n_estimators=10000)
 fig, axes = plt.subplots(4, 1, figsize=(6, 24))
 classplot.roc_plot(estimator, X, y, ax=axes, cv=3, fit_params=fit_params)
 ```
-![image](https://user-images.githubusercontent.com/59557625/117276085-a1a35f80-ae99-11eb-8368-cdd1cfa78346.png)
+![outputcv](https://user-images.githubusercontent.com/59557625/132558249-77f742f7-7af2-4da7-9d22-5456b21f4234.png)
 
 #### 引数一覧
 |引数名|必須引数orオプション|型|デフォルト値|内容|
@@ -392,6 +396,7 @@ classplot.roc_plot(estimator, X, y, ax=axes, cv=3, fit_params=fit_params)
 ### classplotクラス使用法詳細
 こちらの記事にまとめました
 https://qiita.com/c60evaporator/items/43866a42e09daebb5cc0
+
 
 <br>
 <br>
