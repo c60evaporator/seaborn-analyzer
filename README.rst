@@ -38,7 +38,7 @@ If you want to know usage of the other classes, see `API Reference
 ============
 Requirements
 ============
-seaborn-analyzer 0.1.7 requires
+seaborn-analyzer 0.1.8 requires
 
 * Python >=3.6
 * Numpy >=1.20.3
@@ -178,6 +178,61 @@ classplot.class_proba_plot
     classplot.class_proba_plot(clf, ['petal_width', 'petal_length'], 'species', iris,
                                proba_type='imshow')
 .. image:: https://user-images.githubusercontent.com/59557625/117276085-a1a35f80-ae99-11eb-8368-cdd1cfa78346.png
+
+classplot.plot_roc_curve_multiclass
+==========================
+.. code-block:: python
+
+    import seaborn as sns
+    from sklearn.svm import SVC
+    from sklearn.model_selection import train_test_split
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from seaborn_analyzer import classplot
+    # Load dataset
+    iris = sns.load_dataset("iris")
+    OBJECTIVE_VARIALBLE = 'species'  # Objective variable
+    USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # Explantory variables
+    y = iris[OBJECTIVE_VARIALBLE].values
+    X = iris[USE_EXPLANATORY].values
+    # Add random noise features
+    random_state = np.random.RandomState(0)
+    n_samples, n_features = X.shape
+    X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
+    # Plot ROC curve in multiclass classification
+    X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=True, random_state=42)
+    estimator = SVC(probability=True, random_state=42)
+    classplot.plot_roc_curve_multiclass(estimator, X_train, y_train, 
+                                        X_test=X_test, y_test=y_test)
+    plt.plot([0, 1], [0, 1], label='Chance', alpha=0.8,
+            lw=2, color='red', linestyle='--')
+    plt.legend(loc='lower right')
+.. image:: https://user-images.githubusercontent.com/59557625/132558369-c6bfee32-156b-4043-bedb-5b1854b00660.png
+
+classplot.roc_plot
+==========================
+.. code-block:: python
+
+    from lightgbm import LGBMClassifier
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    from seaborn_analyzer import classplot
+    # Load dataset
+    iris = sns.load_dataset("iris")
+    OBJECTIVE_VARIALBLE = 'species'  # Objective variable
+    USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # Explantory variables
+    y = iris[OBJECTIVE_VARIALBLE].values
+    X = iris[USE_EXPLANATORY].values
+    fit_params = {'verbose': 0,
+                'early_stopping_rounds': 10,
+                'eval_metric': 'rmse',
+                'eval_set': [(X, y)]
+                }
+    # Plot ROC curve with cross validation in multiclass classification
+    estimator = LGBMClassifier(random_state=42, n_estimators=10000)
+    fig, axes = plt.subplots(4, 1, figsize=(6, 24))
+    classplot.roc_plot(estimator, X, y, ax=axes, cv=3, fit_params=fit_params)
+.. image:: https://user-images.githubusercontent.com/59557625/132558249-77f742f7-7af2-4da7-9d22-5456b21f4234.png
 
 regplot.linear_plot
 ===================
