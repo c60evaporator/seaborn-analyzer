@@ -180,7 +180,7 @@ classplot.class_proba_plot
 .. image:: https://user-images.githubusercontent.com/59557625/117276085-a1a35f80-ae99-11eb-8368-cdd1cfa78346.png
 
 classplot.plot_roc_curve_multiclass
-==========================
+===================================
 .. code-block:: python
 
     import seaborn as sns
@@ -210,7 +210,7 @@ classplot.plot_roc_curve_multiclass
 .. image:: https://user-images.githubusercontent.com/59557625/132558369-c6bfee32-156b-4043-bedb-5b1854b00660.png
 
 classplot.roc_plot
-==========================
+==================
 .. code-block:: python
 
     from lightgbm import LGBMClassifier
