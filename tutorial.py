@@ -359,6 +359,239 @@ iris['1st'] = pd.Series(points[:, 0])  # 第1軸をirisに格納
 iris['2nd'] = pd.Series(points[:, 1])  # 第2軸をirisに格納
 sns.scatterplot(x='1st', y='2nd', hue='species', data=iris)
 
+# %% 2クラス分類でのROC曲線(plot_roc_curve使用)
+import seaborn as sns
+from sklearn.svm import SVC
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import plot_roc_curve
+import numpy as np
+# Load dataset
+iris = sns.load_dataset("iris")
+iris = iris[iris['species'] != 'setosa'] 
+OBJECTIVE_VARIALBLE = 'species'  # Objective variable
+USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # Explantory variables
+y = iris[OBJECTIVE_VARIALBLE].values
+X = iris[USE_EXPLANATORY].values
+# Add random noise features
+random_state = np.random.RandomState(0)
+n_samples, n_features = X.shape
+X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
+# Plot ROC curve in binary classification
+X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=True, random_state=42)
+estimator = SVC(probability=True, random_state=42)
+estimator.fit(X_train, y_train)
+plot_roc_curve(estimator, X_test, y_test)
+
+# %% 2クラス分類でのROC曲線(plot_roc_curve_multiclass使用)
+import seaborn as sns
+from sklearn.svm import SVC
+from sklearn.model_selection import train_test_split
+import numpy as np
+from seaborn_analyzer import classplot
+# Load dataset
+iris = sns.load_dataset("iris")
+iris = iris[iris['species'] != 'setosa'] 
+OBJECTIVE_VARIALBLE = 'species'  # Objective variable
+USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # Explantory variables
+y = iris[OBJECTIVE_VARIALBLE].values
+X = iris[USE_EXPLANATORY].values
+# Add random noise features
+random_state = np.random.RandomState(0)
+n_samples, n_features = X.shape
+X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
+# Plot ROC curve in binary classification
+X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=True, random_state=42)
+estimator = SVC(probability=True, random_state=42)
+classplot.plot_roc_curve_multiclass(estimator, X_train, y_train, 
+                                    X_test=X_test, y_test=y_test)
+
+# %% 多クラス分類でのROC曲線(plot_roc_curve_multiclass使用)
+import seaborn as sns
+from sklearn.svm import SVC
+from sklearn.model_selection import train_test_split
+import numpy as np
+import matplotlib.pyplot as plt
+from seaborn_analyzer import classplot
+# Load dataset
+iris = sns.load_dataset("iris")
+OBJECTIVE_VARIALBLE = 'species'  # Objective variable
+USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # Explantory variables
+y = iris[OBJECTIVE_VARIALBLE].values
+X = iris[USE_EXPLANATORY].values
+# Add random noise features
+random_state = np.random.RandomState(0)
+n_samples, n_features = X.shape
+X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
+# Plot ROC curve in multiclass classification
+X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=True, random_state=42)
+estimator = SVC(probability=True, random_state=42)
+classplot.plot_roc_curve_multiclass(estimator, X_train, y_train, 
+                                    X_test=X_test, y_test=y_test)
+plt.plot([0, 1], [0, 1], label='Chance', alpha=0.8,
+         lw=2, color='red', linestyle='--')
+plt.legend(loc='lower right')
+
+# %% クロスバリデーション＆2クラス分類でのROC曲線
+from sklearn.svm import SVC
+import seaborn as sns
+import matplotlib.pyplot as plt
+from seaborn_analyzer import classplot
+# Load dataset
+iris = sns.load_dataset("iris")
+iris = iris[iris['species'] != 'setosa'] 
+OBJECTIVE_VARIALBLE = 'species'  # Objective variable
+USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # Explantory variables
+y = iris[OBJECTIVE_VARIALBLE].values
+X = iris[USE_EXPLANATORY].values
+# Plot ROC curve in binary classification
+estimator = SVC(probability=True, random_state=42)
+fig, axes = plt.subplots(4, 1, figsize=(6, 24))
+classplot.roc_plot(estimator, X, y, ax=axes, cv=3)
+
+# %% クロスバリデーション＆多クラス分類でのROC曲線
+from sklearn.svm import SVC
+import seaborn as sns
+import matplotlib.pyplot as plt
+from seaborn_analyzer import classplot
+# Load dataset
+iris = sns.load_dataset("iris")
+OBJECTIVE_VARIALBLE = 'species'  # Objective variable
+USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # Explantory variables
+y = iris[OBJECTIVE_VARIALBLE].values
+X = iris[USE_EXPLANATORY].values
+# Plot ROC curve with cross validation in binary classification
+estimator = SVC(probability=True, random_state=42)
+fig, axes = plt.subplots(4, 1, figsize=(6, 24))
+classplot.roc_plot(estimator, X, y, ax=axes, cv=3)
+
+# %% クロスバリデーション＆多クラス分類＆fit_params適用でのROC曲線
+from lightgbm import LGBMClassifier
+import seaborn as sns
+import matplotlib.pyplot as plt
+from seaborn_analyzer import classplot
+# Load dataset
+iris = sns.load_dataset("iris")
+OBJECTIVE_VARIALBLE = 'species'  # Objective variable
+USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # Explantory variables
+y = iris[OBJECTIVE_VARIALBLE].values
+X = iris[USE_EXPLANATORY].values
+fit_params = {'verbose': 0,
+              'early_stopping_rounds': 10,
+              'eval_metric': 'rmse',
+              'eval_set': [(X, y)]
+              }
+# Plot ROC curve with cross validation in multiclass classification
+estimator = LGBMClassifier(random_state=42, n_estimators=10000)
+fig, axes = plt.subplots(4, 1, figsize=(6, 24))
+classplot.roc_plot(estimator, X, y, ax=axes, cv=3, fit_params=fit_params)
+
+# %% 3つの分類アルゴリズムで2クラスROC曲線を描画
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+from lightgbm import LGBMClassifier
+import seaborn as sns
+import matplotlib.pyplot as plt
+import numpy as np
+from seaborn_analyzer import classplot
+# Load dataset
+iris = sns.load_dataset("iris")
+iris = iris[iris['species'] != 'setosa'] 
+OBJECTIVE_VARIALBLE = 'species'  # Objective variable
+USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # Explantory variables
+y = iris[OBJECTIVE_VARIALBLE].values
+X = iris[USE_EXPLANATORY].values
+# Add random noise features
+random_state = np.random.RandomState(0)
+n_samples, n_features = X.shape
+X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
+fit_params = {'verbose': 0,
+              'early_stopping_rounds': 10,
+              'eval_metric': 'rmse',
+              'eval_set': [(X, y)]
+              }
+# Plot ROC curve with three classifiers
+estimator1 = LGBMClassifier(random_state=42, n_estimators=10000)
+estimator2 = SVC(probability=True, random_state=42)
+estimator3 = RandomForestClassifier(random_state=42)
+fig, axes = plt.subplots(4, 3, figsize=(18, 24))
+ax_pred = [[row[i] for row in axes] for i in range(3)]
+classplot.roc_plot(estimator1, X, y, ax=ax_pred[0], cv=3, fit_params=fit_params)
+classplot.roc_plot(estimator2, X, y, ax=ax_pred[1], cv=3)
+classplot.roc_plot(estimator3, X, y, ax=ax_pred[2], cv=3)
+# Add etimator name to the graph
+ax_pred[0][0].set_title(f'LightGBM\n\n{ax_pred[0][0].title._text}')
+ax_pred[1][0].set_title(f'SVM\n\n{ax_pred[1][0].title._text}')
+ax_pred[2][0].set_title(f'RandomForest\n\n{ax_pred[2][0].title._text}')
+
+# %% 3つの分類アルゴリズムで多クラスROC曲線を描画（ノイズなし）
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+from lightgbm import LGBMClassifier
+import seaborn as sns
+import matplotlib.pyplot as plt
+from seaborn_analyzer import classplot
+# Load dataset
+iris = sns.load_dataset("iris")
+OBJECTIVE_VARIALBLE = 'species'  # Objective variable
+USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # Explantory variables
+y = iris[OBJECTIVE_VARIALBLE].values
+X = iris[USE_EXPLANATORY].values
+fit_params = {'verbose': 0,
+              'early_stopping_rounds': 10,
+              'eval_metric': 'rmse',
+              'eval_set': [(X, y)]
+              }
+# Plot ROC curve with three classifiers
+estimator1 = LGBMClassifier(random_state=42, n_estimators=10000)
+estimator2 = SVC(probability=True, random_state=42)
+estimator3 = RandomForestClassifier(random_state=42)
+fig, axes = plt.subplots(4, 3, figsize=(18, 24))
+ax_pred = [[row[i] for row in axes] for i in range(3)]
+classplot.roc_plot(estimator1, X, y, ax=ax_pred[0], cv=3, fit_params=fit_params)
+classplot.roc_plot(estimator2, X, y, ax=ax_pred[1], cv=3)
+classplot.roc_plot(estimator3, X, y, ax=ax_pred[2], cv=3)
+# Add etimator name to the graph
+ax_pred[0][0].set_title(f'LightGBM\n\n{ax_pred[0][0].title._text}')
+ax_pred[1][0].set_title(f'SVM\n\n{ax_pred[1][0].title._text}')
+ax_pred[2][0].set_title(f'RandomForest\n\n{ax_pred[2][0].title._text}')
+
+# %% 3つの分類アルゴリズムで多クラスROC曲線を描画（ノイズあり）
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+from lightgbm import LGBMClassifier
+import seaborn as sns
+import matplotlib.pyplot as plt
+import numpy as np
+from seaborn_analyzer import classplot
+# Load dataset
+iris = sns.load_dataset("iris")
+OBJECTIVE_VARIALBLE = 'species'  # Objective variable
+USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # Explantory variables
+y = iris[OBJECTIVE_VARIALBLE].values
+X = iris[USE_EXPLANATORY].values
+# Add random noise features
+random_state = np.random.RandomState(0)
+n_samples, n_features = X.shape
+X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
+fit_params = {'verbose': 0,
+              'early_stopping_rounds': 10,
+              'eval_metric': 'rmse',
+              'eval_set': [(X, y)]
+              }
+# Plot ROC curve with three classifiers
+estimator1 = LGBMClassifier(random_state=42, n_estimators=10000)
+estimator2 = SVC(probability=True, random_state=42)
+estimator3 = RandomForestClassifier(random_state=42)
+fig, axes = plt.subplots(4, 3, figsize=(18, 24))
+ax_pred = [[row[i] for row in axes] for i in range(3)]
+classplot.roc_plot(estimator1, X, y, ax=ax_pred[0], cv=3, fit_params=fit_params)
+classplot.roc_plot(estimator2, X, y, ax=ax_pred[1], cv=3)
+classplot.roc_plot(estimator3, X, y, ax=ax_pred[2], cv=3)
+# Add etimator name to the graph
+ax_pred[0][0].set_title(f'LightGBM\n\n{ax_pred[0][0].title._text}')
+ax_pred[1][0].set_title(f'SVM\n\n{ax_pred[1][0].title._text}')
+ax_pred[2][0].set_title(f'RandomForest\n\n{ax_pred[2][0].title._text}')
+
 
 
 #######回帰モデルの可視化 seaborn_analyzer.regplot (https://qiita.com/c60evaporator/items/c930c822b527f62796ee)######
@@ -367,33 +600,39 @@ from seaborn_analyzer import regplot
 import seaborn as sns
 iris = sns.load_dataset("iris")
 regplot.linear_plot(x='petal_length', y='sepal_length', data=iris)
+
 #%% 概要の「機能2」（予測値と実測値のプロット）
 from seaborn_analyzer import regplot
 import seaborn as sns
 from sklearn.svm import SVR
 iris = sns.load_dataset("iris")
 regplot.regression_pred_true(SVR(), x='petal_length', y='sepal_length', data=iris, cv_stats='median', rank_number=3, cv=2)
+
 # %% 概要の「機能3」（1次元説明変数回帰モデルの可視化）
 from seaborn_analyzer import regplot
 import seaborn as sns
 from sklearn.svm import SVR
 iris = sns.load_dataset("iris")
 regplot.regression_plot_1d(SVR(), x='petal_length', y='sepal_length', data=iris, cv_stats='median', cv=2)
+
 # %% 概要の「機能4」（2～4次元説明変数回帰モデルの可視化）
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from seaborn_analyzer import regplot
 df_temp = pd.read_csv(f'./sample_data/temp_pressure.csv')
 regplot.regression_heat_plot(LinearRegression(), x=['altitude', 'latitude'], y='temperature', data=df_temp)
+
 # %% 散布図
 import seaborn as sns
 iris = sns.load_dataset("iris")
 sns.scatterplot(x='petal_length', y='sepal_length', data=iris)
+
 # %% custom_scatter_plot.regplot.linear_plot
 from seaborn_analyzer import regplot
 import seaborn as sns
 iris = sns.load_dataset("iris")
 regplot.linear_plot(x='petal_length', y='sepal_length', data=iris)
+
 # %% 気象庁の温度・標高・緯度データを可視化
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -407,6 +646,7 @@ ax.scatter3D(X[:, 0], X[:, 1], y)
 ax.set_xlabel('altitude [m]')
 ax.set_ylabel('latitude [°]')
 ax.set_zlabel('temperature [°C]')
+
 # %% 線形回帰して性能評価指標算出
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score, mean_absolute_error
@@ -415,12 +655,14 @@ lr.fit(X, y)  # 線形回帰学習
 y_pred = lr.predict(X)  # 学習モデルから回帰して予測値を算出
 print(f'R2={r2_score(y, y_pred)}')  # R2_Scoreを表示
 print(f'MAE={mean_absolute_error(y, y_pred)}')  # MAEを表示
+
 # %% 予測値 vs 実測値プロット
 import seaborn as sns
 sns.scatterplot(x=y, y=y_pred)
 ax = plt.gca()
 ax.set_xlabel('true')
 ax.set_ylabel('pred')
+
 #%% seaborn_analyzer.regplot.regression_pred_true
 import pandas as pd
 from seaborn_analyzer import regplot
@@ -428,13 +670,17 @@ import seaborn as sns
 from sklearn.linear_model import LinearRegression
 df_temp = pd.read_csv(f'./sample_data/temp_pressure.csv')
 regplot.regression_pred_true(LinearRegression(), x=['altitude', 'latitude'], y='temperature', data=df_temp, scores=['mae', 'r2'])
+
 # %% ランダムフォレスト回帰
 from sklearn.ensemble import RandomForestRegressor
 regplot.regression_pred_true(RandomForestRegressor(), x=['altitude', 'latitude'], y='temperature', data=df_temp, scores=['mae', 'r2'])
+
 # %% クロスバリデーション
 regplot.regression_pred_true(LinearRegression(), cv=2, x=['altitude', 'latitude'], y='temperature', data=df_temp, scores=['mae', 'r2'])
+
 # %% 誤差上位の表示
 regplot.regression_pred_true(LinearRegression(), rank_number=3, rank_col='city', x=['altitude', 'latitude'], y='temperature', data=df_temp, scores=['mae', 'r2'])
+
 # %% 1次元説明変数の場合の回帰線プロット
 import numpy as np
 from sklearn.svm import SVR
@@ -455,37 +701,45 @@ Xline = np.linspace(xmin, xmax, 100)
 Xline = Xline.reshape(len(Xline), 1)
 # 回帰線を描画
 plt.plot(Xline, svr.predict(Xline), color='red')
+
 # %% seaborn_analyzer.regplot.regression_plot_1d
 import seaborn as sns
 from seaborn_analyzer import regplot
 from sklearn.svm import SVR
 iris = sns.load_dataset("iris")
 regplot.regression_plot_1d(SVR(), x='petal_length', y='sepal_length', data=iris)
+
 # %% seaborn_analyzer.regplot.regression_heat_plot
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from seaborn_analyzer import regplot
 df_temp = pd.read_csv(f'./sample_data/temp_pressure.csv')
 regplot.regression_heat_plot(LinearRegression(), x=['altitude', 'latitude'], y='temperature', data=df_temp)
+
 # %% ランダムフォレスト回帰
 from sklearn.ensemble import RandomForestRegressor
 regplot.regression_heat_plot(RandomForestRegressor(), x=['altitude', 'latitude'], y='temperature', data=df_temp)
+
 # %% クロスバリデーション
 regplot.regression_heat_plot(LinearRegression(), cv=2, display_cv_indices=[0, 1], x=['altitude', 'latitude'], y='temperature', data=df_temp)
+
 # %% 誤差上位の表示
 regplot.regression_heat_plot(LinearRegression(), rank_number=3, rank_col='city', x=['altitude', 'latitude'], y='temperature', data=df_temp)
+
 # %% 3次元ヒートマップ
 from seaborn_analyzer import regplot
 import seaborn as sns
 from sklearn.svm import SVR
 iris = sns.load_dataset("iris")
 regplot.regression_heat_plot(SVR(), x=['sepal_width', 'petal_width', 'petal_length'], y='sepal_length', data=iris, x_heat=['petal_length', 'petal_width'], pair_sigmarange=1.0)
+
 # %% linear_plotの参考図プロット用
 import seaborn as sns
 import matplotlib.pyplot as plt
 iris = sns.load_dataset("iris")
 from seaborn_analyzer import regplot
 regplot.linear_plot(x='petal_length', y='sepal_length', data=iris, plot_scores=False)
+
 # %% regression_pred_trueの参考図プロット用
 import seaborn as sns
 iris = sns.load_dataset("iris")
@@ -497,6 +751,7 @@ from xgboost import XGBRegressor
 regplot.regression_pred_true(RandomForestRegressor(), x=['petal_width', 'petal_length'],
                              y='sepal_length', data=iris,
                              cv=2, subplot_kws={'figsize': (3, 9)})
+
 # %% regression_plot_1dの参考図プロット用
 import seaborn as sns
 iris = sns.load_dataset("iris")
@@ -508,6 +763,7 @@ from xgboost import XGBRegressor
 regplot.regression_plot_1d(RandomForestRegressor(), x='petal_length', 
                            y='sepal_length', data=iris,
                            cv=2, subplot_kws={'figsize': (3, 9)})
+
 # %% regression_heat_plotの参考図プロット用
 import seaborn as sns
 iris = sns.load_dataset("iris")
@@ -519,6 +775,7 @@ from xgboost import XGBRegressor
 regplot.regression_heat_plot(RandomForestRegressor(), x=['petal_width', 'petal_length'],
                              y='sepal_length', data=iris,
                              scatter_kws={'marker': 'v'})
+
 # %% パイプライン
 import seaborn as sns
 iris = sns.load_dataset("iris")
@@ -530,6 +787,7 @@ from sklearn.preprocessing import StandardScaler
 pipe = Pipeline([("scaler", StandardScaler()), ("svr", SVR())])
 regplot.regression_heat_plot(pipe, x=['petal_width', 'petal_length'],
                              y='sepal_length', data=iris)
+
 # %% 特徴量重要度
 import seaborn as sns
 iris = sns.load_dataset("iris")
@@ -544,6 +802,7 @@ xgbr.fit(X, y)
 # 特徴量重要度の取得と可視化
 importances = list(xgbr.feature_importances_)
 plt.barh(features, importances)
+
 # %% 残差プロット
 import seaborn as sns
 iris = sns.load_dataset("iris")
@@ -564,6 +823,7 @@ plt.xlabel('y_pred')
 plt.ylabel('error')
 # 残差=0の補助線を引く
 plt.plot([np.amin(y_pred), np.amax(y_pred)], [0, 0], "red")
+
 # %% 大阪都構想データで4次元プロット
 import pandas as pd
 from seaborn_analyzer import regplot
@@ -582,245 +842,5 @@ regplot.regression_heat_plot(XGBRegressor(), x=['2_between_30to60', '3_male_rati
                              fit_params={'early_stopping_rounds': 20,
                                          'eval_set': [(df[['2_between_30to60', '3_male_ratio', '5_household_member', 'latitude']].values, df['approval_rate'].values)],
                                          'verbose': 1})
-
-
-# %% 2クラス分類でのROC曲線(plot_roc_curve使用)
-import seaborn as sns
-from sklearn.svm import SVC
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import plot_roc_curve
-
-# データ読込
-iris = sns.load_dataset("iris")
-iris = iris[iris['species'] != 'setosa'] 
-OBJECTIVE_VARIALBLE = 'species'  # 目的変数
-USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # 説明変数
-y = iris[OBJECTIVE_VARIALBLE].values
-X = iris[USE_EXPLANATORY].values
-# ノイズ付加
-import numpy as np
-random_state = np.random.RandomState(0)
-n_samples, n_features = X.shape
-X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=True, random_state=42)
-estimator = SVC(probability=True, random_state=42)
-estimator.fit(X_train, y_train)
-plot_roc_curve(estimator, X_test, y_test)
-
-# %% 2クラス分類でのROC曲線(plot_roc_curve_multiclass使用)
-import seaborn as sns
-from sklearn.svm import SVC
-from sklearn.model_selection import train_test_split
-from seaborn_analyzer import classplot
-
-# データ読込
-iris = sns.load_dataset("iris")
-iris = iris[iris['species'] != 'setosa'] 
-OBJECTIVE_VARIALBLE = 'species'  # 目的変数
-USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # 説明変数
-y = iris[OBJECTIVE_VARIALBLE].values
-X = iris[USE_EXPLANATORY].values
-# ノイズ付加
-import numpy as np
-random_state = np.random.RandomState(0)
-n_samples, n_features = X.shape
-X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=True, random_state=42)
-estimator = SVC(probability=True, random_state=42)
-classplot.plot_roc_curve_multiclass(estimator, X_train, y_train, 
-                                    X_test=X_test, y_test=y_test)
-
-# %% 多クラス分類でのROC曲線(plot_roc_curve_multiclass使用)
-import seaborn as sns
-from sklearn.svm import SVC
-from sklearn.model_selection import train_test_split
-from seaborn_analyzer import classplot
-
-# データ読込
-iris = sns.load_dataset("iris")
-OBJECTIVE_VARIALBLE = 'species'  # 目的変数
-USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # 説明変数
-y = iris[OBJECTIVE_VARIALBLE].values
-X = iris[USE_EXPLANATORY].values
-# ノイズ付加
-import numpy as np
-random_state = np.random.RandomState(0)
-n_samples, n_features = X.shape
-X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=True, random_state=42)
-estimator = SVC(probability=True, random_state=42)
-classplot.plot_roc_curve_multiclass(estimator, X_train, y_train, 
-                                    X_test=X_test, y_test=y_test)
-
-# %% クロスバリデーション＆2クラス分類でのROC曲線
-from sklearn.svm import SVC
-import seaborn as sns
-import matplotlib.pyplot as plt
-from seaborn_analyzer import classplot
-
-# データ読込
-iris = sns.load_dataset("iris")
-iris = iris[iris['species'] != 'setosa'] 
-OBJECTIVE_VARIALBLE = 'species'  # 目的変数
-USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # 説明変数
-y = iris[OBJECTIVE_VARIALBLE].values
-X = iris[USE_EXPLANATORY].values
-# ROC曲線描画
-estimator = SVC(probability=True, random_state=42)
-fig, axes = plt.subplots(4, 1, figsize=(6, 24))
-classplot.roc_plot(estimator, X, y, ax=axes, cv=3)
-
-# %% クロスバリデーション＆多クラス分類でのROC曲線
-from sklearn.svm import SVC
-import seaborn as sns
-import matplotlib.pyplot as plt
-from seaborn_analyzer import classplot
-
-# データ読込
-iris = sns.load_dataset("iris")
-OBJECTIVE_VARIALBLE = 'species'  # 目的変数
-USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # 説明変数
-y = iris[OBJECTIVE_VARIALBLE].values
-X = iris[USE_EXPLANATORY].values
-# ROC曲線描画
-estimator = SVC(probability=True, random_state=42)
-fig, axes = plt.subplots(4, 1, figsize=(6, 24))
-classplot.roc_plot(estimator, X, y, ax=axes, cv=3)
-
-# %% クロスバリデーション＆多クラス分類＆fit_params適用でのROC曲線
-from lightgbm import LGBMClassifier
-import seaborn as sns
-import matplotlib.pyplot as plt
-from seaborn_analyzer import classplot
-
-# データ読込
-iris = sns.load_dataset("iris")
-OBJECTIVE_VARIALBLE = 'species'  # 目的変数
-USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # 説明変数
-y = iris[OBJECTIVE_VARIALBLE].values
-X = iris[USE_EXPLANATORY].values
-# fit_params定義
-fit_params = {'verbose': 0,
-              'early_stopping_rounds': 10,
-              'eval_metric': 'rmse',
-              'eval_set': [(X, y)]
-              }
-# ROC曲線描画
-estimator = LGBMClassifier(random_state=42, n_estimators=10000)
-fig, axes = plt.subplots(4, 1, figsize=(6, 24))
-classplot.roc_plot(estimator, X, y, ax=axes, cv=3, fit_params=fit_params)
-
-# %% 3つの分類アルゴリズムで2クラスROC曲線を描画
-from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier
-from lightgbm import LGBMClassifier
-import seaborn as sns
-import matplotlib.pyplot as plt
-from seaborn_analyzer import classplot
-# データ読込
-iris = sns.load_dataset("iris")
-iris = iris[iris['species'] != 'setosa'] 
-OBJECTIVE_VARIALBLE = 'species'  # 目的変数
-USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # 説明変数
-y = iris[OBJECTIVE_VARIALBLE].values
-X = iris[USE_EXPLANATORY].values
-# ノイズ付加
-import numpy as np
-random_state = np.random.RandomState(0)
-n_samples, n_features = X.shape
-X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
-
-fit_params = {'verbose': 0,
-              'early_stopping_rounds': 10,
-              'eval_metric': 'rmse',
-              'eval_set': [(X, y)]
-              }
-
-estimator1 = LGBMClassifier(random_state=42, n_estimators=10000)
-estimator2 = SVC(probability=True, random_state=42)
-estimator3 = RandomForestClassifier(random_state=42)
-fig, axes = plt.subplots(4, 3, figsize=(18, 24))
-ax_pred = [[row[i] for row in axes] for i in range(3)]
-classplot.roc_plot(estimator1, X, y, ax=ax_pred[0], cv=3, fit_params=fit_params)
-classplot.roc_plot(estimator2, X, y, ax=ax_pred[1], cv=3)
-classplot.roc_plot(estimator3, X, y, ax=ax_pred[2], cv=3)
-# 一番上の行に学習器名を追加
-ax_pred[0][0].set_title(f'LightGBM\n\n{ax_pred[0][0].title._text}')
-ax_pred[1][0].set_title(f'SVM\n\n{ax_pred[1][0].title._text}')
-ax_pred[2][0].set_title(f'RandomForest\n\n{ax_pred[2][0].title._text}')
-
-# %% 3つの分類アルゴリズムで多クラスROC曲線を描画（ノイズなし）
-from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier
-from lightgbm import LGBMClassifier
-import seaborn as sns
-import matplotlib.pyplot as plt
-from seaborn_analyzer import classplot
-# データ読込
-iris = sns.load_dataset("iris")
-OBJECTIVE_VARIALBLE = 'species'  # 目的変数
-USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # 説明変数
-y = iris[OBJECTIVE_VARIALBLE].values
-X = iris[USE_EXPLANATORY].values
-
-fit_params = {'verbose': 0,
-              'early_stopping_rounds': 10,
-              'eval_metric': 'rmse',
-              'eval_set': [(X, y)]
-              }
-
-estimator1 = LGBMClassifier(random_state=42, n_estimators=10000)
-estimator2 = SVC(probability=True, random_state=42)
-estimator3 = RandomForestClassifier(random_state=42)
-fig, axes = plt.subplots(4, 3, figsize=(18, 24))
-ax_pred = [[row[i] for row in axes] for i in range(3)]
-classplot.roc_plot(estimator1, X, y, ax=ax_pred[0], cv=3, fit_params=fit_params)
-classplot.roc_plot(estimator2, X, y, ax=ax_pred[1], cv=3)
-classplot.roc_plot(estimator3, X, y, ax=ax_pred[2], cv=3)
-# 一番上の行に学習器名を追加
-ax_pred[0][0].set_title(f'LightGBM\n\n{ax_pred[0][0].title._text}')
-ax_pred[1][0].set_title(f'SVM\n\n{ax_pred[1][0].title._text}')
-ax_pred[2][0].set_title(f'RandomForest\n\n{ax_pred[2][0].title._text}')
-
-# %% 3つの分類アルゴリズムで多クラスROC曲線を描画（ノイズあり）
-from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier
-from lightgbm import LGBMClassifier
-import seaborn as sns
-import matplotlib.pyplot as plt
-from seaborn_analyzer import classplot
-# データ読込
-iris = sns.load_dataset("iris")
-OBJECTIVE_VARIALBLE = 'species'  # 目的変数
-USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # 説明変数
-y = iris[OBJECTIVE_VARIALBLE].values
-X = iris[USE_EXPLANATORY].values
-# ノイズ付加
-import numpy as np
-random_state = np.random.RandomState(0)
-n_samples, n_features = X.shape
-X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
-
-fit_params = {'verbose': 0,
-              'early_stopping_rounds': 10,
-              'eval_metric': 'rmse',
-              'eval_set': [(X, y)]
-              }
-
-estimator1 = LGBMClassifier(random_state=42, n_estimators=10000)
-estimator2 = SVC(probability=True, random_state=42)
-estimator3 = RandomForestClassifier(random_state=42)
-fig, axes = plt.subplots(4, 3, figsize=(18, 24))
-ax_pred = [[row[i] for row in axes] for i in range(3)]
-classplot.roc_plot(estimator1, X, y, ax=ax_pred[0], cv=3, fit_params=fit_params)
-classplot.roc_plot(estimator2, X, y, ax=ax_pred[1], cv=3)
-classplot.roc_plot(estimator3, X, y, ax=ax_pred[2], cv=3)
-# 一番上の行に学習器名を追加
-ax_pred[0][0].set_title(f'LightGBM\n\n{ax_pred[0][0].title._text}')
-ax_pred[1][0].set_title(f'SVM\n\n{ax_pred[1][0].title._text}')
-ax_pred[2][0].set_title(f'RandomForest\n\n{ax_pred[2][0].title._text}')
 
 # %%
