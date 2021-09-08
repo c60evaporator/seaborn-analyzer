@@ -747,8 +747,45 @@ ax_pred = [[row[i] for row in axes] for i in range(3)]
 classplot.roc_plot(estimator1, X, y, ax=ax_pred[0], cv=3, fit_params=fit_params)
 classplot.roc_plot(estimator2, X, y, ax=ax_pred[1], cv=3)
 classplot.roc_plot(estimator3, X, y, ax=ax_pred[2], cv=3)
+# 一番上の行に学習器名を追加
+ax_pred[0][0].set_title(f'LightGBM\n\n{ax_pred[0][0].title._text}')
+ax_pred[1][0].set_title(f'SVM\n\n{ax_pred[1][0].title._text}')
+ax_pred[2][0].set_title(f'RandomForest\n\n{ax_pred[2][0].title._text}')
 
-# %% 3つの分類アルゴリズムで多クラスROC曲線を描画
+# %% 3つの分類アルゴリズムで多クラスROC曲線を描画（ノイズなし）
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+from lightgbm import LGBMClassifier
+import seaborn as sns
+import matplotlib.pyplot as plt
+from seaborn_analyzer import classplot
+# データ読込
+iris = sns.load_dataset("iris")
+OBJECTIVE_VARIALBLE = 'species'  # 目的変数
+USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # 説明変数
+y = iris[OBJECTIVE_VARIALBLE].values
+X = iris[USE_EXPLANATORY].values
+
+fit_params = {'verbose': 0,
+              'early_stopping_rounds': 10,
+              'eval_metric': 'rmse',
+              'eval_set': [(X, y)]
+              }
+
+estimator1 = LGBMClassifier(random_state=42, n_estimators=10000)
+estimator2 = SVC(probability=True, random_state=42)
+estimator3 = RandomForestClassifier(random_state=42)
+fig, axes = plt.subplots(4, 3, figsize=(18, 24))
+ax_pred = [[row[i] for row in axes] for i in range(3)]
+classplot.roc_plot(estimator1, X, y, ax=ax_pred[0], cv=3, fit_params=fit_params)
+classplot.roc_plot(estimator2, X, y, ax=ax_pred[1], cv=3)
+classplot.roc_plot(estimator3, X, y, ax=ax_pred[2], cv=3)
+# 一番上の行に学習器名を追加
+ax_pred[0][0].set_title(f'LightGBM\n\n{ax_pred[0][0].title._text}')
+ax_pred[1][0].set_title(f'SVM\n\n{ax_pred[1][0].title._text}')
+ax_pred[2][0].set_title(f'RandomForest\n\n{ax_pred[2][0].title._text}')
+
+# %% 3つの分類アルゴリズムで多クラスROC曲線を描画（ノイズあり）
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from lightgbm import LGBMClassifier
@@ -781,4 +818,9 @@ ax_pred = [[row[i] for row in axes] for i in range(3)]
 classplot.roc_plot(estimator1, X, y, ax=ax_pred[0], cv=3, fit_params=fit_params)
 classplot.roc_plot(estimator2, X, y, ax=ax_pred[1], cv=3)
 classplot.roc_plot(estimator3, X, y, ax=ax_pred[2], cv=3)
+# 一番上の行に学習器名を追加
+ax_pred[0][0].set_title(f'LightGBM\n\n{ax_pred[0][0].title._text}')
+ax_pred[1][0].set_title(f'SVM\n\n{ax_pred[1][0].title._text}')
+ax_pred[2][0].set_title(f'RandomForest\n\n{ax_pred[2][0].title._text}')
+
 # %%
