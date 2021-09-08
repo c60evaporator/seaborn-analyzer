@@ -84,6 +84,7 @@ cp = CustomPairPlot()
 cp.pairanalyzer(titanic, hue='survived')
 ```
 ![image](https://user-images.githubusercontent.com/59557625/115889860-4e8bde80-a48f-11eb-826a-cd3c79556a42.png)
+
 #### 引数一覧
 |引数名|必須引数orオプション|型|デフォルト値|内容|
 |---|---|---|---|---|
@@ -128,6 +129,7 @@ df = pd.DataFrame(load_boston().data, columns= load_boston().feature_names)
 hist.plot_normality(df, x='LSTAT', norm_hist=False, rounddigit=5)
 ```
 ![image](https://user-images.githubusercontent.com/59557625/117275256-cfd46f80-ae98-11eb-9da7-6f6e133846fa.png)
+
 #### 引数一覧
 |引数名|必須引数orオプション|型|デフォルト値|内容|
 |---|---|---|---|---|
@@ -159,6 +161,7 @@ df_scores
 ```
 ![image](https://user-images.githubusercontent.com/59557625/115890066-81ce6d80-a48f-11eb-8390-f985d9e2b8b1.png)
 ![image](https://user-images.githubusercontent.com/59557625/115890108-8d219900-a48f-11eb-9896-38f7dedbb6e4.png)
+
 #### 引数一覧
 |引数名|必須引数orオプション|型|デフォルト値|内容|
 |---|---|---|---|---|
@@ -205,6 +208,7 @@ clf = SVC()
 classplot.class_separator_plot(clf, ['petal_width', 'petal_length'], 'species', iris)
 ```
 ![image](https://user-images.githubusercontent.com/59557625/117274234-d7474900-ae97-11eb-9de2-c8a74dc179a5.png)
+
 #### 引数一覧
 |引数名|必須引数orオプション|型|デフォルト値|内容|
 |---|---|---|---|---|
@@ -246,6 +250,7 @@ classplot.class_proba_plot(clf, ['petal_width', 'petal_length'], 'species', iris
                            proba_type='imshow')
 ```
 ![image](https://user-images.githubusercontent.com/59557625/117276085-a1a35f80-ae99-11eb-8368-cdd1cfa78346.png)
+
 #### 引数一覧
 |引数名|必須引数orオプション|型|デフォルト値|内容|
 |---|---|---|---|---|
@@ -278,6 +283,110 @@ classplot.class_proba_plot(clf, ['petal_width', 'petal_length'], 'species', iris
 |proba_type|オプション|str|'contourf'|クラス確率図の描画種類<br>(等高線'contourf', 'contour', or RGB画像'imshow')|
 |imshow_kws|オプション|dict|None|proba_type='imshow'のとき[matplotlib.pyplot.imshow](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.imshow.html)に渡す引数|
 |legend_kws|オプション|dict|None|凡例用の[matplotlib.axes.Axes.legend](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html)に渡す引数|
+<br>
+
+### plot_roc_curve_multiclassメソッド
+#### 実行例
+```python
+import seaborn as sns
+from sklearn.svm import SVC
+from sklearn.model_selection import train_test_split
+import numpy as np
+import matplotlib.pyplot as plt
+from seaborn_analyzer import classplot
+# Load dataset
+iris = sns.load_dataset("iris")
+OBJECTIVE_VARIALBLE = 'species'  # Objective variable
+USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # Explantory variables
+y = iris[OBJECTIVE_VARIALBLE].values
+X = iris[USE_EXPLANATORY].values
+# Add random noise features
+random_state = np.random.RandomState(0)
+n_samples, n_features = X.shape
+X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
+# Plot ROC curve in multiclass classification
+X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=True, random_state=42)
+estimator = SVC(probability=True, random_state=42)
+classplot.plot_roc_curve_multiclass(estimator, X_train, y_train, 
+                                    X_test=X_test, y_test=y_test)
+plt.plot([0, 1], [0, 1], label='Chance', alpha=0.8,
+         lw=2, color='red', linestyle='--')
+plt.legend(loc='lower right')
+```
+![image](https://user-images.githubusercontent.com/59557625/117276085-a1a35f80-ae99-11eb-8368-cdd1cfa78346.png)
+
+#### 引数一覧
+|引数名|必須引数orオプション|型|デフォルト値|内容|
+|---|---|---|---|---|
+|estimator|必須|Scikit-learn API|-|表示対象の分類モデル(**未学習かつパラメータ入力済**の分類器を渡してください)|
+|X_train|必須|np.ndarray|-|学習用データのうち説明変数|
+|y_train|必須|np.ndarray|-|学習用データのうち目的変数|
+|X_test|オプション|np.ndarray|-|ROC曲線評価用データのうち説明変数|
+|y_test|オプション　　|np.ndarray|None|ROC曲線評価用データのうち目的変数|
+|sample_weight|オプション|list[float]|None|ROC曲線算出時のクラスごとの重みづけ|
+|drop_intermediate|オプション|bool|True|ROC曲線の形状に影響しない点の計算を省略するか|
+|response_method|オプション|{'predict_proba', 'decision_function'}|predict_proba|クラス確率算出に使用するメソッド名|
+|name|オプション|str|None|学習器の名称|
+|ax|オプション|matplotlib.axes.Axes|None|表示対象のax (Noneならmatplotlib.pyplot.plotで1枚ごとにプロット)|
+|pos_label|オプション|str or int|None|Positive判定するラベル番号、2クラス分類のみ有効|
+|average|オプション|list[str]|None|クラスごとのプロット色のリスト|
+|fit_params|オプション|dict|None|学習器の`fit()`メソッドに渡すパラメータ|
+|plot_roc_kws|オプション|dict|None|クラスごとROC曲線描画用の`ax.plot()`メソッドに渡すパラメータ|
+|class_average_kws|オプション|dict|None|全クラス平均ROC曲線描画用の`ax.plot()`メソッドに渡すパラメータ|
+
+<br>
+
+### roc_plotメソッド
+#### 実行例
+```python
+from lightgbm import LGBMClassifier
+import seaborn as sns
+import matplotlib.pyplot as plt
+from seaborn_analyzer import classplot
+# Load dataset
+iris = sns.load_dataset("iris")
+OBJECTIVE_VARIALBLE = 'species'  # Objective variable
+USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # Explantory variables
+y = iris[OBJECTIVE_VARIALBLE].values
+X = iris[USE_EXPLANATORY].values
+fit_params = {'verbose': 0,
+              'early_stopping_rounds': 10,
+              'eval_metric': 'rmse',
+              'eval_set': [(X, y)]
+              }
+# Plot ROC curve with cross validation in multiclass classification
+estimator = LGBMClassifier(random_state=42, n_estimators=10000)
+fig, axes = plt.subplots(4, 1, figsize=(6, 24))
+classplot.roc_plot(estimator, X, y, ax=axes, cv=3, fit_params=fit_params)
+```
+![image](https://user-images.githubusercontent.com/59557625/117276085-a1a35f80-ae99-11eb-8368-cdd1cfa78346.png)
+
+#### 引数一覧
+|引数名|必須引数orオプション|型|デフォルト値|内容|
+|---|---|---|---|---|
+|clf|必須|Scikit-learn API|-|表示対象の分類モデル(**未学習**の分類器を渡してください)|
+|X|必須|list[str] or np.ndarray|-|説明変数のカラム名、または入力データのうち説明変数|
+|y|必須|str or np.ndarray|-|目的変数のカラム名、または入力データのうち目的変数|
+|data|オプション　　.|pd.DataFrame|None|入力データ (`X`, `y`がstrのとき必須)|
+|x_columns|オプション|list[str]|-|説明変数の名称リスト(`data`がNoneのときのみ有効)|
+|cv|オプション|int or sklearn.model_selection.* |None|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
+|cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
+|cv_group|オプション|str or np.ndarray|None|GroupKFold, LeaveOneGroupOutのグルーピング対象カラム名、またはグルーピングのラベルデータ|
+|ax|オプション|matplotlib.axes.Axes|None|表示対象のax (Noneならmatplotlib.pyplot.plotで1枚ごとにプロット)|
+|sample_weight|オプション|list[float]|None|ROC曲線算出時のクラスごとの重みづけ|
+|drop_intermediate|オプション|bool|True|ROC曲線の形状に影響しない点の計算を省略するか|
+|response_method|オプション|{'predict_proba', 'decision_function'}|predict_proba|クラス確率算出に使用するメソッド名|
+|pos_label|オプション|str or int|None|Positive判定するラベル番号、2クラス分類のみ有効|
+|average|オプション|list[str]|None|クラスごとのプロット色のリスト|
+|clf_params|オプション|dict|None|学習器に渡すパラメータ|
+|fit_params|オプション|dict|None|学習器の`fit()`メソッドに渡すパラメータ|
+|draw_grid|オプション|bool|True|グリッド線の描画有無|
+|grid_kws|オプション|dict|None|グリッド描画用の[`matplotlib.pyplot.grid()`](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.grid.html)メソッドに渡すパラメータ|
+|subplot_kws|オプション|dict|None|図作成用の[`matplotlib.pyplot.subplots()`](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数(ax=Noneのときのみ有効)|
+|plot_roc_kws|オプション|dict|None|クラスごとROC曲線描画用の[`matplotlib.pyplot.plot()`](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.plot.html)メソッドに渡すパラメータ|
+|class_average_kws|オプション|dict|None|全クラス平均ROC曲線描画用の[`matplotlib.pyplot.plot()`](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.plot.html)メソッドに渡すパラメータ|
+|cv_mean_kws|オプション|dict|None|全クラス平均ROC曲線描画用の[`matplotlib.pyplot.plot()`](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.plot.html)メソッドに渡すパラメータ|
+|chance_plot_kws|オプション|dict|None|ランダム直線描画用の[`matplotlib.pyplot.plot()`](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.plot.html)メソッドに渡すパラメータ|
 <br>
 
 ### classplotクラス使用法詳細
