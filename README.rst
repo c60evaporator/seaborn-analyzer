@@ -233,7 +233,7 @@ classplot.roc_plot
     estimator = LGBMClassifier(random_state=42, n_estimators=10000)
     fig, axes = plt.subplots(4, 1, figsize=(6, 24))
     classplot.roc_plot(estimator, X, y, ax=axes, cv=3, fit_params=fit_params)
-.. image:: https://user-images.githubusercontent.com/59557625/132558249-77f742f7-7af2-4da7-9d22-5456b21f4234.png
+.. image:: https://user-images.githubusercontent.com/59557625/132708291-99f7bda0-eb24-4fc0-8994-a976d097908e.png
 
 regplot.linear_plot
 ===================
