@@ -2288,7 +2288,7 @@ class classplot():
             # One vs Restの分類器を作成
             clf_ovr = OneVsRestClassifierPatched(estimator)
             clf_ovr.fit(X_train, y_train_binarize,
-                        fit_params_list) #TODO:あとでfit_paramsを追加 https://github.com/scikit-learn/scikit-learn/issues/10882
+                        fit_params_list)
             # predict_probaまたはdecision_functionでクラス確率を取得
             if response_method == 'predict_proba':
                 y_score = clf_ovr.predict_proba(X_test)
@@ -2572,7 +2572,10 @@ class classplot():
                 # CVごとのROC曲線をプロット
                 viz = cls.plot_roc_curve_multiclass(clf, X[train], y_true[train], 
                                                     X_test=X[test], y_test=y_true[test],
-                                                    name=name, ax=ax[i], fit_params=fit_params,
+                                                    sample_weight=sample_weight, drop_intermediate=drop_intermediate,
+                                                    response_method=response_method,
+                                                    name=name, ax=ax[i],
+                                                    pos_label=pos_label, average=average, fit_params=fit_params,
                                                     plot_roc_kws=plot_roc_kws,
                                                     class_average_kws=class_average_kws
                                                     )
