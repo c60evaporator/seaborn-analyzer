@@ -2584,7 +2584,8 @@ class classplot():
                 aucs.append(viz.roc_auc)
                 # CVごとのROC曲線を全体図にプロット
                 ax[cv_num].plot(mean_fpr, interp_tpr,
-                                label=name, color=color_list[i],
+                                label=f'{name} (AUC = {aucs[i]:.2f})',
+                                color=color_list[i],
                                 **plot_roc_kws)
             
             # CV平均ROC曲線を計算
