@@ -506,7 +506,7 @@ n_samples, n_features = X.shape
 X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
 fit_params = {'verbose': 0,
               'early_stopping_rounds': 10,
-              'eval_metric': 'multi_logloss',
+              'eval_metric': 'binary_logloss',
               'eval_set': [(X, y)]
               }
 # Plot ROC curve with three classifiers
@@ -592,6 +592,28 @@ ax_pred[0][0].set_title(f'LightGBM\n\n{ax_pred[0][0].title._text}')
 ax_pred[1][0].set_title(f'SVM\n\n{ax_pred[1][0].title._text}')
 ax_pred[2][0].set_title(f'RandomForest\n\n{ax_pred[2][0].title._text}')
 
+# %%XGBoostのROC曲線描画
+import seaborn as sns
+import matplotlib.pyplot as plt
+from seaborn_analyzer import classplot
+from xgboost import XGBClassifier
+# Load dataset
+iris = sns.load_dataset("iris")
+OBJECTIVE_VARIALBLE = 'species'  # Objective variable
+USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # Explantory variables
+y = iris[OBJECTIVE_VARIALBLE].values
+X = iris[USE_EXPLANATORY].values
+NOT_OPT_PARAMS = {'random_state': 42, 'booster': 'gbtree', 'n_estimators': 10000, 'use_label_encoder': False}
+BEST_PARAMS = {'learning_rate': 0.16380494993112965, 'min_child_weight': 1, 'max_depth': 9, 'colsample_bytree': 0.9885437044181186, 'subsample': 0.2762139608777358, 'reg_alpha': 0.09817943593356171, 'reg_lambda': 0.001895410328121496, 'gamma': 0.046138633197055}
+params = {}
+params.update(NOT_OPT_PARAMS)
+params.update(BEST_PARAMS)
+estimator = XGBClassifier()
+estimator.set_params(**params)
+FIT_PARAMS = {'verbose': 0, 'early_stopping_rounds': 10, 'eval_metric': 'logloss', 'eval_set': [(X, y)]}
+fig, axes = plt.subplots(4, 1, figsize=(6, 24))
+classplot.roc_plot(estimator, X, y,
+                   ax=axes, cv=3, fit_params=FIT_PARAMS)
 
 
 #######回帰モデルの可視化 seaborn_analyzer.regplot (https://qiita.com/c60evaporator/items/c930c822b527f62796ee)######
