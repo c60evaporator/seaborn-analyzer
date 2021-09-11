@@ -2280,7 +2280,7 @@ class classplot():
             fit_params_list = []
             for i in range(n_classes):
                 fit_params_cls = copy.deepcopy(fit_params)
-                # fit_paramsにeval_setがあるとき
+                # fit_paramsにeval_setがあるとき、二値化したものに置き換える
                 if 'eval_set' in fit_params_cls:
                     fit_params_cls['eval_set'] = [(fit_params['eval_set'][0][0], eval_set_y_binarized[:, i])]
                 fit_params_list.append(fit_params_cls)

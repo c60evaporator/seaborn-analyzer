@@ -477,7 +477,7 @@ y = iris[OBJECTIVE_VARIALBLE].values
 X = iris[USE_EXPLANATORY].values
 fit_params = {'verbose': 0,
               'early_stopping_rounds': 10,
-              'eval_metric': 'rmse',
+              'eval_metric': 'multi_logloss',
               'eval_set': [(X, y)]
               }
 # Plot ROC curve with cross validation in multiclass classification
@@ -506,7 +506,7 @@ n_samples, n_features = X.shape
 X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
 fit_params = {'verbose': 0,
               'early_stopping_rounds': 10,
-              'eval_metric': 'rmse',
+              'eval_metric': 'multi_logloss',
               'eval_set': [(X, y)]
               }
 # Plot ROC curve with three classifiers
@@ -538,7 +538,7 @@ y = iris[OBJECTIVE_VARIALBLE].values
 X = iris[USE_EXPLANATORY].values
 fit_params = {'verbose': 0,
               'early_stopping_rounds': 10,
-              'eval_metric': 'rmse',
+              'eval_metric': 'multi_logloss',
               'eval_set': [(X, y)]
               }
 # Plot ROC curve with three classifiers
@@ -575,7 +575,7 @@ n_samples, n_features = X.shape
 X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
 fit_params = {'verbose': 0,
               'early_stopping_rounds': 10,
-              'eval_metric': 'rmse',
+              'eval_metric': 'multi_logloss',
               'eval_set': [(X, y)]
               }
 # Plot ROC curve with three classifiers
