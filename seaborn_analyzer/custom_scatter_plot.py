@@ -85,7 +85,7 @@ class regplot():
                 score_dict['max_error'] = max([abs(p - r) for r, p in zip(y_true, y_pred)])
         return score_dict
 
-    def _reshape_input_data(x, y, data, x_colnames):
+    def _reshape_input_data(x, y, data, x_colnames, cv_group):
         """
         入力データの形式統一(pd.DataFrame or np.ndarray)
         """
@@ -101,6 +101,7 @@ class regplot():
             y_true = data[y].values
             x_colnames = x
             y_colname = y
+            cv_group_colname = cv_group
             
         # dataがNoneのとき(x, y, cv_groupがnp.ndarray)
         elif data is None:
@@ -118,12 +119,18 @@ class regplot():
             else:
                 x_colnames = x_colnames
             y_colname = 'objective_variable'
-            data = pd.DataFrame(np.column_stack((X, y)),
-                                columns=x_colnames + [y_colname])
+            if cv_group is not None:  # cv_group指定時
+                cv_group_colname = 'group'
+                data = pd.DataFrame(np.column_stack((X, y_true, cv_group)),
+                                    columns=x_colnames + [y_colname] + [cv_group_colname])
+            else:
+                cv_group_colname = None
+                data = pd.DataFrame(np.column_stack((X, y)),
+                                    columns=x_colnames + [y_colname])
         else:
             raise Exception('`data` argument should be pd.DataFrame or None')
 
-        return X, y_true, data, x_colnames, y_colname
+        return X, y_true, data, x_colnames, y_colname, cv_group_colname
 
     @classmethod
     def _rank_display(cls, y_true, y_pred, rank_number, rank_col, rank_col_data, x=None, ax=None, rounddigit=None):
@@ -242,7 +249,7 @@ class regplot():
     @classmethod
     def regression_pred_true(cls, estimator, x: List[str], y: str, data: pd.DataFrame = None,
                              x_colnames: List[str] = None, hue=None, linecolor='red', rounddigit=3,
-                             rank_number=None, rank_col=None, scores='mae', cv_stats='mean', cv=None, cv_seed=42, ax=None,
+                             rank_number=None, rank_col=None, scores='mae', cv_stats='mean', cv=None, cv_seed=42, cv_group=None, ax=None,
                              estimator_params=None, fit_params=None, subplot_kws=None, scatter_kws=None, legend_kws=None):
 
         """
@@ -276,6 +283,8 @@ class regplot():
             Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
         cv_seed : int, optional
             Seed for random number generator of cross validation.
+        cv_group: str, optional
+            Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to ``groups`` argument of cv.split().
         ax : {matplotlib.axes.Axes, list[matplotlib.axes.Axes]}, optional
             Pre-existing axes for the plot or list of it. Otherwise, call matplotlib.pyplot.subplot() internally.
         estimator_params : dict, optional
@@ -296,9 +305,10 @@ class regplot():
         """
 
         # 入力データの形式統一
-        X, y_true, data, x_colnames, y_colname = cls._reshape_input_data([x] if isinstance(x, str) else x,
-                                                                         y, data,
-                                                                         x_colnames)
+        X, y_true, data, x_colnames, y_colname, cv_group_colname = cls._reshape_input_data([x] if isinstance(x, str) else x, 
+                                                                                           y, data,
+                                                                                           x_colnames,
+                                                                                           cv_group)
         # scoresの型をListに統一
         if scores is None:
             scores = []
@@ -355,16 +365,15 @@ class regplot():
                 cv = KFold(n_splits=cv, shuffle=True, random_state=cv_seed)
             #LeaveOneOutかどうかを判定
             isLeaveOneOut = isinstance(cv, LeaveOneOut)
-            # GroupKFold、LeaveOneGroupOutのとき、hueをグルーピング対象に指定
+            # cv_groupをグルーピング対象に指定(GroupKFold、LeaveOneGroupOut等)
             split_kws={}
-            if isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
-                if hue is not None:
-                    split_kws['groups'] = data[hue].values
-                else:
-                    raise Exception('"GroupKFold" and "LeaveOneGroupOut" cross validations need "hue" argument')
-            # LeaveOneGroupOutのとき、クロスバリデーション分割数をhueの数に指定
+            if cv_group_colname is not None:
+                split_kws['groups'] = data[cv_group_colname].values
+            elif isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
+                raise Exception('"GroupKFold" and "LeaveOneGroupOut" cross validations need ``cv_group`` argument')
+            # LeaveOneGroupOutのとき、クロスバリデーション分割数をcv_groupの数に指定
             if isinstance(cv, LeaveOneGroupOut):
-                cv_num = len(set(data[hue].values))
+                cv_num = len(set(data[cv_group_colname].values))
             elif isLeaveOneOut:
                 cv_num = 1
             else:
@@ -641,7 +650,7 @@ class regplot():
     @classmethod
     def regression_plot_1d(cls, estimator, x: str, y: str, data: pd.DataFrame = None, x_colname: str = None,
                            hue=None, linecolor='red', rounddigit=3,
-                           rank_number=None, rank_col=None, scores='mae', cv_stats='mean', cv=None, cv_seed=42,
+                           rank_number=None, rank_col=None, scores='mae', cv_stats='mean', cv=None, cv_seed=42, cv_group=None,
                            estimator_params=None, fit_params=None, subplot_kws=None, scatter_kws=None, legend_kws=None):
         """
         Plot regression lines of any scikit-learn regressor with 1D explanatory variable.
@@ -676,6 +685,8 @@ class regplot():
             Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
         cv_seed : int, optional
             Seed for random number generator of cross validation.
+        cv_group: str, optional
+            Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to ``groups`` argument of cv.split().
         estimator_params : dict, optional
             Parameters passed to the regression estimator. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         fit_params : dict, optional
@@ -694,10 +705,10 @@ class regplot():
         """
 
         # 入力データの形式統一
-        X, y_true, data, x_colnames, y_colname = cls._reshape_input_data([x] if isinstance(x, str) else x,
-                                                                         y, data,
-                                                                         [x_colname] if x_colname is not None else x_colname
-                                                                         )
+        X, y_true, data, x_colnames, y_colname, cv_group_colname = cls._reshape_input_data([x] if isinstance(x, str) else x,
+                                                                                           y, data,
+                                                                                           [x_colname] if x_colname is not None else x_colname,
+                                                                                           cv_group)
         # scoresの型をListに統一
         if scores is None:
             scores = []
@@ -755,16 +766,15 @@ class regplot():
             #LeaveOneOutのときエラーを出す
             if isinstance(cv, LeaveOneOut):
                 raise Exception('"regression_plot_1d" method does not support "LeaveOneOut" cross validation')
-            # GroupKFold、LeaveOneGroupOutのとき、hueをグルーピング対象に指定
+            # cv_groupをグルーピング対象に指定(GroupKFold、LeaveOneGroupOut等)
             split_kws={}
-            if isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
-                if hue is not None:
-                    split_kws['groups'] = data[hue].values                    
-                else:
-                    raise Exception('"GroupKFold" and "LeaveOneGroupOut" cross validations need "hue" argument')
-            # LeaveOneGroupOutのとき、クロスバリデーション分割数をhueの数に指定
+            if cv_group_colname is not None:
+                split_kws['groups'] = data[cv_group_colname].values
+            elif isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
+                raise Exception('"GroupKFold" and "LeaveOneGroupOut" cross validations need ``cv_group`` argument')
+            # LeaveOneGroupOutのとき、クロスバリデーション分割数をcv_groupの数に指定
             if isinstance(cv, LeaveOneGroupOut):
-                cv_num = len(set(data[hue].values))
+                cv_num = len(set(data[cv_group_colname].values))
             else:
                 cv_num = cv.n_splits
 
@@ -1127,7 +1137,7 @@ class regplot():
                              heat_division = 30, color_extendsigma = 0.5,
                              plot_scatter = 'true', rounddigit_rank=3, rounddigit_x1=2, rounddigit_x2=2, rounddigit_x3=2,
                              rank_number=None, rank_col=None,
-                             cv=None, cv_seed=42, display_cv_indices = 0,
+                             cv=None, cv_seed=42, cv_group=None, display_cv_indices = 0,
                              estimator_params=None, fit_params=None,
                              subplot_kws=None, heat_kws=None, scatter_kws=None, legend_kws=None):
         """
@@ -1177,6 +1187,8 @@ class regplot():
             Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
         cv_seed : int, optional
             Seed for random number generator of cross validation.
+        cv_group: str, optional
+            Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to ``groups`` argument of cv.split().
         display_cv_indices : int or list, optional
             Cross validation index or indices to display.
         estimator_params : dict, optional
@@ -1194,8 +1206,9 @@ class regplot():
         """
 
         # 入力データの形式統一
-        X, y_true, data, x_colnames, y_colname = cls._reshape_input_data(x, y, data,
-                                                                         x_colnames)
+        X, y_true, data, x_colnames, y_colname, cv_group_colname = cls._reshape_input_data(x, y, data,
+                                                                                           x_colnames,
+                                                                                           cv_group)
         # 説明変数xの次元が2～4以外ならエラーを出す
         if len(x_colnames) < 2 or len(x_colnames) > 4:
             raise Exception('Dimension of x must be 2 to 4')
@@ -1290,16 +1303,15 @@ class regplot():
             # LeaveOneOutのときエラーを出す
             if isinstance(cv, LeaveOneOut):
                 raise Exception('"regression_heat_plot" method does not support "LeaveOneOut" cross validation')
-            # GroupKFold、LeaveOneGroupOutのとき、scatter_hueをグルーピング対象に指定
+            # cv_groupをグルーピング対象に指定(GroupKFold、LeaveOneGroupOut等)
             split_kws={}
-            if isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
-                if scatter_hue is not None:
-                    split_kws['groups'] = data[scatter_hue].values
-                else:
-                    raise Exception('"GroupKFold" and "LeaveOneGroupOut" cross validations need "scatter_hue" argument')
-            # LeaveOneGroupOutのとき、クロスバリデーション分割数をscatter_hueの数に指定
+            if cv_group_colname is not None:
+                split_kws['groups'] = data[cv_group_colname].values
+            elif isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
+                raise Exception('"GroupKFold" and "LeaveOneGroupOut" cross validations need ``cv_group`` argument')
+            # LeaveOneGroupOutのとき、クロスバリデーション分割数をcv_groupの数に指定
             if isinstance(cv, LeaveOneGroupOut):
-                cv_num = len(set(data[scatter_hue].values))
+                cv_num = len(set(data[cv_group_colname].values))
             else:
                 cv_num = cv.n_splits
 
@@ -1401,12 +1413,12 @@ class classplot():
                 raise Exception('`x` argument should be np.ndarray if `data` is None')
             if not isinstance(y, np.ndarray):
                 raise Exception('`y` argument should be np.ndarray if `data` is None')
-            X = x
+            X = x if len(x.shape) == 2 else x.reshape([x.shape[0], 1])
             y_true = y.ravel()
             # x_colnameとXの整合性確認
             if x_colnames is None:
-                x_colnames = list(range(x.shape[1]))
-            elif x.shape[1] != len(x_colnames):
+                x_colnames = list(range(X.shape[1]))
+            elif X.shape[1] != len(x_colnames):
                 raise Exception('width of X must be equal to length of x_colnames')
             else:
                 x_colnames = x_colnames
@@ -1782,7 +1794,7 @@ class classplot():
         cv_seed: int, optional
             Seed for random number generator of cross validation.
         cv_group: str, optional
-            Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to ``groups`` argument of cv.split(). Available only if ``cv`` is GroupKFold or LeaveOneGroupOut
+            Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to ``groups`` argument of cv.split().
         display_cv_indices: int, optional
             Cross validation index or indices to display.
         clf_params: dict, optional
@@ -1881,13 +1893,12 @@ class classplot():
             # LeaveOneOutのときエラーを出す
             if isinstance(cv, LeaveOneOut):
                 raise Exception('"regression_heat_plot" method does not support ``LeaveOneOut`` cross validation')
-            # GroupKFold、LeaveOneGroupOutのとき、cv_groupをグルーピング対象に指定
+            # cv_groupをグルーピング対象に指定(GroupKFold、LeaveOneGroupOut等)
             split_kws={}
-            if isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
-                if cv_group_colname is not None:
-                    split_kws['groups'] = data[cv_group_colname].values
-                else:
-                    raise Exception('"GroupKFold" and "LeaveOneGroupOut" cross validations need ``cv_group`` argument')
+            if cv_group_colname is not None:
+                split_kws['groups'] = data[cv_group_colname].values
+            elif isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
+                raise Exception('"GroupKFold" and "LeaveOneGroupOut" cross validations need ``cv_group`` argument')
             # LeaveOneGroupOutのとき、クロスバリデーション分割数をcv_groupの数に指定
             if isinstance(cv, LeaveOneGroupOut):
                 cv_num = len(set(data[cv_group_colname].values))
@@ -1979,7 +1990,7 @@ class classplot():
         cv_seed: int, optional
             Seed for random number generator of cross validation.
         cv_group: str, optional
-            Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to ``groups`` argument of cv.split(). Available only if ``cv`` is GroupKFold or LeaveOneGroupOut
+            Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to ``groups`` argument of cv.split().
         display_cv_indices: int, optional
             Cross validation index or indices to display.
         clf_params: dict, optional
@@ -2114,13 +2125,12 @@ class classplot():
             # LeaveOneOutのときエラーを出す
             if isinstance(cv, LeaveOneOut):
                 raise Exception('"regression_heat_plot" method does not support "LeaveOneOut" cross validation')
-            # GroupKFold、LeaveOneGroupOutのとき、cv_groupをグルーピング対象に指定
+            # cv_groupをグルーピング対象に指定(GroupKFold、LeaveOneGroupOut等)
             split_kws={}
-            if isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
-                if cv_group_colname is not None:
-                    split_kws['groups'] = data[cv_group_colname].values
-                else:
-                    raise Exception('"GroupKFold" and "LeaveOneGroupOut" cross validations need ``cv_group`` argument')
+            if cv_group_colname is not None:
+                split_kws['groups'] = data[cv_group_colname].values
+            elif isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
+                raise Exception('"GroupKFold" and "LeaveOneGroupOut" cross validations need ``cv_group`` argument')
             # LeaveOneGroupOutのとき、クロスバリデーション分割数をcv_groupの数に指定
             if isinstance(cv, LeaveOneGroupOut):
                 cv_num = len(set(data[cv_group_colname].values))
@@ -2411,8 +2421,8 @@ class classplot():
         cv_seed: int, default=42
             Seed for random number generator of cross validation.
 
-        cv_group: str, default=None
-            Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to ``groups`` argument of cv.split(). Available only if ``cv`` is GroupKFold or LeaveOneGroupOut
+        cv_group: str, optional
+            Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to ``groups`` argument of cv.split().
 
         ax : {matplotlib.axes.Axes, list[matplotlib.axes.Axes]}, default=None
             Pre-existing axes for the plot or list of it. Otherwise, call matplotlib.pyplot.subplot() internally.
@@ -2529,13 +2539,12 @@ class classplot():
             # LeaveOneOutのときエラーを出す
             if isinstance(cv, LeaveOneOut):
                 raise Exception('"regression_heat_plot" method does not support "LeaveOneOut" cross validation')
-            # GroupKFold、LeaveOneGroupOutのとき、cv_groupをグルーピング対象に指定
+            # cv_groupをグルーピング対象に指定(GroupKFold、LeaveOneGroupOut等)
             split_kws={}
-            if isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
-                if cv_group_colname is not None:
-                    split_kws['groups'] = data[cv_group_colname].values
-                else:
-                    raise Exception('"GroupKFold" and "LeaveOneGroupOut" cross validations need ``cv_group`` argument')
+            if cv_group_colname is not None:
+                split_kws['groups'] = data[cv_group_colname].values
+            elif isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
+                raise Exception('"GroupKFold" and "LeaveOneGroupOut" cross validations need ``cv_group`` argument')
             # LeaveOneGroupOutのとき、クロスバリデーション分割数をcv_groupの数に指定
             if isinstance(cv, LeaveOneGroupOut):
                 cv_num = len(set(data[cv_group_colname].values))
