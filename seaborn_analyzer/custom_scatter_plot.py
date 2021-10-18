@@ -539,9 +539,10 @@ class regplot():
         """
 
         # 入力データの形式統一
-        X, y_true, data, x_colnames, y_colname = cls._reshape_input_data([x] if isinstance(x, str) else x, 
-                                                                         y, data,
-                                                                         [x_colname] if x_colname is not None else x_colname)
+        X, y_true, data, x_colnames, y_colname, cv_group_colname = cls._reshape_input_data([x] if isinstance(x, str) else x, 
+                                                                                           y, data,
+                                                                                           [x_colname] if x_colname is not None else x_colname,
+                                                                                           cv_group=None)
         if x_colname is None:
             x_colname = x_colnames[0]
         # scatter_kwsがNoneなら空のdictを入力
