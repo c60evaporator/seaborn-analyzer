@@ -230,7 +230,7 @@ classplot.class_separator_plot(clf, ['petal_width', 'petal_length'], 'species', 
 |false_marker|オプション|str|None|不正解クラスの散布図プロット形状|
 |cv|オプション|int or sklearn.model_selection.* |None|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
 |cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
-|cv_group|オプション|str|None|GroupKFold,LeaveOneGroupOutのグルーピング対象カラム名|
+|cv_group|オプション|str|None|クロスバリデーションのグルーピング対象カラム名、またはグルーピングのラベルデータ (GroupKFold,LeaveOneGroupOut等)|
 |display_cv_indices|オプション|int|0|表示対象のクロスバリデーション番号|
 |clf_params|オプション|dict|None|分類モデルに渡すパラメータ|
 |fit_params|オプション|dict|None|学習時のパラメータ|
@@ -272,7 +272,7 @@ classplot.class_proba_plot(clf, ['petal_width', 'petal_length'], 'species', iris
 |false_marker|オプション|str|None|不正解クラスの散布図プロット形状|
 |cv|オプション|int or sklearn.model_selection.* |None|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
 |cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
-|cv_group|オプション|str|None|GroupKFold, LeaveOneGroupOutのグルーピング対象カラム名|
+|cv_group|オプション|str|None|クロスバリデーションのグルーピング対象カラム名、またはグルーピングのラベルデータ (GroupKFold,LeaveOneGroupOut等)|
 |display_cv_indices|オプション|int|0|表示対象のクロスバリデーション番号|
 |clf_params|オプション|dict|None|分類モデルに渡すパラメータ|
 |fit_params|オプション|dict|None|学習時のパラメータ|
@@ -375,7 +375,7 @@ classplot.roc_plot(estimator, X, y, ax=axes, cv=3, fit_params=fit_params)
 |x_columns|オプション|list[str]|None|説明変数の名称リスト(`data`がNoneのときのみ有効)|
 |cv|オプション|int or sklearn.model_selection.* |5|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
 |cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
-|cv_group|オプション|str or np.ndarray|None|GroupKFold, LeaveOneGroupOutのグルーピング対象カラム名、またはグルーピングのラベルデータ|
+|cv_group|オプション|str|None|クロスバリデーションのグルーピング対象カラム名、またはグルーピングのラベルデータ (GroupKFold,LeaveOneGroupOut等)|
 |ax|オプション|matplotlib.axes.Axes|None|表示対象のax (Noneならmatplotlib.pyplot.plotで1枚ごとにプロット)|
 |sample_weight|オプション|list[float]|None|ROC曲線算出時のクラスごとの重みづけ|
 |drop_intermediate|オプション|bool|True|ROC曲線の形状に影響しない点の計算を省略するか|
@@ -464,6 +464,7 @@ regplot.regression_pred_true(LinearRegression(), x=['altitude', 'latitude'], y='
 |cv_stats|オプション|str|'mean'|クロスバリデーション時に表示する評価指標統計値 ('mean', 'median', 'max', or 'min')|
 |cv|オプション|int or sklearn.model_selection.* |None|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
 |cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
+|cv_group|オプション|str|None|クロスバリデーションのグルーピング対象カラム名、またはグルーピングのラベルデータ (GroupKFold,LeaveOneGroupOut等)|
 |estimator_params|オプション|dict|None|回帰モデルに渡すパラメータ|
 |fit_params|オプション|dict|None|学習時のパラメータをdict指定|
 |subplot_kws|オプション|dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
@@ -497,6 +498,7 @@ regplot.regression_plot_1d(SVR(), x='petal_length', y='sepal_length', data=iris)
 |cv_stats|オプション|str|'mean'|クロスバリデーション時に表示する評価指標統計値 ('mean', 'median', 'max', or 'min')|
 |cv|オプション|int or sklearn.model_selection.* |None|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
 |cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
+|cv_group|オプション|str|None|クロスバリデーションのグルーピング対象カラム名、またはグルーピングのラベルデータ (GroupKFold,LeaveOneGroupOut等)|
 |estimator_params|オプション|dict|None|回帰モデルに渡すパラメータ|
 |fit_params|オプション|dict|None|学習時のパラメータをdict指定|
 |subplot_kws|オプション|dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
@@ -537,6 +539,7 @@ regplot.regression_heat_plot(LinearRegression(), x=['altitude', 'latitude'], y='
 |rank_col|オプション|str|None|誤差上位と一緒に表示するフィールド名|
 |cv|オプション|int or sklearn.model_selection.* |None|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
 |cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
+|cv_group|オプション|str|None|クロスバリデーションのグルーピング対象カラム名、またはグルーピングのラベルデータ (GroupKFold,LeaveOneGroupOut等)|
 |display_cv_indices|オプション|int|0|表示対象のクロスバリデーション番号|
 |estimator_params|オプション|dict|None|回帰モデルに渡すパラメータ|
 |fit_params|オプション|dict|None|学習時のパラメータをdict指定|
