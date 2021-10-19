@@ -865,4 +865,15 @@ regplot.regression_heat_plot(XGBRegressor(), x=['2_between_30to60', '3_male_rati
                                          'eval_set': [(df[['2_between_30to60', '3_male_ratio', '5_household_member', 'latitude']].values, df['approval_rate'].values)],
                                          'verbose': 1})
 
+# %% average_plot
+import seaborn as sns
+from sklearn.svm import SVR
+from seaborn_analyzer import regplot
+iris = sns.load_dataset("iris")
+svr = SVR()
+features = ['petal_width', 'petal_length', 'sepal_width']
+X = iris[features].values
+y = iris['sepal_length'].values
+regplot.average_plot(svr, X, y, x_colnames=features, cv=3, display_cv_indices=[0, 1, 2])
+
 # %%

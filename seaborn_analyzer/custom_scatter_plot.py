@@ -498,7 +498,181 @@ class regplot():
                 cls._rank_display(y_true_all, y_pred_all, rank_number, rank_col, rank_col_all,
                                   ax=ax_all, rounddigit=rounddigit)
             return score_stats_dict
+    
+    def _average_plot(estimator, data, x_colnames, y_colname, hue,
+                      aggregate, subplot_kws, plot_kws, scatter_kws, legend_kws,
+                      cv_index, x_range=200):
+        # figsize (全ての図全体のサイズ)指定
+        if 'figsize' not in subplot_kws.keys():
+            subplot_kws['figsize'] = (6, len(x_colnames) * 5)
+        if 'color' not in plot_kws:
+            plot_kws['color'] = 'red'
+        # プロット用のaxes作成
+        fig, axes = plt.subplots(len(x_colnames), 1, **subplot_kws)
+        if cv_index is not None:
+            fig.suptitle(f'CV No.{cv_index}')
+        # 全列を走査
+        for i, colname in enumerate(x_colnames):
+            # 該当列（グラフのX軸）の値を作成
+            x_max = data[colname].max()
+            x_min = data[colname].min()
+            x_array = np.arange(x_min, x_max, (x_max - x_min)/x_range)
+            # 該当列以外を抽出して平均値算出
+            if aggregate == 'mean':
+                other_x_agg = data[[col for col in x_colnames if col != colname]].mean()
+            elif aggregate == 'median':
+                other_x_agg = data[[col for col in x_colnames if col != colname]].median()
+            else:
+                raise ValueError('the `aggregate` argument should be "mean" or "median"')
+            X_mean = np.tile(other_x_agg, (x_range, 1))
+            # 該当列を挿入して説明変数とし、モデルで推論
+            X_mean = np.insert(X_mean, i, x_array, axis=1)
+            y_pred = estimator.predict(X_mean)
+            # 実測値を散布図プロット
+            sns.scatterplot(x=colname, y=y_colname, hue=hue, data=data, ax=axes[i], **scatter_kws)
+            # 推測値曲線をプロット
+            axes[i].plot(x_array, y_pred, **plot_kws)
+            # 色分け時は凡例表示
+            if hue is not None:
+                axes[i].legend(**legend_kws)
 
+        fig.tight_layout(rect=[0, 0, 1, 0.98])
+        plt.show()            
+
+
+    @classmethod
+    def average_plot(cls, estimator, x: List[str], y: str, data: pd.DataFrame = None,
+                     x_colnames: List[str] = None, hue=None,
+                     aggregate='mean',
+                     cv=None, cv_seed=42, cv_group=None, display_cv_indices = 0,
+                     estimator_params=None, fit_params=None,
+                     subplot_kws=None, plot_kws=None, scatter_kws=None, legend_kws=None):
+        """
+        Plot relationship between one explanatory variable and predicted value by line graph.
+
+        Other explanatory variables are fixed to aggregated values such as mean values or median values.
+
+        Parameters
+        ----------
+        estimator : estimator object implementing ``fit``
+            Regression estimator. This is assumed to implement the scikit-learn estimator interface.
+        x : list[str] or np.ndarray
+            Explanatory variables. Should be list[str] if ``data`` is pd.DataFrame. Should be np.ndarray if ``data`` is None
+        y : str or np.ndarray
+            Objective variable. Should be str if ``data`` is pd.DataFrame. Should be np.ndarray if ``data`` is None
+        data: pd.DataFrame
+            Input data structure.
+        x_colnames: List[str], optional
+            Names of explanatory variables. Available only if ``data`` is NOT pd.DataFrame
+        x_heat: List[str], optional
+            X-axis and y-axis variables of heatmap. If None, use two variables in ``x`` from the front.
+        hue : str, optional
+            Grouping variable that will produce points with different colors.
+        aggregate : {'mean', 'median'}, optional
+            Statistic method of aggregating explanatory variables except x_axis variable.
+        cv : int, cross-validation generator, or an iterable, optional
+            Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
+        cv_seed : int, optional
+            Seed for random number generator of cross validation.
+        cv_group: str, optional
+            Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to ``groups`` argument of cv.split().
+        display_cv_indices : int or list, optional
+            Cross validation index or indices to display.
+        estimator_params : dict, optional
+            Parameters passed to the regression estimator. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+        fit_params : dict, optional
+            Parameters passed to the fit() method of the regression estimator, e.g. ``early_stopping_round`` and ``eval_set`` of XGBRegressor. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+        subplot_kws: dict, optional
+            Additional parameters passed to matplotlib.pyplot.subplots(), e.g. ``figsize``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
+        plot_kws: dict, optional
+            Additional parameters passed to matplotlib.axes.Axes.plot(), e.g. ``alpha``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.plot.html
+        scatter_kws: dict, optional
+            Additional parameters passed to seaborn.scatterplot(), e.g. ``alpha``. See https://seaborn.pydata.org/generated/seaborn.scatterplot.html
+        legend_kws : dict
+            Additional parameters passed to matplotlib.axes.Axes.legend(), e.g. ``loc``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html
+        """
+
+        # 入力データの形式統一
+        X, y_true, data, x_colnames, y_colname, cv_group_colname = cls._reshape_input_data(x, y, data,
+                                                                                           x_colnames,
+                                                                                           cv_group)
+        
+        # display_cv_indicesをList化
+        if isinstance(display_cv_indices, int):
+            display_cv_indices = [display_cv_indices]
+        elif not isinstance(x_colnames, list):
+            raise Exception('the "cv_display_indices" argument should be int or List[int]')
+        # 学習器パラメータがあれば適用
+        if estimator_params is not None:
+            estimator.set_params(**estimator_params)
+        # 学習時パラメータがNoneなら空のdictを入力
+        if fit_params is None:
+            fit_params = {}
+        # subplot_kwsがNoneなら空のdictを入力
+        if subplot_kws is None:
+            subplot_kws = {}
+        # plot_kwsがNoneなら空のdictを入力
+        if plot_kws is None:
+            plot_kws = {}
+        # scatter_kwsがNoneなら空のdictを入力
+        if scatter_kws is None:
+            scatter_kws = {}
+        # legend_kwsがNoneなら空のdictを入力
+        if legend_kws is None:
+            legend_kws = {}
+        
+        # クロスバリデーション有無で場合分け
+        # クロスバリデーション未実施時(学習データからプロット＆指標算出)
+        if cv is None:
+            # 学習と推論
+            estimator.fit(X, y_true, **fit_params)
+            # 平均値
+            cls._average_plot(estimator, data, x_colnames, y_colname, hue,
+                              aggregate=aggregate,
+                              subplot_kws=subplot_kws, plot_kws=plot_kws,
+                              scatter_kws=scatter_kws, legend_kws=legend_kws,
+                              cv_index=None)
+            
+        # クロスバリデーション実施時(分割ごとに別々にプロット＆指標算出)
+        if cv is not None:
+            # 分割法未指定時、cv_numとseedに基づきKFoldでランダムに分割
+            if isinstance(cv, numbers.Integral):
+                cv = KFold(n_splits=cv, shuffle=True, random_state=cv_seed)
+            # LeaveOneOutのときエラーを出す
+            if isinstance(cv, LeaveOneOut):
+                raise Exception('"regression_heat_plot" method does not support "LeaveOneOut" cross validation')
+            # cv_groupをグルーピング対象に指定(GroupKFold、LeaveOneGroupOut等)
+            split_kws={}
+            if cv_group_colname is not None:
+                split_kws['groups'] = data[cv_group_colname].values
+            elif isinstance(cv, GroupKFold) or isinstance(cv, LeaveOneGroupOut):
+                raise Exception('"GroupKFold" and "LeaveOneGroupOut" cross validations need ``cv_group`` argument')
+            # LeaveOneGroupOutのとき、クロスバリデーション分割数をcv_groupの数に指定
+            if isinstance(cv, LeaveOneGroupOut):
+                cv_num = len(set(data[cv_group_colname].values))
+            else:
+                cv_num = cv.n_splits
+
+            # クロスバリデーション
+            for i, (train, test) in enumerate(cv.split(X, y_true, **split_kws)):
+                # 表示対象以外のCVなら飛ばす
+                if i not in display_cv_indices:
+                    continue
+                print(f'cv_number={i}/{cv_num}')
+                # 表示用にテストデータと学習データ分割
+                X_train = X[train]
+                y_train = y_true[train]
+                data_test = data.iloc[test]
+                # 学習と推論
+                estimator.fit(X_train, y_train, **fit_params)
+                # ヒートマップをプロット
+                cls._average_plot(estimator, data_test, x_colnames, y_colname, hue,
+                                  aggregate=aggregate,
+                                  subplot_kws=subplot_kws, plot_kws=plot_kws,
+                                  scatter_kws=scatter_kws, legend_kws=legend_kws,
+                                  cv_index=i)
+
+        
     @classmethod
     def linear_plot(cls, x: str, y: str, data: pd.DataFrame = None,
                     x_colname: str = None,
@@ -1218,7 +1392,7 @@ class regplot():
         if isinstance(display_cv_indices, int):
             display_cv_indices = [display_cv_indices]
         elif not isinstance(x_colnames, list):
-            raise Exception('the "cv_display_num" argument must be int or List[int]')
+            raise Exception('the "cv_display_indices" argument must be int or List[int]')
         # 学習器パラメータがあれば適用
         if estimator_params is not None:
             estimator.set_params(**estimator_params)
