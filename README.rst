@@ -111,6 +111,7 @@ regplot class
     "**regression_pred_true**", Plot prediction vs. true scatter plots of any scikit-learn regressor., `regplot.regression_pred_true <https://c60evaporator.github.io/seaborn-analyzer/seaborn_analyzer.html#seaborn_analyzer.custom_scatter_plot.regplot.regression_pred_true>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotregression_pred_true>`__
     "**regression_plot_1d**", Plot regression lines of any scikit-learn regressor with 1D explanatory variable., `regplot.regression_plot_1d <https://c60evaporator.github.io/seaborn-analyzer/seaborn_analyzer.html#seaborn_analyzer.custom_scatter_plot.regplot.regression_plot_1d>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotregression_plot_1d>`__
     "**regression_heat_plot**", Plot regression heatmaps of any scikit-learn regressor with 2 to 4D explanatory variables., `regplot.regression_heat_plot <https://c60evaporator.github.io/seaborn-analyzer/seaborn_analyzer.html#seaborn_analyzer.custom_scatter_plot.regplot.regression_heat_plot>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#regplotregression_heat_plot>`__
+    "**average_plot**", Plot relationship between one explanatory variable and predicted value by line graph., `regplot.average_plot <https://c60evaporator.github.io/seaborn-analyzer/seaborn_analyzer.html#seaborn_analyzer.custom_scatter_plot.regplot.average_plot>`__, `example <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#average_plot>`__
 
 
 ========
@@ -278,3 +279,18 @@ regplot.regression_heat_plot
     df_temp = pd.read_csv(f'./sample_data/temp_pressure.csv')
     regplot.regression_heat_plot(LinearRegression(), x=['altitude', 'latitude'], y='temperature', data=df_temp)
 .. image:: https://user-images.githubusercontent.com/59557625/115955837-1b4f5b00-a534-11eb-91b0-b913019d26ff.png
+
+regplot.average_plot
+============================
+.. code-block:: python
+
+    import seaborn as sns
+    from sklearn.svm import SVR
+    from seaborn_analyzer import regplot
+    iris = sns.load_dataset("iris")
+    svr = SVR()
+    features = ['petal_width', 'petal_length', 'sepal_width']
+    X = iris[features].values
+    y = iris['sepal_length'].values
+    regplot.average_plot(svr, X, y, x_colnames=features, cv=3)
+.. image:: https://user-images.githubusercontent.com/59557625/137940484-31f1fec7-012e-4c36-83a8-a1803755caa6.png
