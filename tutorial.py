@@ -874,6 +874,6 @@ svr = SVR()
 features = ['petal_width', 'petal_length', 'sepal_width']
 X = iris[features].values
 y = iris['sepal_length'].values
-regplot.average_plot(svr, X, y, x_colnames=features, cv=3, display_cv_indices=[0, 1, 2])
+regplot.average_plot(svr, X, y, x_colnames=features, cv=3)
 
 # %%

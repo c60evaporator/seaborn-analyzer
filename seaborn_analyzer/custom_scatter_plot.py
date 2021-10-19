@@ -564,8 +564,6 @@ class regplot():
             Input data structure.
         x_colnames: List[str], optional
             Names of explanatory variables. Available only if ``data`` is NOT pd.DataFrame
-        x_heat: List[str], optional
-            X-axis and y-axis variables of heatmap. If None, use two variables in ``x`` from the front.
         hue : str, optional
             Grouping variable that will produce points with different colors.
         aggregate : {'mean', 'median'}, optional
