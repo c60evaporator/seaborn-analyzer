@@ -571,7 +571,7 @@ regplot.average_plot(svr, X, y, x_colnames=features, cv=3)
 |x|必須|list[str]|-|説明変数に指定するカラム名のリスト|
 |y|必須|str|-|目的変数に指定するカラム名|
 |data|必須|pd.DataFrame|-|入力データ|
-|hue|オプション|str|None|散布図色分け指定カラム名|
+|hue|オプション　　　|str|None|散布図色分け指定カラム名|
 |aggregate|オプション|str|'mean'|X軸指定変数以外の変数の固定値集計方法|
 |cv|オプション|int or sklearn.model_selection.* |None|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
 |cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
