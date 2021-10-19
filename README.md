@@ -412,6 +412,7 @@ Scikit-Learn APIに対応した回帰モデル (例: XGBoostパッケージのXG
 |regression_pred_true|予測値vs実測値プロット|
 |regression_plot_1d|1次元説明変数で回帰線表示|
 |regression_heat_plot|2～4次元説明変数で回帰予測値をヒートマップ表示|
+|regression_average_plot|各変数ごとに、他の変数を平均値で固定して予測値プロット|
 
 ### linear_plotメソッド
 #### 実行例
@@ -546,6 +547,40 @@ regplot.regression_heat_plot(LinearRegression(), x=['altitude', 'latitude'], y='
 |subplot_kws|オプション|dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
 |heat_kws|オプション|dict|None|ヒートマップ用の[seaborn.heatmap](https://seaborn.pydata.org/generated/seaborn.heatmap.html)に渡す引数|
 |scatter_kws|オプション|dict|None|散布図用の[matplotlib.pyplot.scatter](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.scatter.html)に渡す引数|
+|legend_kws|オプション|dict|None|凡例用の[matplotlib.axes.Axes.legend](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html)に渡す引数|
+<br>
+
+### average_plot
+#### 実行例
+```python
+import seaborn as sns
+from sklearn.svm import SVR
+from seaborn_analyzer import regplot
+iris = sns.load_dataset("iris")
+svr = SVR()
+features = ['petal_width', 'petal_length', 'sepal_width']
+X = iris[features].values
+y = iris['sepal_length'].values
+regplot.average_plot(svr, X, y, x_colnames=features, cv=3)
+![output](https://user-images.githubusercontent.com/59557625/137940484-31f1fec7-012e-4c36-83a8-a1803755caa6.png)
+#### 引数一覧
+|引数名|必須引数orオプション|型|デフォルト値|内容|
+|---|---|---|---|---|
+|estimator|必須|Scikit-learn API|-|表示対象の回帰モデル|
+|x|必須|list[str]|-|説明変数に指定するカラム名のリスト|
+|y|必須|str|-|目的変数に指定するカラム名|
+|data|必須|pd.DataFrame|-|入力データ|
+|hue|オプション|str|None|散布図色分け指定カラム名|
+|aggregate|オプション|str|'mean'|X軸指定変数以外の変数の固定値集計方法|
+|cv|オプション|int or sklearn.model_selection.* |None|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
+|cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
+|cv_group|オプション|str|None|クロスバリデーションのグルーピング対象カラム名、またはグルーピングのラベルデータ (GroupKFold,LeaveOneGroupOut等)|
+|display_cv_indices|オプション|int|0|表示対象のクロスバリデーション番号|
+|estimator_params|オプション|dict|None|回帰モデルに渡すパラメータ|
+|fit_params|オプション|dict|None|学習時のパラメータをdict指定|
+|subplot_kws|オプション|dict|None|[matplotlib.pyplot.subplots](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html)に渡す引数|
+|plot_kws|オプション|dict|None|ヒートマップ用の[matplotlib.axes.Axes.plot](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.plot.html)に渡す引数|
+|scatter_kws|オプション|dict|None|散布図用の[seaborn.scatterplot](https://seaborn.pydata.org/generated/seaborn.scatterplot.html)に渡す引数|
 |legend_kws|オプション|dict|None|凡例用の[matplotlib.axes.Axes.legend](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html)に渡す引数|
 <br>
 
