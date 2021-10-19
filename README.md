@@ -562,6 +562,7 @@ features = ['petal_width', 'petal_length', 'sepal_width']
 X = iris[features].values
 y = iris['sepal_length'].values
 regplot.average_plot(svr, X, y, x_colnames=features, cv=3)
+```
 ![output](https://user-images.githubusercontent.com/59557625/137940484-31f1fec7-012e-4c36-83a8-a1803755caa6.png)
 #### 引数一覧
 |引数名|必須引数orオプション|型|デフォルト値|内容|
