@@ -454,9 +454,17 @@ class regplot():
                 # 学習と推論
                 estimator.fit(X_train, y_train, **fit_params)
                 y_pred = estimator.predict(X_test)
+                # 学習データスコア算出
+                y_pred_train = estimator.predict(X_train)
+                score_dict = cls._make_score_dict(y_train, y_pred_train, scores)
+                for score in scores:
+                    if f'{score}_train' not in score_train_dict:
+                        score_train_dict[f'{score}_train'] = []
+                    score_train_dict[f'{score}_train'].append(score_dict[score])
                 # CV内結果をプロット(LeaveOneOutのときはプロットしない)
                 if not isLeaveOneOut:
                     score_cv_dict = {k: v[i] for k, v in score_all_dict.items()}
+                    score_cv_dict.update({f'{k}_train': v for k, v in score_dict.items()})
                     cls._plot_pred_true(y_test, y_pred, hue_data=hue_test, hue_name=hue_name, ax=ax[i],
                                         linecolor=linecolor, rounddigit=rounddigit, score_dict=score_cv_dict,
                                         scatter_kws=scatter_kws, legend_kws=legend_kws)
@@ -466,33 +474,26 @@ class regplot():
                 y_pred_all.append(y_pred)
                 hue_all.append(hue_test)
                 rank_col_all.append(rank_col_test)
-                # 学習データスコア算出
-                y_pred_train = estimator.predict(X_train)
-                score_dict = cls._make_score_dict(y_train, y_pred_train, scores)
-                for score in scores:
-                    if score not in score_train_dict:
-                        score_train_dict[score] = []
-                    score_train_dict[score].append(score_dict[score])
 
             # 全体プロット用データを合体
             y_true_all = np.hstack(y_true_all)
             y_pred_all = np.hstack(y_pred_all)
             hue_all = np.hstack(hue_all)
             rank_col_all = np.hstack(rank_col_all)
-            # 指標の統計値を計算
+            # スコアの統計値を計算
             if cv_stats == 'mean':
                 score_stats_dict = {f'{k}_mean': np.mean(v) for k, v in score_all_dict.items()}
-                train_stats_dict = {f'{k}_train': np.mean(v) for k, v in score_train_dict.items()}
+                train_stats_dict = {k: np.mean(v) for k, v in score_train_dict.items()}
             elif cv_stats == 'median':
                 score_stats_dict = {f'{k}_median': np.median(v) for k, v in score_all_dict.items()}
-                train_stats_dict = {f'{k}_train': np.median(v) for k, v in score_train_dict.items()}
+                train_stats_dict = {k: np.median(v) for k, v in score_train_dict.items()}
             elif cv_stats == 'min':
                 score_stats_dict = {f'{k}_min': np.amin(v) for k, v in score_all_dict.items()}
-                train_stats_dict = {f'{k}_train': np.amin(v) for k, v in score_train_dict.items()}
+                train_stats_dict = {k: np.amin(v) for k, v in score_train_dict.items()}
             elif cv_stats == 'max':
                 score_stats_dict = {f'{k}_max': np.amax(v) for k, v in score_all_dict.items()}
-                train_stats_dict = {f'{k}_train': np.amax(v) for k, v in score_train_dict.items()}
-            # 学習データ指標を指標dictに追加
+                train_stats_dict = {k: np.amax(v) for k, v in score_train_dict.items()}
+            # 学習データスコアをdictに追加
             score_stats_dict.update(train_stats_dict)
             # 全体プロット
             ax_all = ax if isLeaveOneOut else ax[cv_num]
@@ -997,6 +998,7 @@ class regplot():
             fig, axes = plt.subplots(cv_num + 1, 1, **subplot_kws)
 
             # クロスバリデーション
+            score_train_dict = {}
             for i, (train, test) in enumerate(cv.split(X, y_true, **split_kws)):
                 # 表示用にテストデータと学習データ分割
                 X_train = X[train]
@@ -1018,8 +1020,16 @@ class regplot():
                         rank_col_test = data[rank_col].values[test]
                 # 学習と推論
                 estimator.fit(X_train, y_train, **fit_params)
+                # 学習データスコア算出
+                y_pred_train = estimator.predict(X_train)
+                score_dict = cls._make_score_dict(y_train, y_pred_train, scores)
+                for score in scores:
+                    if f'{score}_train' not in score_train_dict:
+                        score_train_dict[f'{score}_train'] = []
+                    score_train_dict[f'{score}_train'].append(score_dict[score])
                 # CV内結果をプロット
                 score_cv_dict = {k: v[i] for k, v in score_all_dict.items()}
+                score_cv_dict.update({f'{k}_train': v for k, v in score_dict.items()})
                 cls._estimator_plot_1d(estimator, X_test, y_test, hue_data=hue_test, hue_name=hue_name, ax=axes[i],
                                    linecolor=linecolor, rounddigit=rounddigit, score_dict=score_cv_dict,
                                    scatter_kws=scatter_kws, legend_kws=legend_kws)
@@ -1028,22 +1038,21 @@ class regplot():
                     cls._rank_display(y_test, estimator.predict(X_test), rank_number, rank_col, rank_col_test, x=X_test, ax=axes[i], rounddigit=rounddigit)
                 axes[i].set_title(f'Cross Validation Fold{i}')
 
-            # 指標の統計値を計算
+            # スコアの統計値を計算
             if cv_stats == 'mean':
                 score_stats_dict = {f'{k}_mean': np.mean(v) for k, v in score_all_dict.items()}
+                train_stats_dict = {k: np.mean(v) for k, v in score_train_dict.items()}
             elif cv_stats == 'median':
                 score_stats_dict = {f'{k}_median': np.median(v) for k, v in score_all_dict.items()}
+                train_stats_dict = {k: np.median(v) for k, v in score_train_dict.items()}
             elif cv_stats == 'min':
                 score_stats_dict = {f'{k}_min': np.amin(v) for k, v in score_all_dict.items()}
+                train_stats_dict = {k: np.amin(v) for k, v in score_train_dict.items()}
             elif cv_stats == 'max':
                 score_stats_dict = {f'{k}_max': np.amax(v) for k, v in score_all_dict.items()}
-            # 全体データを学習＆評価データとして評価指標算出
-            estimator.fit(X, y_true, **fit_params)
-            y_pred = estimator.predict(X)
-            score_dict = cls._make_score_dict(y_true, y_pred, scores)
-            # 学習データ指標を指標dictに追加
-            score_dict = {f'{k}_train': np.mean(v) for k, v in score_dict.items()}
-            score_stats_dict.update(score_dict)
+                train_stats_dict = {k: np.amax(v) for k, v in score_train_dict.items()}
+            # 学習データスコアをdictに追加
+            score_stats_dict.update(train_stats_dict)
             # 全体色分け用データ取得
             hue_data = None if hue is None else data[hue]
             hue_name = None if hue is None else hue
