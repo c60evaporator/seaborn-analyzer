@@ -74,9 +74,9 @@ class regplot():
             elif scoring == 'mae':
                 score_dict['mae'] = mean_absolute_error(y_true, y_pred)
             elif scoring == 'mse':
-                score_dict['mse'] = mean_squared_error(y_true, y_pred, squared=False)
+                score_dict['mse'] = mean_squared_error(y_true, y_pred, squared=True)
             elif scoring == 'rmse':
-                score_dict['rmse'] = mean_squared_error(y_true, y_pred)
+                score_dict['rmse'] = mean_squared_error(y_true, y_pred, squared=False)
             elif scoring == 'rmsle':
                 score_dict['rmsle'] = mean_squared_log_error(y_true, y_pred)
             elif scoring == 'mape':
