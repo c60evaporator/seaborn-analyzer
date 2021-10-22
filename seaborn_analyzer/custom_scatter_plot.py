@@ -524,7 +524,7 @@ class regplot():
             # 該当列（グラフのX軸）の値を作成
             x_max = data[colname].max()
             x_min = data[colname].min()
-            x_array = np.arange(x_min, x_max, (x_max - x_min)/x_range)
+            x_array = np.linspace(x_min, x_max, x_range)
             # 該当列以外を抽出して平均値算出
             if aggregate == 'mean':
                 other_x_agg = data[[col for col in x_colnames if col != colname]].mean()
