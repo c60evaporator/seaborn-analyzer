@@ -373,7 +373,7 @@ classplot.roc_plot(estimator, X, y, ax=axes, cv=3, fit_params=fit_params)
 |y|必須|str or np.ndarray|-|目的変数のカラム名、または入力データのうち目的変数|
 |data|オプション　　.|pd.DataFrame|None|入力データ (`X`, `y`がstrのとき必須)|
 |x_columns|オプション|list[str]|None|説明変数の名称リスト(`data`がNoneのときのみ有効)|
-|cv|オプション|int or sklearn.model_selection.* |5|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
+|cv|オプション|int or sklearn.model_selection.* |None|クロスバリデーション分割法 (Noneのとき学習データから指標算出、int入力時はkFoldで分割)|
 |cv_seed|オプション|int|42|クロスバリデーションの乱数シード|
 |cv_group|オプション|str|None|クロスバリデーションのグルーピング対象カラム名、またはグルーピングのラベルデータ (GroupKFold,LeaveOneGroupOut等)|
 |ax|オプション|matplotlib.axes.Axes|None|表示対象のax (Noneならmatplotlib.pyplot.plotで1枚ごとにプロット)|
