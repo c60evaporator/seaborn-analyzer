@@ -359,6 +359,8 @@ iris['1st'] = pd.Series(points[:, 0])  # 第1軸をirisに格納
 iris['2nd'] = pd.Series(points[:, 1])  # 第2軸をirisに格納
 sns.scatterplot(x='1st', y='2nd', hue='species', data=iris)
 
+
+
 # %% 2クラス分類でのROC曲線(plot_roc_curve使用)
 import seaborn as sns
 from sklearn.svm import SVC
@@ -381,6 +383,30 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=True, random_s
 estimator = SVC(probability=True, random_state=42)
 estimator.fit(X_train, y_train)
 plot_roc_curve(estimator, X_test, y_test)
+
+# %% クロスバリデーション＆2クラス分類でのROC曲線
+from sklearn.svm import SVC
+from sklearn.model_selection import KFold
+import seaborn as sns
+import matplotlib.pyplot as plt
+from seaborn_analyzer import classplot
+import numpy as np
+# Load dataset
+iris = sns.load_dataset("iris")
+iris = iris[iris['species'] != 'setosa'] 
+OBJECTIVE_VARIALBLE = 'species'  # Objective variable
+USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # Explantory variables
+y = iris[OBJECTIVE_VARIALBLE].values
+X = iris[USE_EXPLANATORY].values
+# Add random noise features
+random_state = np.random.RandomState(0)
+n_samples, n_features = X.shape
+X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
+# Plot ROC curve in binary classification
+estimator = SVC(probability=True, random_state=42)
+fig, axes = plt.subplots(4, 1, figsize=(6, 24))
+cv = KFold(n_splits=3, shuffle=True, random_state=42)
+classplot.roc_plot(estimator, X, y, ax=axes, cv=cv)
 
 # %% 2クラス分類でのROC曲線(plot_roc_curve_multiclass使用)
 import seaborn as sns
@@ -431,34 +457,22 @@ plt.plot([0, 1], [0, 1], label='Chance', alpha=0.8,
          lw=2, color='red', linestyle='--')
 plt.legend(loc='lower right')
 
-# %% クロスバリデーション＆2クラス分類でのROC曲線
-from sklearn.svm import SVC
-import seaborn as sns
-import matplotlib.pyplot as plt
-from seaborn_analyzer import classplot
-# Load dataset
-iris = sns.load_dataset("iris")
-iris = iris[iris['species'] != 'setosa'] 
-OBJECTIVE_VARIALBLE = 'species'  # Objective variable
-USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # Explantory variables
-y = iris[OBJECTIVE_VARIALBLE].values
-X = iris[USE_EXPLANATORY].values
-# Plot ROC curve in binary classification
-estimator = SVC(probability=True, random_state=42)
-fig, axes = plt.subplots(4, 1, figsize=(6, 24))
-classplot.roc_plot(estimator, X, y, ax=axes, cv=3)
-
 # %% クロスバリデーション＆多クラス分類でのROC曲線
 from sklearn.svm import SVC
 import seaborn as sns
 import matplotlib.pyplot as plt
 from seaborn_analyzer import classplot
+import numpy as np
 # Load dataset
 iris = sns.load_dataset("iris")
 OBJECTIVE_VARIALBLE = 'species'  # Objective variable
 USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # Explantory variables
 y = iris[OBJECTIVE_VARIALBLE].values
 X = iris[USE_EXPLANATORY].values
+# Add random noise features
+random_state = np.random.RandomState(0)
+n_samples, n_features = X.shape
+X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
 # Plot ROC curve with cross validation in binary classification
 estimator = SVC(probability=True, random_state=42)
 fig, axes = plt.subplots(4, 1, figsize=(6, 24))

@@ -2573,7 +2573,7 @@ class classplot():
     @classmethod
     def roc_plot(cls, clf, x: List[str], y: str, data: pd.DataFrame = None,
                  x_colnames: List[str] = None, 
-                 cv=5, cv_seed=42, cv_group=None,
+                 cv=None, cv_seed=42, cv_group=None,
                  ax=None,
                  sample_weight=None, drop_intermediate=True,
                  response_method="predict_proba", pos_label=None, average='macro',
