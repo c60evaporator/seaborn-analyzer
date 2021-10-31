@@ -28,7 +28,10 @@ class CustomPairPlot():
         fsize = min(9, 45/hue_num) + min(4.5, 22.5/hue_num) * np.ceil(abs(r)/0.4)
         fsize = min(9, 45/hue_num) if np.isnan(fsize) else fsize
         #該当マスのaxを取得
-        ax = plt.gca()
+        if 'ax' in kws.keys():  # seaborn 0.11.1以降
+            ax = kws['ax']
+        else:  # seaborn 0.11.0以前
+            ax = plt.gca()
         #既に表示したhueの分だけ下にさげて相関係数表示
         ax.annotate("r={:.2f}".format(r), xy=(.1, .65-min(.15,.75/hue_num)*labelnum), xycoords=ax.transAxes, size=fsize, color=kws["color"])
     
