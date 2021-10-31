@@ -140,7 +140,6 @@ class CustomPairPlot():
                 sns.scatterplot(data=self.df, x=x_var, y=y_var, hue=self.hue,
                      palette=g.palette, style=self.hue, markers=markers)
             #凡例を追加
-            g._clean_axis(ax)
             g._update_legend_data(ax)
 
         if kw_color is not None:
@@ -202,6 +201,7 @@ class CustomPairPlot():
         g = sns.PairGrid(self.df, hue=self.hue,
                  palette=palette, vars=vars, diag_sharey=diag_sharey,
                  height=height, aspect=aspect, dropna=dropna, size=None, **grid_kws)
+        self.hue_names = g.hue_names
 
         #マーカーを設定
         if markers is not None:
@@ -245,12 +245,10 @@ class CustomPairPlot():
         #hueなし
         if self.hue is None:
             #右上に相関係数表示
-            self.hue_names = None
             self._corrall_upper(g)
         #hueあり
         else:
             #右上に相関係数表示(hueごとに色分け＆全体の相関係数を黒表示)
-            self.hue_names = g.hue_names
             g.map_upper(self._corrfunc)
             self._corrall_upper(g)
             g.add_legend()
