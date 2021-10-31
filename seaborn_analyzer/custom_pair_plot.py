@@ -185,11 +185,12 @@ class CustomPairPlot():
         grid_kws : dict
             Additional parameters passed to seaborn.PairGrid.__init__() other than the above arguments. See https://seaborn.pydata.org/generated/seaborn.PairGrid.html
         """
+        # bool型の列をintに変換
+        self.df = df.copy()
+        bool_cols = self.df.select_dtypes(include=bool).columns
+        for col in bool_cols:
+            self.df[col] = self.df[col] * 1
         #メンバ変数入力
-        if diag_kind=="hist":#ヒストグラム表示のとき、bool型の列を除外してデータ読込
-            self.df = df.select_dtypes(exclude=bool)
-        else:#kde表示のとき、bool型を含めデータ読込
-            self.df = df
         self.hue = hue
         self.corr_mat = df.corr(method="pearson")
         #文字サイズ調整
