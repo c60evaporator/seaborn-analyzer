@@ -259,42 +259,74 @@ class regplot():
         ----------
         estimator : estimator object implementing ``fit``
             Regression estimator. This is assumed to implement the scikit-learn estimator interface.
+
         x : str or List[str]
             Explanatory variables.
+
         y : str
             Objective variable.
+
         data : pd.DataFrame
             Input data structure.
+
         hue : str, optional
             Grouping variable that will produce points with different colors.
+
         linecolor : str, optional
             Color of prediction = true line. See https://matplotlib.org/stable/gallery/color/named_colors.html
+
         rounddigit: int, optional
             Round a number of score to a given precision in decimal digits.
+
         rank_number : int, optional
             Number of emphasized data that are in the top posiotions for regression error.
+
         rank_col : list[str], optional
             Variables that are displayed with emphasized data that are in the top posiotions for regression error.
+
         scores : {'r2', 'mae', 'mse', 'rmse', 'rmsle', 'mape', 'max_error'} or list, optional
             Regression score that are displayed at the lower right of the graph.
+
         cv_stats : {'mean', 'median', 'max', 'min'}, optional
             Statistical method of cross validation score that are displayed at the lower right of the graph.
+
         cv : int, cross-validation generator, or an iterable, optional
             Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
+
         cv_seed : int, optional
             Seed for random number generator of cross validation.
+
         cv_group: str, optional
             Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to ``groups`` argument of cv.split().
+
         ax : {matplotlib.axes.Axes, list[matplotlib.axes.Axes]}, optional
             Pre-existing axes for the plot or list of it. Otherwise, call matplotlib.pyplot.subplot() internally.
+
         estimator_params : dict, optional
             Parameters passed to the regression estimator. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+
         fit_params : dict, optional
             Parameters passed to the fit() method of the regression estimator, e.g. ``early_stopping_round`` and ``eval_set`` of XGBRegressor. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+
+        eval_set_selection: {'all', 'test', 'train', 'original', 'original_transformed'}, optional
+            Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LightGBM or XGBoost.
+            
+            If "all", use all data in `X` and `y`.
+
+            If "train", select train data from `X` and `y` using cv.split().
+
+            If "test", select test data from `X` and `y` using cv.split().
+
+            If "original", use raw `eval_set`.
+
+            If "original_transformed", use `eval_set` transformed by fit_transform() of pipeline if `estimater` is pipeline.
+
         subplot_kws : dict, optional
             Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize. Available only if ``axes`` is None. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
+
         scatter_kws: dict, optional
             Additional parameters passed to sns.scatterplot(), e.g. ``alpha``. See https://seaborn.pydata.org/generated/seaborn.scatterplot.html
+
         legend_kws : dict
             Additional parameters passed to ax.legend(), e.g. ``loc``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html
 
@@ -566,34 +598,49 @@ class regplot():
             Regression estimator. This is assumed to implement the scikit-learn estimator interface.
         x : list[str] or np.ndarray
             Explanatory variables. Should be list[str] if ``data`` is pd.DataFrame. Should be np.ndarray if ``data`` is None
+
         y : str or np.ndarray
             Objective variable. Should be str if ``data`` is pd.DataFrame. Should be np.ndarray if ``data`` is None
+
         data: pd.DataFrame
             Input data structure.
+
         x_colnames: List[str], optional
             Names of explanatory variables. Available only if ``data`` is NOT pd.DataFrame
+
         hue : str, optional
             Grouping variable that will produce points with different colors.
+
         aggregate : {'mean', 'median'}, optional
             Statistic method of aggregating explanatory variables except x_axis variable.
+
         cv : int, cross-validation generator, or an iterable, optional
             Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
+
         cv_seed : int, optional
             Seed for random number generator of cross validation.
+
         cv_group: str, optional
             Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to ``groups`` argument of cv.split().
+
         display_cv_indices : int or list, optional
             Cross validation index or indices to display.
+
         estimator_params : dict, optional
             Parameters passed to the regression estimator. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+
         fit_params : dict, optional
             Parameters passed to the fit() method of the regression estimator, e.g. ``early_stopping_round`` and ``eval_set`` of XGBRegressor. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+
         subplot_kws: dict, optional
             Additional parameters passed to matplotlib.pyplot.subplots(), e.g. ``figsize``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
+
         plot_kws: dict, optional
             Additional parameters passed to matplotlib.axes.Axes.plot(), e.g. ``alpha``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.plot.html
+
         scatter_kws: dict, optional
             Additional parameters passed to seaborn.scatterplot(), e.g. ``alpha``. See https://seaborn.pydata.org/generated/seaborn.scatterplot.html
+
         legend_kws : dict
             Additional parameters passed to matplotlib.axes.Axes.legend(), e.g. ``loc``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html
         """
@@ -691,24 +738,34 @@ class regplot():
         ----------
         x : str
             Variable that specify positions on the x.
+
         y : str
             Variable that specify positions on the y.
+
         data : pd.DataFrame
             Input data structure.
+
         x_colname: str, optional
             Names of explanatory variable. Available only if ``data`` is NOT pd.DataFrame
+
         ax : matplotlib.axes.Axes, optional
             Pre-existing axes for the plot. Otherwise, call matplotlib.pyplot.gca() internally.
+
         hue : str, optional
             Grouping variable that will produce points with different colors.
+
         linecolor : str, optional
             Color of regression line. See https://matplotlib.org/stable/gallery/color/named_colors.html
+
         rounddigit: int, optional
             Round a number of score to a given precision in decimal digits.
+
         plot_scores: bool, optional
             If True, display Pearson correlation coefficient and the p-value.
+
         scatter_kws: dict, optional
             Additional parameters passed to sns.scatterplot(), e.g. ``alpha``. See https://seaborn.pydata.org/generated/seaborn.scatterplot.html
+
         legend_kws : dict
             Additional parameters passed to ax.legend(), e.g. ``loc``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html
 
@@ -776,26 +833,37 @@ class regplot():
         ----------
         trained_estimator : 
             学習済の回帰モデル(scikit-learn API)
+
         X : ndarray
             説明変数
+
         y_true : ndarray
             目的変数実測値
+
         hue_data : ndarray
             色分け用ラベルデータ
+
         hue_name : str
             色分け用の列名
+
         ax : matplotlib.axes.Axes
             表示対象のax (Noneならplt.plotで1枚ごとにプロット)
+
         linecolor : str
             予測値=実測値の線の色
+
         linesplit : int
             フィッティング線の分割数 (カクカクしたら増やす)
+
         rounddigit: int
             表示指標の小数丸め桁数
+
         score_dict : dict[str, float]
             算出した評価指標一覧
+
         scatter_kws: dict, optional
             Additional parameters passed to sns.scatterplot(), e.g. ``alpha``. See https://seaborn.pydata.org/generated/seaborn.scatterplot.html
+
         legend_kws : dict
             Additional parameters passed to ax.legend(), e.g. ``loc``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html
         """
@@ -840,42 +908,74 @@ class regplot():
         ----------
         estimator : estimator object implementing ``fit``
             Regression estimator. This is assumed to implement the scikit-learn estimator interface.
+
         x : str, or np.ndarray
             Explanatory variables. Should be str if ``data`` is pd.DataFrame. Should be np.ndarray if ``data`` is None
+
         y : str or np.ndarray
             Objective variable. Should be str if ``data`` is pd.DataFrame. Should be np.ndarray if ``data`` is None
+
         data: pd.DataFrame
             Input data structure.
+
         x_colname: str, optional
             Names of explanatory variable. Available only if ``data`` is NOT pd.DataFrame
+
         hue : str, optional
             Grouping variable that will produce points with different colors.
+
         linecolor : str, optional
             Color of prediction = true line. See https://matplotlib.org/stable/gallery/color/named_colors.html
+
         rounddigit: int, optional
             Round a number of score to a given precision in decimal digits.
+
         rank_number : int, optional
             Number of emphasized data that are in the top positions for regression error.
+
         rank_col : list[str], optional
             Variables that are displayed with emphasized data that are in the top posiotions for regression error.
+
         scores : {'r2', 'mae', 'mse', 'rmse', 'rmsle', 'mape', 'max_error'} or list,, optional
             Regression score that are displayed at the lower right of the graph.
+
         cv_stats : {'mean', 'median', 'max', 'min'}, optional
             Statistical method of cross validation score that are displayed at the lower right of the graph.
+
         cv : int, cross-validation generator, or an iterable, optional
             Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
+
         cv_seed : int, optional
             Seed for random number generator of cross validation.
+
         cv_group: str, optional
             Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to ``groups`` argument of cv.split().
+
         estimator_params : dict, optional
             Parameters passed to the regression estimator. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+
         fit_params : dict, optional
             Parameters passed to the fit() method of the regression estimator, e.g. ``early_stopping_round`` and ``eval_set`` of XGBRegressor. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+
         subplot_kws : dict, optional
             Additional parameters passed to matplotlib.pyplot.subplots(), e.g. ``figsize``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
+
+        eval_set_selection: {'all', 'test', 'train', 'original', 'original_transformed'}, optional
+            Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LightGBM or XGBoost.
+            
+            If "all", use all data in `X` and `y`.
+
+            If "train", select train data from `X` and `y` using cv.split().
+
+            If "test", select test data from `X` and `y` using cv.split().
+
+            If "original", use raw `eval_set`.
+
+            If "original_transformed", use `eval_set` transformed by fit_transform() of pipeline if `estimater` is pipeline.
+
         scatter_kws: dict, optional
             Additional parameters passed to sns.scatterplot(), e.g. ``alpha``. See https://seaborn.pydata.org/generated/seaborn.scatterplot.html
+
         legend_kws : dict
             Additional parameters passed to ax.legend(), e.g. ``loc``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html
 
@@ -1336,60 +1436,101 @@ class regplot():
         ----------
         estimator : estimator object implementing ``fit``
             Regression estimator. This is assumed to implement the scikit-learn estimator interface.
+
         x : list[str] or np.ndarray
             Explanatory variables. Should be list[str] if ``data`` is pd.DataFrame. Should be np.ndarray if ``data`` is None
+
         y : str or np.ndarray
             Objective variable. Should be str if ``data`` is pd.DataFrame. Should be np.ndarray if ``data`` is None
+
         data: pd.DataFrame
             Input data structure.
+
         x_colnames: List[str], optional
             Names of explanatory variables. Available only if ``data`` is NOT pd.DataFrame
+
         x_heat: List[str], optional
             X-axis and y-axis variables of heatmap. If None, use two variables in ``x`` from the front.
+
         scatter_hue : str, optional
             Grouping variable that will produce points with different colors. Available only if plot_scatter is set to ``hue``.
+
         pair_sigmarange: float, optional
             Set the range of subplots. The lower limit is mean({x3, x4}) - ``pair_sigmarange`` * std({x3, x4}). The higher limit is mean({x3, x4}) + ``pair_sigmarange`` * std({x3, x4}). Available only if len(x) is bigger than 2.
+
         pair_sigmainterval: float, optional
             Set the interval of subplots. For example, if ``pair_sigmainterval`` is set to 0.5 and ``pair_sigmarange`` is set to 1.0, The ranges of subplots are lower than μ-1σ, μ-1σ to μ-0.5σ, μ-0.5σ to μ, μ to μ+0.5σ, μ+0.5σ to μ+1σ, and higher than μ+1σ. Available only if len(x) is bigger than 2.
+
         heat_extendsigma: float, optional
             Set the axis view limits of the heatmap. The lower limit is min({x1, x2}) - std({x1, x2}) * ``heat_extendsigma``. The higher limit is max({x1, x2}) + std({x1, x2}) * ``heat_extendsigma``
+
         heat_division: int, optional
             Resolution of the heatmap.
+
         color_extendsigma: float, optional
             Set the colormap limits of the heatmap. The lower limit is min(y_ture) - std(y_ture) * ``color_extendsigma``. The higher limit is max(y_ture) - std(y_ture) * ``color_extendsigma``.
+
         plot_scatter: {'error', 'true', 'hue'}, optional
             Color decision of scatter plot. If 'error', to be mapped to colors using error value. If 'true', to be mapped to colors using y_ture value. If 'hue', to be mapped to colors using scatter_hue variable. If None, no scatter.
+
         rounddigit_rank: int, optional
             Round a number of error that are in the top posiotions for regression error. to a given precision in decimal digits.
+
         rounddigit_x1: int, optional
             Round a number of x-axis valiable of the heatmap to a given precision in decimal digits.
+
         rounddigit_x2: int, optional
             Round a number of y-axis valiable of the heatmap to a given precision in decimal digits.
+
         rounddigit_x3: int, optional
             Round a number of y-axis valiable of subplots to a given precision in decimal digits.
+
         rank_number: int, optional
             Number of emphasized data that are in the top posiotions for regression error.
+
         rank_col: str, optional
             Variables that are displayed with emphasized data that are in the top posiotions for regression error.
+
         cv : int, cross-validation generator, or an iterable, optional
             Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
+
         cv_seed : int, optional
             Seed for random number generator of cross validation.
+
         cv_group: str, optional
             Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to ``groups`` argument of cv.split().
+
         display_cv_indices : int or list, optional
             Cross validation index or indices to display.
+
         estimator_params : dict, optional
             Parameters passed to the regression estimator. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+
         fit_params : dict, optional
             Parameters passed to the fit() method of the regression estimator, e.g. ``early_stopping_round`` and ``eval_set`` of XGBRegressor. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+
+        eval_set_selection: {'all', 'test', 'train', 'original', 'original_transformed'}, optional
+            Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LightGBM or XGBoost.
+            
+            If "all", use all data in `X` and `y`.
+
+            If "train", select train data from `X` and `y` using cv.split().
+
+            If "test", select test data from `X` and `y` using cv.split().
+
+            If "original", use raw `eval_set`.
+
+            If "original_transformed", use `eval_set` transformed by fit_transform() of pipeline if `estimater` is pipeline.
+
         subplot_kws: dict, optional
             Additional parameters passed to matplotlib.pyplot.subplots(), e.g. ``figsize``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
+
         heat_kws: dict, optional
             Additional parameters passed to sns.heatmap(), e.g. ``cmap``. See https://seaborn.pydata.org/generated/seaborn.heatmap.html
+
         scatter_kws: dict, optional
             Additional parameters passed to matplotlib.pyplot.scatter(), e.g. ``alpha``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.scatter.html
+
         legend_kws : dict
             Additional parameters passed to ax.legend(), e.g. ``loc``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html
         """
@@ -1950,52 +2091,89 @@ class classplot():
         ----------
         clf: classifier object implementing ``fit``
             Classifier. This is assumed to implement the scikit-learn estimator interface.
+
         x : list[str], or np.ndarray
             Explanatory variables. Should be list[str] if ``data`` is pd.DataFrame. Should be np.ndarray if ``data`` is None
+
         y : str or np.ndarray
             Objective variable. Should be str if ``data`` is pd.DataFrame. Should be np.ndarray if ``data`` is None
+
         data: pd.DataFrame
             Input data structure.
+
         x_colnames: List[str], optional
             Names of explanatory variables. Available only if ``data`` is NOT pd.DataFrame
+
         x_chart: List[str], optional
             X-axis . If None, use two variables in ``x`` from the front.
+
         pair_sigmarange: float, optional
             Set the range of subplots. The lower limit is mean({x3, x4}) - ``pair_sigmarange`` * std({x3, x4}). The higher limit is mean({x3, x4}) + ``pair_sigmarange`` * std({x3, x4}). Available only if len(x) is bigger than 2.
+
         pair_sigmainterval: float, optional
             Set the interval of subplots. For example, if ``pair_sigmainterval`` is set to 0.5 and ``pair_sigmarange`` is set to 1.0, The ranges of subplots are lower than μ-1σ, μ-1σ to μ-0.5σ, μ-0.5σ to μ, μ to μ+0.5σ, μ+0.5σ to μ+1σ, and higher than μ+1σ. Available only if len(x) is bigger than 2.
+
         chart_extendsigma: float, optional
             Set the axis view limits of the separation map. The lower limit is min({x1, x2}) - std({x1, x2}) * chart_extendsigma. The higher limit is max({x1, x2}) + std({x1, x2}) * chart_extendsigma
+
         chart_scale: int, optional
             Set the resolution of the separation lines. If plotting speed is slow, we reccomend setting chart_scale to 2. We DON'T reccomend setting it to larger than 3 because of jaggies.
+
         plot_scatter: {'error', 'class', 'class_error', None}, optional
             Color decision of scatter plot. If 'error', to be mapped to colors using true-false. If 'class', to be mapped to colors using class labels. If 'class_error', to be mapped to colors using class labels and marker styles using true-false. If None, no scatter.
+
         rounddigit_x3: int, optional
             Round a number of y-axis valiable of subplots to a given precision in decimal digits.
+
         scatter_colors: List[str], optional
             Set of colors for mapping the class labels. Available only if ``plot_scatter`` is set to 'class' or 'class_error'.
+
         true_marker: str, optional
             Marker style of True label. Available only if ``plot_scatter`` is set to 'error' or 'class_error'. See https://matplotlib.org/stable/api/markers_api.html#module-matplotlib.markers
+
         false_marker: str, optional
             Marker style of False label. Available only if ``plot_scatter`` is set to 'error' or 'class_error'. See https://matplotlib.org/stable/api/markers_api.html#module-matplotlib.markers
+
         cv : int, cross-validation generator, or an iterable, optional
             Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
+
         cv_seed: int, optional
             Seed for random number generator of cross validation.
+
         cv_group: str, optional
             Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to ``groups`` argument of cv.split().
+
         display_cv_indices: int, optional
             Cross validation index or indices to display.
+
         clf_params: dict, optional
             Parameters passed to the classifier. If the classifier is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+
         fit_params: dict, optional
             Parameters passed to the fit() method of the classifier, e.g. ``early_stopping_round`` and ``eval_set`` of XGBClassifier. If the classifier is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+        
+        eval_set_selection: {'all', 'test', 'train', 'original', 'original_transformed'}, optional
+            Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LightGBM or XGBoost.
+            
+            If "all", use all data in `X` and `y`.
+
+            If "train", select train data from `X` and `y` using cv.split().
+
+            If "test", select test data from `X` and `y` using cv.split().
+
+            If "original", use raw `eval_set`.
+
+            If "original_transformed", use `eval_set` transformed by fit_transform() of pipeline if `estimater` is pipeline.
+
         subplot_kws: dict, optional
             Additional parameters passed to matplotlib.pyplot.subplots(), e.g. ``figsize.`` See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
+
         contourf_kws: dict, optional
             Additional parameters passed to matplotlib.pyplot.contourf(), e.g. ``alpha``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.contourf.html
+
         scatter_kws: dict, optional
             Additional parameters passed to matplotlib.pyplot.scatter(), e.g. ``alpha``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.scatter.html
+
         legend_kws : dict
             Additional parameters passed to ax.legend(), e.g. ``loc``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html
         """
@@ -2138,62 +2316,104 @@ class classplot():
         ----------
         clf: classifier object implementing ``fit``
             Classifier. This is assumed to implement the scikit-learn estimator interface.
+
         x : list[str], or np.ndarray
             Explanatory variables. Should be list[str] if ``data`` is pd.DataFrame. Should be np.ndarray if ``data`` is None
+
         y : str or np.ndarray
             Objective variable. Should be str if ``data`` is pd.DataFrame. Should be np.ndarray if ``data`` is None
+
         data: pd.DataFrame, optional
             Input data structure.
+
         x_colnames: List[str], optional
             Names of explanatory variables. Available only if ``data`` is NOT pd.DataFrame
+
         x_chart: List[str], optional
             X-axis and y-axis variables of separation map. If None, use two variables in ``x`` from the front.
+
         pair_sigmarange: float, optional
             Set the range of subplots. The lower limit is mean({x3, x4}) - ``pair_sigmarange`` * std({x3, x4}). The higher limit is mean({x3, x4}) + ``pair_sigmarange`` * std({x3, x4}). Available only if len(x) is bigger than 2.
+
         pair_sigmainterval: float, optional
             Set the interval of subplots. For example, if ``pair_sigmainterval`` is set to 0.5 and ``pair_sigmarange`` is set to 1.0, The ranges of subplots are lower than μ-1σ, μ-1σ to μ-0.5σ, μ-0.5σ to μ, μ to μ+0.5σ, μ+0.5σ to μ+1σ, and higher than μ+1σ. Available only if len(x) is bigger than 2.
+
         chart_extendsigma: float, optional
             Set the axis view limits of the separation map. The lower limit is min({x1, x2}) - std({x1, x2}) * ``chart_extendsigma``. The higher limit is max({x1, x2}) + std({x1, x2}) * ``chart_extendsigma``
+
         chart_scale: int, optional
             Set the resolution of the separation lines. If plotting speed is slow, we reccomend setting chart_scale to 2. We DON'T reccomend setting it to larger than 3 because of jaggies.
+
         plot_border: bool, optional
             If True, display class separation lines
+
         plot_scatter: {'error', 'class', 'class_error', None}, optional
             Color decision of scatter plot. If 'error', to be mapped to colors using true-false. If 'class', to be mapped to colors using class labels. If 'class_error', to be mapped to colors using class labels and marker styles using true-false. If None, no scatter.
+
         rounddigit_x3: int, optional
             Round a number of y-axis valiable of subplots to a given precision in decimal digits.
+
         proba_class: str or List[str], optional
             Class label name, in which probability map is displayed.
+
         proba_cmap_dict: dict[str, str], optional
             Colormap of probability map. The keys must be class label name and the values must be colormap names in Matplotlib. See https://matplotlib.org/stable/tutorials/colors/colormaps.html
+
         proba_type: {'contourf', 'contour', 'imshow'}, optional
             Plotting type of probabiliity map. If 'contourf', mapped by matplotlib.pyplot.contourf(). If 'contour', mapped by matplotlib.pyplot.contour(). If 'imshow', mapped by matplotlib.pyplot.imshow(). 'imshow' is available only if the number of class labels is less than 4.
+
         scatter_colors: List[str], optional
             Set of colors for mapping the class labels. Available only if ``plot_scatter`` is set to 'class' or 'class_error'.
+
         true_marker: str, optional
             Marker style of True label. Available only if ``plot_scatter`` is set to 'error' or 'class_error'. See https://matplotlib.org/stable/api/markers_api.html#module-matplotlib.markers
+
         false_marker: str, optional
             Marker style of False label. Available only if ``plot_scatter`` is set to 'error' or 'class_error'. See https://matplotlib.org/stable/api/markers_api.html#module-matplotlib.markers
+
         cv: int or sklearn.model_selection.*, optional
             Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
+
         cv_seed: int, optional
             Seed for random number generator of cross validation.
+
         cv_group: str, optional
             Group variable for the samples used while splitting the dataset into train/test set. This argument is passed to ``groups`` argument of cv.split().
+
         display_cv_indices: int, optional
             Cross validation index or indices to display.
+
         clf_params: dict, optional
             Parameters passed to the classifier. If the classifier is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+
         fit_params: dict, optional
             Parameters passed to the fit() method of the classifier, e.g. ``early_stopping_round`` and ``eval_set`` of XGBClassifier. If the classifier is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+
+        eval_set_selection: {'all', 'test', 'train', 'original', 'original_transformed'}, optional
+            Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LightGBM or XGBoost.
+            
+            If "all", use all data in `X` and `y`.
+
+            If "train", select train data from `X` and `y` using cv.split().
+
+            If "test", select test data from `X` and `y` using cv.split().
+
+            If "original", use raw `eval_set`.
+
+            If "original_transformed", use `eval_set` transformed by fit_transform() of pipeline if `estimater` is pipeline.
+
         subplot_kws: dict, optional
             Additional parameters passed to matplotlib.pyplot.subplots(), e.g. ``figsize``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
+
         contourf_kws: dict, optional
             Additional parameters passed to matplotlib.pyplot.contourf() if proba_type is set to 'contourf', or additional parameters passed to matplotlib.pyplot.contour() if proba_type is set to 'contour'. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.contourf.html or https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.contour.html
+
         imshow_kws: dict, optional
             Additional parameters passed to matplotlib.pyplot.imshow(), e.g. ``alpha``. Available only if proba_type is set to 'imshow'. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.imshow.html
+
         scatter_kws: dict, optional
             Additional parameters passed to matplotlib.pyplot.scatter(), e.g. ``alpha``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.scatter.html
+
         legend_kws : dict
             Additional parameters passed to ax.legend(), e.g. ``loc``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html
         """
@@ -2640,6 +2860,19 @@ class classplot():
 
         fit_params : dict, default=None
             Parameters passed to the fit() method of the classifier, e.g. ``early_stopping_round`` and ``eval_set`` of XGBClassifier. If the classifier is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+        
+        eval_set_selection: {'all', 'test', 'train', 'original', 'original_transformed'}, optional
+            Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LightGBM or XGBoost.
+            
+            If "all", use all data in `X` and `y`.
+
+            If "train", select train data from `X` and `y` using cv.split().
+
+            If "test", select test data from `X` and `y` using cv.split().
+
+            If "original", use raw `eval_set`.
+
+            If "original_transformed", use `eval_set` transformed by fit_transform() of pipeline if `estimater` is pipeline.
 
         draw_grid: bool, default=True
             If True, grid lines are drawn.
