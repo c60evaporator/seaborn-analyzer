@@ -890,4 +890,38 @@ X = iris[features].values
 y = iris['sepal_length'].values
 regplot.average_plot(svr, X, y, x_colnames=features, cv=3)
 
-# %%
+# %% eval_set_selection引数の動作確認（regression_pred_true）
+import seaborn as sns
+iris = sns.load_dataset("iris")
+from lightgbm import LGBMRegressor
+from muscle_tuning import LGBMRegressorTuning
+import pandas as pd
+from seaborn_analyzer import regplot
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+df_reg = pd.read_csv(f'./sample_data/osaka_metropolis_english.csv')
+OBJECTIVE_VARIABLE = 'approval_rate'  # 目的変数
+USE_EXPLANATORY = ['2_between_30to60', '3_male_ratio', '5_household_member', 'latitude']  # 説明変数
+y = df_reg[OBJECTIVE_VARIABLE].values
+X = df_reg[USE_EXPLANATORY].values
+
+tuning = LGBMRegressorTuning(X, y, USE_EXPLANATORY, y_colname=OBJECTIVE_VARIABLE)
+fit_params={'verbose': 0,  # 学習中のコマンドライン出力
+            'early_stopping_rounds': 10,  # 学習時、評価指標がこの回数連続で改善しなくなった時点でストップ
+            'eval_metric': 'rmse',  # early_stopping_roundsの評価指標
+            'eval_set': [(X, y)]
+            }
+estimator = Pipeline([("scaler", StandardScaler()), ("lgbm", LGBMRegressor())])
+tuning.optuna_tuning(estimator=estimator)
+
+params_after = {}
+params_after.update(tuning.best_params)
+params_after.update(tuning.not_opt_params)
+best_estimator = estimator.set_params(**params_after)
+regplot.regression_pred_true(best_estimator, x=USE_EXPLANATORY,
+                            y=OBJECTIVE_VARIABLE, data=df_reg,
+                            scores='mse',
+                            cv=tuning.cv,
+                            fit_params=tuning.fit_params,
+                            eval_set_selection='all'
+                            )

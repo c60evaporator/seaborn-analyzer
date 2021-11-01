@@ -743,6 +743,14 @@ class regplot():
             else:
                 cv_num = cv.n_splits
 
+            # fit_paramsにeval_metricが入力されており、eval_setが入力されていないときの処理(eval_setにテストデータを使用)
+            if eval_set_selection is None:
+                eval_set_selection = 'test'
+            fit_params, eval_set_selection = init_eval_set(
+                    eval_set_selection, fit_params, X, y)
+            # 最終学習器以外の前処理変換器作成
+            transformer = _make_transformer(eval_set_selection, estimator)
+
             # クロスバリデーション
             for i, (train, test) in enumerate(cv.split(X, y_true, **split_kws)):
                 # 表示対象以外のCVなら飛ばす
@@ -753,8 +761,13 @@ class regplot():
                 X_train = X[train]
                 y_train = y_true[train]
                 data_test = data.iloc[test]
+                
+                # eval_setの中から学習データ or テストデータのみを抽出
+                fit_params_modified = _eval_set_selection(eval_set_selection, transformer,
+                                                        fit_params, train, test)
+
                 # 学習と推論
-                estimator.fit(X_train, y_train, **fit_params)
+                estimator.fit(X_train, y_train, **fit_params_modified)
                 # ヒートマップをプロット
                 cls._average_plot(estimator, data_test, x_colnames, y_colname, hue,
                                   aggregate=aggregate,
@@ -1098,36 +1111,51 @@ class regplot():
             else:
                 cv_num = cv.n_splits
 
+            # fit_paramsにeval_metricが入力されており、eval_setが入力されていないときの処理(eval_setにテストデータを使用)
+            if eval_set_selection is None:
+                eval_set_selection = 'test'
+            fit_params, eval_set_selection = init_eval_set(
+                    eval_set_selection, fit_params, X, y)
+            # 最終学習器以外の前処理変換器作成
+            transformer = _make_transformer(eval_set_selection, estimator)
+
             # スコア種類ごとにクロスバリデーションスコアの算出
             score_all_dict = {}
             for scoring in scores:
                 # cross_val_scoreでクロスバリデーション
                 if scoring == 'r2':
-                    score_all_dict['r2'] = cross_val_score(estimator, X, y_true, cv=cv, scoring='r2',
-                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
+                    score_all_dict['r2'] = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true, 
+                                                    cv=cv, scoring='r2',
+                                                    fit_params=fit_params, n_jobs=-1, **split_kws)
                 elif scoring == 'mae':
-                    neg_mae = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_mean_absolute_error',
-                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
+                    neg_mae = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true, 
+                                                    cv=cv, scoring='neg_mean_absolute_error',
+                                                    fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['mae'] = -neg_mae  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'mse':
-                    neg_mse = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_mean_squared_error',
-                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
+                    neg_mse = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true,
+                                                    cv=cv, scoring='neg_mean_squared_error',
+                                                    fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['mse'] = -neg_mse  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'rmse':
-                    neg_rmse = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_root_mean_squared_error',
-                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
+                    neg_rmse = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true,
+                                                    cv=cv, scoring='neg_root_mean_squared_error',
+                                                    fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['rmse'] = -neg_rmse  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'rmsle':
-                    neg_msle = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_mean_squared_log_error',
-                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
+                    neg_msle = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true,
+                                                    cv=cv, scoring='neg_mean_squared_log_error',
+                                                    fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['rmsle'] = np.sqrt(-neg_msle)  # 正負を逆にしてルートをとる
                 elif scoring == 'mape':
-                    neg_mape = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_mean_absolute_percentage_error',
-                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
+                    neg_mape = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true,
+                                                    cv=cv, scoring='neg_mean_absolute_percentage_error',
+                                                    fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['mape'] = -neg_mape  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'max_error':
-                    neg_max_error = cross_val_score(estimator, X, y_true, cv=cv, scoring='max_error',
-                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
+                    neg_max_error = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true,
+                                                    cv=cv, scoring='max_error',
+                                                    fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['max_error'] = - neg_max_error  # scikit-learnの仕様に合わせ正負を逆に
             
             # 表示用のaxes作成
@@ -1157,8 +1185,13 @@ class regplot():
                         rank_col_test = data.index.values[test]
                     else:  # 表示フィールド指定あるとき
                         rank_col_test = data[rank_col].values[test]
+                
+                # eval_setの中から学習データ or テストデータのみを抽出
+                fit_params_modified = _eval_set_selection(eval_set_selection, transformer,
+                                                        fit_params, train, test)
+
                 # 学習と推論
-                estimator.fit(X_train, y_train, **fit_params)
+                estimator.fit(X_train, y_train, **fit_params_modified)
                 # 学習データスコア算出
                 y_pred_train = estimator.predict(X_train)
                 score_dict = cls._make_score_dict(y_train, y_pred_train, scores)
@@ -1684,6 +1717,14 @@ class regplot():
             else:
                 cv_num = cv.n_splits
 
+            # fit_paramsにeval_metricが入力されており、eval_setが入力されていないときの処理(eval_setにテストデータを使用)
+            if eval_set_selection is None:
+                eval_set_selection = 'test'
+            fit_params, eval_set_selection = init_eval_set(
+                    eval_set_selection, fit_params, X, y)
+            # 最終学習器以外の前処理変換器作成
+            transformer = _make_transformer(eval_set_selection, estimator)
+
             # クロスバリデーション
             for i, (train, test) in enumerate(cv.split(X, y_true, **split_kws)):
                 # 表示対象以外のCVなら飛ばす
@@ -1695,8 +1736,13 @@ class regplot():
                 y_train = y_true[train]
                 X_test = X[test]
                 y_test = y_true[test]
+                
+                # eval_setの中から学習データ or テストデータのみを抽出
+                fit_params_modified = _eval_set_selection(eval_set_selection, transformer,
+                                                        fit_params, train, test)
+
                 # 学習と推論
-                estimator.fit(X_train, y_train, **fit_params)
+                estimator.fit(X_train, y_train, **fit_params_modified)
                 y_pred = estimator.predict(X_test)
                 # 誤差上位表示用データ取得
                 if rank_number is not None:
