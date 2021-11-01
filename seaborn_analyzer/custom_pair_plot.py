@@ -144,6 +144,7 @@ class CustomPairPlot():
                      palette=g.palette, style=self.hue, markers=markers)
             #凡例を追加
             g._update_legend_data(ax)
+            ax.legend_ = None
 
         if kw_color is not None:
             kwargs["color"] = kw_color
