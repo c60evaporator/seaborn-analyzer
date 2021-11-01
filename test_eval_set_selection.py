@@ -465,6 +465,7 @@ classplot.class_proba_plot(best_estimator, x=USE_EXPLANATORY,
                     y=OBJECTIVE_VARIABLE, data=iris,
                     cv=tuning.cv,
                     pair_sigmarange=0.5,
+                    proba_type='imshow',
                     fit_params=tuning.fit_params,
                     eval_set_selection=tuning.eval_set_selection
                     )
@@ -515,6 +516,7 @@ classplot.class_proba_plot(best_estimator, x=USE_EXPLANATORY,
                     y=OBJECTIVE_VARIABLE, data=iris,
                     cv=tuning.cv,
                     pair_sigmarange=0.5,
+                    proba_type='imshow',
                     fit_params=tuning.fit_params,
                     eval_set_selection=tuning.eval_set_selection
                     )
@@ -564,6 +566,7 @@ classplot.class_proba_plot(best_estimator, x=USE_EXPLANATORY,
                     y=OBJECTIVE_VARIABLE, data=iris,
                     cv=tuning.cv,
                     pair_sigmarange=0.5,
+                    proba_type='imshow',
                     fit_params=tuning.fit_params,
                     eval_set_selection='original_transformed'
                     )
@@ -613,6 +616,7 @@ classplot.class_proba_plot(best_estimator, x=USE_EXPLANATORY,
                     y=OBJECTIVE_VARIABLE, data=iris,
                     cv=tuning.cv,
                     pair_sigmarange=0.5,
+                    proba_type='imshow',
                     fit_params=tuning.fit_params,
                     eval_set_selection=tuning.eval_set_selection
                     )
@@ -657,6 +661,7 @@ classplot.class_proba_plot(best_estimator, x=USE_EXPLANATORY,
                     y=OBJECTIVE_VARIABLE, data=iris,
                     cv=tuning.cv,
                     pair_sigmarange=0.5,
+                    proba_type='imshow',
                     fit_params=tuning.fit_params,
                     eval_set_selection=tuning.eval_set_selection
                     )
@@ -701,6 +706,7 @@ classplot.class_proba_plot(best_estimator, x=USE_EXPLANATORY,
                     y=OBJECTIVE_VARIABLE, data=iris,
                     cv=tuning.cv,
                     pair_sigmarange=0.5,
+                    proba_type='imshow',
                     fit_params=tuning.fit_params,
                     eval_set_selection=tuning.eval_set_selection
                     )
@@ -750,6 +756,7 @@ classplot.class_proba_plot(best_estimator, x=USE_EXPLANATORY,
                     y=OBJECTIVE_VARIABLE, data=iris,
                     cv=tuning.cv,
                     pair_sigmarange=0.5,
+                    proba_type='imshow',
                     fit_params=tuning.fit_params,
                     eval_set_selection=tuning.eval_set_selection
                     )
@@ -794,6 +801,7 @@ classplot.class_proba_plot(best_estimator, x=USE_EXPLANATORY,
                     y=OBJECTIVE_VARIABLE, data=iris,
                     cv=tuning.cv,
                     pair_sigmarange=0.5,
+                    proba_type='imshow',
                     fit_params=tuning.fit_params,
                     eval_set_selection=tuning.eval_set_selection
                     )
@@ -838,6 +846,7 @@ classplot.class_proba_plot(best_estimator, x=USE_EXPLANATORY,
                     y=OBJECTIVE_VARIABLE, data=iris,
                     cv=tuning.cv,
                     pair_sigmarange=0.5,
+                    proba_type='imshow',
                     fit_params=tuning.fit_params,
                     eval_set_selection=tuning.eval_set_selection
                     )

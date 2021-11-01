@@ -1736,7 +1736,7 @@ class regplot():
                 y_train = y_true[train]
                 X_test = X[test]
                 y_test = y_true[test]
-                
+
                 # eval_setの中から学習データ or テストデータのみを抽出
                 fit_params_modified = _eval_set_selection(eval_set_selection, transformer,
                                                         fit_params, train, test)
@@ -2043,7 +2043,11 @@ class classplot():
         # チャート非使用変数を標準化してDataFrameに追加
         if x_num >= 3:
             X_not_chart_norm = stats.zscore(df_not_chart)
-            df_all = df_all.join(pd.DataFrame(X_not_chart_norm, columns=[f'normalize_{c}' for c in df_not_chart]))
+            if isinstance(X_not_chart_norm, pd.DataFrame):  # X_not_chart_normがDataFrameの時
+                not_chart_rename_dir = {c: f'normalize_{c}' for c in df_not_chart}
+                df_all = df_all.join(X_not_chart_norm.rename(columns=not_chart_rename_dir))
+            else:  # X_not_chart_normがndarrayの時（古いscipyのバージョン時）
+                df_all = df_all.join(pd.DataFrame(X_not_chart_norm, columns=[f'normalize_{c}' for c in df_not_chart]))
 
         # チャートのX1軸およびX2軸の表示範囲(最大最小値 + extendsigma)
         x1_min = np.min(X[:, x_chart_indices[0]])
@@ -2357,6 +2361,14 @@ class classplot():
             else:
                 cv_num = cv.n_splits
 
+            # fit_paramsにeval_metricが入力されており、eval_setが入力されていないときの処理(eval_setにテストデータを使用)
+            if eval_set_selection is None:
+                eval_set_selection = 'test'
+            fit_params, eval_set_selection = init_eval_set(
+                    eval_set_selection, fit_params, X, y)
+            # 最終学習器以外の前処理変換器作成
+            transformer = _make_transformer(eval_set_selection, clf)
+
             # クロスバリデーション
             for i, (train, test) in enumerate(cv.split(X, y_true, **split_kws)):
                 # 表示対象以外のCVなら飛ばす
@@ -2373,8 +2385,13 @@ class classplot():
                 y_train = y_true[train]
                 X_test = X[test]
                 y_test = y_true[test]
+
+                # eval_setの中から学習データ or テストデータのみを抽出
+                fit_params_modified = _eval_set_selection(eval_set_selection, transformer,
+                                                        fit_params, train, test)
+
                 # 学習と推論
-                clf.fit(X_train, y_train, **fit_params)
+                clf.fit(X_train, y_train, **fit_params_modified)
                 y_pred = clf.predict(X_test)
                 # 決定境界図をプロット
                 cls._class_chart_plot(clf, X_test, y_pred, y_test, x_chart, x_not_chart, x_chart_indices,
@@ -2631,6 +2648,14 @@ class classplot():
             else:
                 cv_num = cv.n_splits
 
+            # fit_paramsにeval_metricが入力されており、eval_setが入力されていないときの処理(eval_setにテストデータを使用)
+            if eval_set_selection is None:
+                eval_set_selection = 'test'
+            fit_params, eval_set_selection = init_eval_set(
+                    eval_set_selection, fit_params, X, y)
+            # 最終学習器以外の前処理変換器作成
+            transformer = _make_transformer(eval_set_selection, clf)
+
             # クロスバリデーション
             for i, (train, test) in enumerate(cv.split(X, y_true, **split_kws)):
                 # 表示対象以外のCVなら飛ばす
@@ -2656,8 +2681,13 @@ class classplot():
                     continue
                 # proba_cmap_dictも学習データから再取得
                 proba_cmap_dict = {k: v for k, v in proba_cmap_dict.items() if k in class_list_train}
+
+                # eval_setの中から学習データ or テストデータのみを抽出
+                fit_params_modified = _eval_set_selection(eval_set_selection, transformer,
+                                                        fit_params, train, test)
+
                 # 学習と推論
-                clf.fit(X_train, y_train, **fit_params)
+                clf.fit(X_train, y_train, **fit_params_modified)
                 y_pred = clf.predict(X_test)
                 # クラス確率を推定
                 proba_pred = clf.predict_proba(X_test)[:, proba_class_indices]
@@ -2778,14 +2808,14 @@ class classplot():
             y_train_binarize = label_binarize(y_train, classes=y_labels)
             y_test_binarize = label_binarize(y_test, classes=y_labels)
             # fit_paramsにeval_setがあるとき、二値化
-            if 'eval_set' in fit_params:
+            if 'eval_set' in fit_params and fit_params['eval_set'] is not None:
                 eval_set_y_binarized = label_binarize(fit_params['eval_set'][0][1], classes=y_labels)
             # fit_paramsをクラス数で分割
             fit_params_list = []
             for i in range(n_classes):
                 fit_params_cls = copy.deepcopy(fit_params)
                 # fit_paramsにeval_setがあるとき、二値化したものに置き換える
-                if 'eval_set' in fit_params_cls:
+                if 'eval_set' in fit_params_cls and fit_params_cls['eval_set'] is not None:
                     fit_params_cls['eval_set'] = [(fit_params['eval_set'][0][0], eval_set_y_binarized[:, i])]
                 fit_params_list.append(fit_params_cls)
                 
@@ -3058,6 +3088,14 @@ class classplot():
             else:
                 cv_num = cv.n_splits
 
+            # fit_paramsにeval_metricが入力されており、eval_setが入力されていないときの処理(eval_setにテストデータを使用)
+            if eval_set_selection is None:
+                eval_set_selection = 'test'
+            fit_params, eval_set_selection = init_eval_set(
+                    eval_set_selection, fit_params, X, y)
+            # 最終学習器以外の前処理変換器作成
+            transformer = _make_transformer(eval_set_selection, clf)
+
             # 表示用のax作成
             if ax is None:
                 if 'figsize' not in subplot_kws.keys():
@@ -3085,13 +3123,18 @@ class classplot():
                 if 'linestyle' not in class_average_kws.keys():
                     class_average_kws['linestyle'] = ':'
                 class_average_kws['color'] = color_list[i]
+
+                # eval_setの中から学習データ or テストデータのみを抽出
+                fit_params_modified = _eval_set_selection(eval_set_selection, transformer,
+                                                        fit_params, train, test)
+                
                 # CVごとのROC曲線をプロット
                 viz = cls.plot_roc_curve_multiclass(clf, X[train], y_true[train], 
                                                     X_test=X[test], y_test=y_true[test],
                                                     sample_weight=sample_weight, drop_intermediate=drop_intermediate,
                                                     response_method=response_method,
                                                     name=name, ax=ax[i],
-                                                    pos_label=pos_label, average=average, fit_params=fit_params,
+                                                    pos_label=pos_label, average=average, fit_params=fit_params_modified,
                                                     plot_roc_kws=plot_roc_kws,
                                                     class_average_kws=class_average_kws
                                                     )
