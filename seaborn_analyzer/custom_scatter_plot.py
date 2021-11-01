@@ -14,6 +14,7 @@ import copy
 import decimal
 
 from .multiclass_fitparams import OneVsRestClassifierPatched
+from ._cv_eval_set import init_eval_set, _make_transformer, _eval_set_selection, cross_val_score_eval_set
 
 class regplot():
     # regression_heat_plotメソッド (回帰モデルヒートマップ表示)における、散布図カラーマップ
@@ -192,7 +193,8 @@ class regplot():
         ax.legend(**legend_kws)
 
     @classmethod
-    def _plot_pred_true(cls, y_true, y_pred, hue_data=None, hue_name=None, ax=None, linecolor='red', linesplit=200, rounddigit=None,
+    def _plot_pred_true(cls, y_true, y_pred, hue_data=None, hue_name=None, ax=None,
+                        linecolor='red', linesplit=200, rounddigit=None,
                         score_dict=None, scatter_kws=None, legend_kws=None):
         """
         予測値と実測値を、回帰評価指標とともにプロット
@@ -249,8 +251,10 @@ class regplot():
     @classmethod
     def regression_pred_true(cls, estimator, x: List[str], y: str, data: pd.DataFrame = None,
                              x_colnames: List[str] = None, hue=None, linecolor='red', rounddigit=3,
-                             rank_number=None, rank_col=None, scores='mae', cv_stats='mean', cv=None, cv_seed=42, cv_group=None, ax=None,
-                             estimator_params=None, fit_params=None, subplot_kws=None, scatter_kws=None, legend_kws=None):
+                             rank_number=None, rank_col=None, scores='mae', 
+                             cv_stats='mean', cv=None, cv_seed=42, cv_group=None, ax=None,
+                             estimator_params=None, fit_params=None, eval_set_selection=None,
+                             subplot_kws=None, scatter_kws=None, legend_kws=None):
 
         """
         Plot prediction vs. true scatter plots of any scikit-learn regression estimator
@@ -309,7 +313,7 @@ class regplot():
             Parameters passed to the fit() method of the regression estimator, e.g. ``early_stopping_round`` and ``eval_set`` of XGBRegressor. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
 
         eval_set_selection: {'all', 'test', 'train', 'original', 'original_transformed'}, optional
-            Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LightGBM or XGBoost.
+            Select data passed to `eval_set` in `fit_params`. Available only if `estimator` is LightGBM or XGBoost and `cv` is not None.
             
             If "all", use all data in `X` and `y`.
 
@@ -411,36 +415,51 @@ class regplot():
             else:
                 cv_num = cv.n_splits
 
+            # fit_paramsにeval_metricが入力されており、eval_setが入力されていないときの処理(eval_setにテストデータを使用)
+            if eval_set_selection is None:
+                eval_set_selection = 'test'
+            fit_params, eval_set_selection = init_eval_set(
+                    eval_set_selection, fit_params, X, y)
+            # 最終学習器以外の前処理変換器作成
+            transformer = _make_transformer(eval_set_selection, estimator)
+
             # スコア種類ごとにクロスバリデーションスコアの算出
             score_all_dict = {}
             for scoring in scores:
                 # cross_val_scoreでクロスバリデーション
                 if scoring == 'r2':
-                    score_all_dict['r2'] = cross_val_score(estimator, X, y_true, cv=cv, scoring='r2',
-                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
+                    score_all_dict['r2'] = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true,
+                                                    cv=cv, scoring='r2',
+                                                    fit_params=fit_params, n_jobs=-1, **split_kws)
                 elif scoring == 'mae':
-                    neg_mae = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_mean_absolute_error',
-                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
+                    neg_mae = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true,
+                                                    cv=cv, scoring='neg_mean_absolute_error',
+                                                    fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['mae'] = -neg_mae  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'mse':
-                    neg_mse = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_mean_squared_error',
-                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
+                    neg_mse = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true,
+                                                    cv=cv, scoring='neg_mean_squared_error',
+                                                    fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['mse'] = -neg_mse  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'rmse':
-                    neg_rmse = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_root_mean_squared_error',
-                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
+                    neg_rmse = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true,
+                                                    cv=cv, scoring='neg_root_mean_squared_error',
+                                                    fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['rmse'] = -neg_rmse  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'rmsle':
-                    neg_msle = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_mean_squared_log_error',
-                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
+                    neg_msle = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true, 
+                                                    cv=cv, scoring='neg_mean_squared_log_error',
+                                                    fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['rmsle'] = np.sqrt(-neg_msle)  # 正負を逆にしてルートをとる
                 elif scoring == 'mape':
-                    neg_mape = cross_val_score(estimator, X, y_true, cv=cv, scoring='neg_mean_absolute_percentage_error',
-                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
+                    neg_mape = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true,
+                                                    cv=cv, scoring='neg_mean_absolute_percentage_error',
+                                                    fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['mape'] = -neg_mape  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'max_error':
-                    neg_max_error = cross_val_score(estimator, X, y_true, cv=cv, scoring='max_error',
-                                                           fit_params=fit_params, n_jobs=-1, **split_kws)
+                    neg_max_error = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true,
+                                                    cv=cv, scoring='max_error',
+                                                    fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['max_error'] = - neg_max_error  # scikit-learnの仕様に合わせ正負を逆に
             
             # 表示用のax作成
@@ -483,8 +502,13 @@ class regplot():
                         rank_col_test = data[rank_col].values[test]
                 else:
                     rank_col_test = np.array([])
+
+                # eval_setの中から学習データ or テストデータのみを抽出
+                fit_params_modified = _eval_set_selection(eval_set_selection, transformer,
+                                                        fit_params, train, test)
+
                 # 学習と推論
-                estimator.fit(X_train, y_train, **fit_params)
+                estimator.fit(X_train, y_train, **fit_params_modified)
                 y_pred = estimator.predict(X_test)
                 # 学習データスコア算出
                 y_pred_train = estimator.predict(X_train)
@@ -585,7 +609,7 @@ class regplot():
                      x_colnames: List[str] = None, hue=None,
                      aggregate='mean',
                      cv=None, cv_seed=42, cv_group=None, display_cv_indices = 0,
-                     estimator_params=None, fit_params=None,
+                     estimator_params=None, fit_params=None, eval_set_selection=None,
                      subplot_kws=None, plot_kws=None, scatter_kws=None, legend_kws=None):
         """
         Plot relationship between one explanatory variable and predicted value by line graph.
@@ -631,6 +655,19 @@ class regplot():
 
         fit_params : dict, optional
             Parameters passed to the fit() method of the regression estimator, e.g. ``early_stopping_round`` and ``eval_set`` of XGBRegressor. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
+        
+        eval_set_selection: {'all', 'test', 'train', 'original', 'original_transformed'}, optional
+            Select data passed to `eval_set` in `fit_params`. Available only if `estimator` is LightGBM or XGBoost and `cv` is not None.
+            
+            If "all", use all data in `X` and `y`.
+
+            If "train", select train data from `X` and `y` using cv.split().
+
+            If "test", select test data from `X` and `y` using cv.split().
+
+            If "original", use raw `eval_set`.
+
+            If "original_transformed", use `eval_set` transformed by fit_transform() of pipeline if `estimater` is pipeline.
 
         subplot_kws: dict, optional
             Additional parameters passed to matplotlib.pyplot.subplots(), e.g. ``figsize``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
@@ -899,8 +936,10 @@ class regplot():
     @classmethod
     def regression_plot_1d(cls, estimator, x: str, y: str, data: pd.DataFrame = None, x_colname: str = None,
                            hue=None, linecolor='red', rounddigit=3,
-                           rank_number=None, rank_col=None, scores='mae', cv_stats='mean', cv=None, cv_seed=42, cv_group=None,
-                           estimator_params=None, fit_params=None, subplot_kws=None, scatter_kws=None, legend_kws=None):
+                           rank_number=None, rank_col=None, scores='mae',
+                           cv_stats='mean', cv=None, cv_seed=42, cv_group=None,
+                           estimator_params=None, fit_params=None, eval_set_selection=None,
+                           subplot_kws=None, scatter_kws=None, legend_kws=None):
         """
         Plot regression lines of any scikit-learn regressor with 1D explanatory variable.
 
@@ -1427,7 +1466,7 @@ class regplot():
                              plot_scatter = 'true', rounddigit_rank=3, rounddigit_x1=2, rounddigit_x2=2, rounddigit_x3=2,
                              rank_number=None, rank_col=None,
                              cv=None, cv_seed=42, cv_group=None, display_cv_indices = 0,
-                             estimator_params=None, fit_params=None,
+                             estimator_params=None, fit_params=None, eval_set_selection=None,
                              subplot_kws=None, heat_kws=None, scatter_kws=None, legend_kws=None):
         """
         Plot regression heatmaps of any scikit-learn regressor with 2 to 4D explanatory variables.
@@ -2082,7 +2121,7 @@ class classplot():
                              plot_scatter = 'class_error', rounddigit_x3 = 2,
                              scatter_colors = None, true_marker = 'o', false_marker = 'x',
                              cv=None, cv_seed=42, cv_group=None, display_cv_indices = 0,
-                             clf_params=None, fit_params=None,
+                             clf_params=None, fit_params=None, eval_set_selection=None,
                              subplot_kws=None, contourf_kws=None, scatter_kws=None, legend_kws=None):
         """
         Plot class separation lines of any scikit-learn classifier with 2 to 4D explanatory variables.
@@ -2307,7 +2346,7 @@ class classplot():
                          proba_class = None, proba_cmap_dict = None, proba_type = 'contourf',
                          scatter_colors = None, true_marker = 'o', false_marker = 'x',
                          cv=None, cv_seed=42, cv_group=None, display_cv_indices = 0,
-                         clf_params=None, fit_params=None,
+                         clf_params=None, fit_params=None, eval_set_selection=None,
                          subplot_kws=None, contourf_kws=None, imshow_kws=None, scatter_kws=None, legend_kws=None):
         """
         Plot class prediction probability of any scikit-learn classifier with 2 to 4D explanatory variables.
@@ -2797,7 +2836,7 @@ class classplot():
                  ax=None,
                  sample_weight=None, drop_intermediate=True,
                  response_method="predict_proba", pos_label=None, average='macro',
-                 clf_params=None, fit_params=None,
+                 clf_params=None, fit_params=None, eval_set_selection=None,
                  draw_grid=True, grid_kws=None, subplot_kws=None, legend_kws=None,
                  plot_roc_kws=None, class_average_kws=None, cv_mean_kws=None, chance_plot_kws=None):
         """Plot Receiver operating characteristic (ROC) curve with cross validation.
