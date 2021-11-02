@@ -264,7 +264,7 @@ class regplot():
         estimator : estimator object implementing ``fit``
             Regression estimator. This is assumed to implement the scikit-learn estimator interface.
 
-        x : str or List[str]
+        x : str or list[str]
             Explanatory variables.
 
         y : str
@@ -272,6 +272,9 @@ class regplot():
 
         data : pd.DataFrame
             Input data structure.
+
+        x_colnames: list[str], optional
+            Names of explanatory variables. Available only if ``data`` is NOT pd.DataFrame
 
         hue : str, optional
             Grouping variable that will produce points with different colors.
@@ -629,7 +632,7 @@ class regplot():
         data: pd.DataFrame
             Input data structure.
 
-        x_colnames: List[str], optional
+        x_colnames: list[str], optional
             Names of explanatory variables. Available only if ``data`` is NOT pd.DataFrame
 
         hue : str, optional
@@ -1518,10 +1521,10 @@ class regplot():
         data: pd.DataFrame
             Input data structure.
 
-        x_colnames: List[str], optional
+        x_colnames: list[str], optional
             Names of explanatory variables. Available only if ``data`` is NOT pd.DataFrame
 
-        x_heat: List[str], optional
+        x_heat: list[str], optional
             X-axis and y-axis variables of heatmap. If None, use two variables in ``x`` from the front.
 
         scatter_hue : str, optional
@@ -1546,7 +1549,7 @@ class regplot():
             Color decision of scatter plot. If 'error', to be mapped to colors using error value. If 'true', to be mapped to colors using y_ture value. If 'hue', to be mapped to colors using scatter_hue variable. If None, no scatter.
 
         rounddigit_rank: int, optional
-            Round a number of error that are in the top posiotions for regression error. to a given precision in decimal digits.
+            Round a number of error that are in the top posiotions for regression error to a given precision in decimal digits.
 
         rounddigit_x1: int, optional
             Round a number of x-axis valiable of the heatmap to a given precision in decimal digits.
@@ -2190,10 +2193,10 @@ class classplot():
         data: pd.DataFrame
             Input data structure.
 
-        x_colnames: List[str], optional
+        x_colnames: list[str], optional
             Names of explanatory variables. Available only if ``data`` is NOT pd.DataFrame
 
-        x_chart: List[str], optional
+        x_chart: list[str], optional
             X-axis . If None, use two variables in ``x`` from the front.
 
         pair_sigmarange: float, optional
@@ -2214,7 +2217,7 @@ class classplot():
         rounddigit_x3: int, optional
             Round a number of y-axis valiable of subplots to a given precision in decimal digits.
 
-        scatter_colors: List[str], optional
+        scatter_colors: list[str], optional
             Set of colors for mapping the class labels. Available only if ``plot_scatter`` is set to 'class' or 'class_error'.
 
         true_marker: str, optional
@@ -2428,10 +2431,10 @@ class classplot():
         data: pd.DataFrame, optional
             Input data structure.
 
-        x_colnames: List[str], optional
+        x_colnames: list[str], optional
             Names of explanatory variables. Available only if ``data`` is NOT pd.DataFrame
 
-        x_chart: List[str], optional
+        x_chart: list[str], optional
             X-axis and y-axis variables of separation map. If None, use two variables in ``x`` from the front.
 
         pair_sigmarange: float, optional
@@ -2455,7 +2458,7 @@ class classplot():
         rounddigit_x3: int, optional
             Round a number of y-axis valiable of subplots to a given precision in decimal digits.
 
-        proba_class: str or List[str], optional
+        proba_class: str or list[str], optional
             Class label name, in which probability map is displayed.
 
         proba_cmap_dict: dict[str, str], optional
@@ -2464,7 +2467,7 @@ class classplot():
         proba_type: {'contourf', 'contour', 'imshow'}, optional
             Plotting type of probabiliity map. If 'contourf', mapped by matplotlib.pyplot.contourf(). If 'contour', mapped by matplotlib.pyplot.contour(). If 'imshow', mapped by matplotlib.pyplot.imshow(). 'imshow' is available only if the number of class labels is less than 4.
 
-        scatter_colors: List[str], optional
+        scatter_colors: list[str], optional
             Set of colors for mapping the class labels. Available only if ``plot_scatter`` is set to 'class' or 'class_error'.
 
         true_marker: str, optional
@@ -2808,15 +2811,16 @@ class classplot():
             y_train_binarize = label_binarize(y_train, classes=y_labels)
             y_test_binarize = label_binarize(y_test, classes=y_labels)
             # fit_paramsにeval_setがあるとき、二値化
-            if 'eval_set' in fit_params and fit_params['eval_set'] is not None:
-                eval_set_y_binarized = label_binarize(fit_params['eval_set'][0][1], classes=y_labels)
+            eval_sets = [v for v in fit_params.keys() if 'eval_set' in v]
+            if len(eval_sets) > 0 and fit_params[eval_sets[0]] is not None:
+                eval_set_y_binarized = label_binarize(fit_params[eval_sets[0]][0][1], classes=y_labels)
             # fit_paramsをクラス数で分割
             fit_params_list = []
             for i in range(n_classes):
                 fit_params_cls = copy.deepcopy(fit_params)
                 # fit_paramsにeval_setがあるとき、二値化したものに置き換える
-                if 'eval_set' in fit_params_cls and fit_params_cls['eval_set'] is not None:
-                    fit_params_cls['eval_set'] = [(fit_params['eval_set'][0][0], eval_set_y_binarized[:, i])]
+                if len(eval_sets) > 0 and fit_params[eval_sets[0]] is not None:
+                    fit_params_cls[eval_sets[0]] = [(fit_params[eval_sets[0]][0][0], eval_set_y_binarized[:, i])]
                 fit_params_list.append(fit_params_cls)
                 
             # One vs Restの分類器を作成
@@ -2936,7 +2940,7 @@ class classplot():
         data: pd.DataFrame, default=None
             Input data structure.
 
-        x_colnames: List[str], default=None
+        x_colnames: list[str], default=None
             Names of explanatory variables. Available only if ``data`` is NOT pd.DataFrame
 
         cv: int or sklearn.model_selection.*, default=5
