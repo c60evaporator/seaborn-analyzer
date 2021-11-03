@@ -17,10 +17,18 @@ seaborn\_analyzer.custom\_pair\_plot module
    :undoc-members:
    :show-inheritance:
 
-seaborn\_analyzer.custom\_scatter\_plot module
+seaborn\_analyzer.custom\_class\_plot module
 ----------------------------------------------
 
-.. automodule:: seaborn_analyzer.custom_scatter_plot
+.. automodule:: seaborn_analyzer.custom_class_plot
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+seaborn\_analyzer.custom\_reg\_plot module
+----------------------------------------------
+
+.. automodule:: seaborn_analyzer.custom_reg_plot
    :members:
    :undoc-members:
    :show-inheritance:
