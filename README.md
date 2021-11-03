@@ -58,8 +58,8 @@ seabornを利用して、各種データの可視化および評価指標の算�
 |---|---|---|---|
 |CustomPairPlot|custom_pair_plot.py|散布図行列と相関係数行列を同時に表示|[リンク](https://qiita.com/c60evaporator/items/20f11b6ee965cec48570)|
 |hist|custom_hist_plot.py|ヒストグラムと各種分布のフィッティング|[リンク](https://qiita.com/c60evaporator/items/fc531aff0cdbafac0f42)|
-|classplot|custom_scatter_plot.py|分類境界およびクラス確率の表示|[リンク](https://qiita.com/c60evaporator/items/43866a42e09daebb5cc0)|
-|regplot|custom_scatter_plot.py|相関・回帰分析の散布図・ヒートマップ表示|[リンク](https://qiita.com/c60evaporator/items/c930c822b527f62796ee)|
+|classplot|custom_class_plot.py|分類境界およびクラス確率の表示|[リンク](https://qiita.com/c60evaporator/items/43866a42e09daebb5cc0)|
+|regplot|custom_reg_plot.py|相関・回帰分析の散布図・ヒートマップ表示|[リンク](https://qiita.com/c60evaporator/items/c930c822b527f62796ee)|
 
 <br>
 
@@ -550,7 +550,7 @@ regplot.regression_heat_plot(LinearRegression(), x=['altitude', 'latitude'], y='
 |legend_kws|オプション|dict|None|凡例用の[matplotlib.axes.Axes.legend](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html)に渡す引数|
 <br>
 
-### average_plot
+### average_plotメソッド
 #### 実行例
 ```python
 import seaborn as sns
