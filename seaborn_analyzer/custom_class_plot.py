@@ -415,7 +415,7 @@ class classplot():
     @classmethod
     def class_separator_plot(cls, clf, x: List[str], y: str, data: pd.DataFrame = None,
                              x_colnames: List[str] = None, x_chart: List[str] = None,
-                             pair_sigmarange = 1.5, pair_sigmainterval = 0.5, chart_extendsigma = 0.5, chart_scale = 1,
+                             pair_sigmarange = 1.0, pair_sigmainterval = 0.5, chart_extendsigma = 0.5, chart_scale = 1,
                              plot_scatter = 'class_error', rounddigit_x3 = 2,
                              scatter_colors = None, true_marker = 'o', false_marker = 'x',
                              cv=None, cv_seed=42, cv_group=None, display_cv_indices = 0,
@@ -652,7 +652,7 @@ class classplot():
     @classmethod
     def class_proba_plot(cls, clf, x: List[str], y: str, data: pd.DataFrame = None,
                          x_colnames: List[str] = None, x_chart: List[str] = None,
-                         pair_sigmarange = 1.5, pair_sigmainterval = 0.5, chart_extendsigma = 0.5, chart_scale = 1,
+                         pair_sigmarange = 1.0, pair_sigmainterval = 0.5, chart_extendsigma = 0.5, chart_scale = 1,
                          plot_border = True, plot_scatter = 'class', rounddigit_x3 = 2,
                          proba_class = None, proba_cmap_dict = None, proba_type = 'contourf',
                          scatter_colors = None, true_marker = 'o', false_marker = 'x',
