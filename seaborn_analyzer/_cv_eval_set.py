@@ -75,8 +75,11 @@ def _eval_set_selection(eval_set_selection, transformer,
     elif eval_set_selection == 'test':
         fit_params_modified[eval_set_name] = [(_transform_except_last_estimator(transformer, X_fit[test], X_fit[train])\
                                               , y_fit[test])]
-    else:
+    elif eval_set_selection == 'all':
         fit_params_modified[eval_set_name] = [(_transform_except_last_estimator(transformer, X_fit, X_fit[train])\
+                                              , y_fit)]
+    else:
+        fit_params_modified[eval_set_name] = [(_transform_except_last_estimator(transformer, X_fit, X_fit)\
                                               , y_fit)]
     return fit_params_modified
 
