@@ -1337,7 +1337,7 @@ class regplot():
     
     @classmethod
     def _reg_heat_plot(cls, trained_estimator, X, y_pred, y_true, x_heat, x_not_heat, x_heat_indices, hue_data, hue_name,
-                       pair_sigmarange=2.0, pair_sigmainterval=0.5, heat_extendsigma=0.5, heat_division=30, 
+                       pair_sigmarange=1.0, pair_sigmainterval=0.5, heat_extendsigma=0.5, heat_division=30, 
                        vmin=None, vmax=None, plot_scatter='true', maxerror=None,
                        rank_number=None, rank_col=None, rank_col_data=None, scatter_hue_dict=None,
                        rounddigit_rank=None, rounddigit_x1=None, rounddigit_x2=None, rounddigit_x3=None,
@@ -1493,7 +1493,7 @@ class regplot():
     @classmethod
     def regression_heat_plot(cls, estimator, x: List[str], y: str, data: pd.DataFrame = None,
                              x_colnames: List[str] = None, x_heat: List[str] = None, scatter_hue=None,
-                             pair_sigmarange = 1.5, pair_sigmainterval = 0.5, heat_extendsigma = 0.5, 
+                             pair_sigmarange = 1.0, pair_sigmainterval = 0.5, heat_extendsigma = 0.5, 
                              heat_division = 30, color_extendsigma = 0.5,
                              plot_scatter = 'true', rounddigit_rank=3, rounddigit_x1=2, rounddigit_x2=2, rounddigit_x3=2,
                              rank_number=None, rank_col=None,
