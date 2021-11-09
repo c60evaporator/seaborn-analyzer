@@ -599,8 +599,7 @@ class regplot():
             if hue is not None:
                 axes[i].legend(**legend_kws)
 
-        fig.tight_layout(rect=[0, 0, 1, 0.98])
-        plt.show()            
+        fig.tight_layout(rect=[0, 0, 1, 0.98])          
 
 
     @classmethod
@@ -1488,7 +1487,7 @@ class regplot():
                     ax.set_title(f'{x_not_heat[0]}= {h_min}σ - {h_max}σ  {x_not_heat[1]}= {w_min}σ - {w_max}σ')
 
         # 字が重なるのでtight_layoutにする
-        plt.tight_layout()
+        plt.tight_layout(rect=[0, 0, 1, 0.98])
 
     @classmethod
     def regression_heat_plot(cls, estimator, x: List[str], y: str, data: pd.DataFrame = None,
