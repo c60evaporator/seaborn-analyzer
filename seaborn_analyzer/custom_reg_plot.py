@@ -592,12 +592,13 @@ class regplot():
             X_mean = np.insert(X_mean, i, x_array, axis=1)
             y_pred = estimator.predict(X_mean)
             # 実測値を散布図プロット
-            sns.scatterplot(x=colname, y=y_colname, hue=hue, data=data, ax=axes[i], **scatter_kws)
+            ax = axes if x_colnames == 1 else axes[i]
+            sns.scatterplot(x=colname, y=y_colname, hue=hue, data=data, ax=ax, **scatter_kws)
             # 推測値曲線をプロット
-            axes[i].plot(x_array, y_pred, **plot_kws)
+            ax.plot(x_array, y_pred, **plot_kws)
             # 色分け時は凡例表示
             if hue is not None:
-                axes[i].legend(**legend_kws)
+                ax.legend(**legend_kws)
 
         fig.tight_layout(rect=[0, 0, 1, 0.98])          
 
