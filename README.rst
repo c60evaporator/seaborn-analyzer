@@ -38,7 +38,7 @@ If you want to know usage of the other classes, see `API Reference
 ============
 Requirements
 ============
-seaborn-analyzer 0.2.7 requires
+seaborn-analyzer 0.2.8 requires
 
 * Python >=3.6
 * Numpy >=1.20.3
