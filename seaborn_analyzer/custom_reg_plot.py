@@ -841,9 +841,10 @@ class regplot():
         # まずは散布図プロット
         ax = sns.scatterplot(x=x_colname, y=y_colname, data=data, ax=ax, hue=hue, **scatter_kws)
         # 凡例追加
-        if 'title' not in legend_kws.keys():
-            legend_kws['title'] = hue 
-        ax.legend(**legend_kws)
+        if hue is not None and 'title' not in legend_kws.keys():
+            legend_kws['title'] = hue
+        if len(legend_kws.keys()) > 0:
+            ax.legend(**legend_kws)
 
         # 線形回帰モデル作成
         lr = LinearRegression()
