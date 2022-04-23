@@ -44,7 +44,7 @@ seaborn-analyzer 0.2.9 requires
 * Numpy >=1.20.3
 * Pandas >=1.2.4
 * Matplotlib >=3.3.4
-* Seaborn >=0.11.0
+* Seaborn >=0.11.1
 * Scipy >=1.6.3
 * Scikit-learn >=0.24.2
 
