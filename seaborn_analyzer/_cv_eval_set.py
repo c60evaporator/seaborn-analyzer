@@ -14,6 +14,8 @@ from sklearn.metrics import check_scoring
 from sklearn.metrics._scorer import _check_multimetric_scoring
 from sklearn.base import is_classifier
 from sklearn.utils.fixes import delayed
+from lightgbm import LGBMModel
+from lightgbm.callback import early_stopping, log_evaluation
 
 def init_eval_set(src_eval_set_selection, src_fit_params, X, y):
         """
@@ -83,6 +85,20 @@ def _eval_set_selection(eval_set_selection, transformer,
                                               , y_fit)]
     return fit_params_modified
 
+def _lgbm_early_stop_transform(estimator, fit_params_modified):
+    """LightGBMのearly_stoppingおよびverbose引数をコールバック関数に変更 (FutureWarning対策)"""
+    if isinstance(estimator, LGBMModel):
+        if 'early_stopping_rounds' in fit_params_modified.keys() or 'verbose' in fit_params_modified.keys():
+            if 'callbacks' in fit_params_modified.keys():
+                raise ValueError('The `callbacks` argument and the `early_stopping_rounds` or the `verbose` argument cannot be compatible in `fit_params`')
+            fit_params_modified['callbacks'] = []
+            if 'verbose' in fit_params_modified.keys():
+                fit_params_modified['callbacks'].append(log_evaluation(fit_params_modified['verbose']))
+                fit_params_modified.pop('verbose')
+            if 'early_stopping_rounds' in fit_params_modified.keys():
+                fit_params_modified['callbacks'].append(early_stopping(fit_params_modified['early_stopping_rounds'], False, False))
+                fit_params_modified.pop('early_stopping_rounds')
+
 def _fit_and_score_eval_set(eval_set_selection, transformer,
                             estimator, X, y, scorer, train, test, verbose,
                             parameters, fit_params, return_train_score=False,
@@ -96,6 +112,8 @@ def _fit_and_score_eval_set(eval_set_selection, transformer,
     # eval_setの中から学習データ or テストデータのみを抽出
     fit_params_modified = _eval_set_selection(eval_set_selection, transformer,
                                               fit_params, train, test)
+    # LightGBMのearly_stoppingをコールバック関数に変更
+    _lgbm_early_stop_transform(estimator, fit_params_modified)
     if print_message is not None:
         print(print_message)
     # 学習してスコア計算
