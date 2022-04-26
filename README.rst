@@ -38,7 +38,7 @@ If you want to know usage of the other classes, see `API Reference
 ============
 Requirements
 ============
-seaborn-analyzer 0.2.9 requires
+seaborn-analyzer 0.2.10 requires
 
 * Python >=3.6
 * Numpy >=1.20.3
@@ -47,6 +47,7 @@ seaborn-analyzer 0.2.9 requires
 * Seaborn >=0.11.1
 * Scipy >=1.6.3
 * Scikit-learn >=0.24.2
+* LightGBM >=3.2.1
 
 ===========================
 Installing seaborn-analyzer
