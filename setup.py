@@ -23,7 +23,7 @@ INSTALL_REQUIRES = [
     'matplotlib>=3.3.4',
     'scipy>=1.6.3',
     'scikit-learn>=0.24.2',
-    'lightgbm>=3.2.1',
+    'lightgbm>=3.3.2',
 ]
 
 EXTRAS_REQUIRE = {
