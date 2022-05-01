@@ -15,7 +15,7 @@ from sklearn.metrics._scorer import _check_multimetric_scoring
 from sklearn.base import is_classifier
 from sklearn.utils.fixes import delayed
 from lightgbm import LGBMModel
-from lightgbm.callback import early_stopping, log_evaluation
+from lightgbm import early_stopping, log_evaluation
 
 def init_eval_set(src_eval_set_selection, src_fit_params, X, y):
         """
