@@ -16,7 +16,8 @@ seaborn-analyzer
 **A data analysis and visualization tool using Seaborn library.**
 
 .. image:: https://user-images.githubusercontent.com/59557625/126887193-ceba9bdd-3653-4d58-a916-21dcfe9c38a0.png
-
+   :width: 720px
+   
 =====
 Usage
 =====
@@ -30,6 +31,8 @@ An example of using CustomPairPlot class
     titanic = sns.load_dataset("titanic")
     cp = CustomPairPlot()
     cp.pairanalyzer(titanic, hue='survived')
+.. image:: https://user-images.githubusercontent.com/59557625/115889860-4e8bde80-a48f-11eb-826a-cd3c79556a42.png
+   :width: 480px
    
 If you want to know usage of the other classes, see `API Reference
 <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#api-reference>`__ and `Examples
