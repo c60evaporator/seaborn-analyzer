@@ -47,7 +47,7 @@ seaborn-analyzer 0.2.11 requires
 * Seaborn >=0.11.1
 * Scipy >=1.6.3
 * Scikit-learn >=0.24.2
-* LightGBM >=3.2.1
+* LightGBM >=3.3.2
 
 ===========================
 Installing seaborn-analyzer
