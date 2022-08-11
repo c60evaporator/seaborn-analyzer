@@ -41,12 +41,12 @@ If you want to know the usage of the other classes, see `API Reference
 ============
 Requirements
 ============
-seaborn-analyzer 0.2.11 requires
+seaborn-analyzer 0.2.12 requires
 
 * Python >=3.6
 * Numpy >=1.20.3
 * Pandas >=1.2.4
-* Matplotlib >=3.3.4
+* Matplotlib >=3.1.3
 * Seaborn >=0.11.1
 * Scipy >=1.6.3
 * Scikit-learn >=0.24.2
