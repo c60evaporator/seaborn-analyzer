@@ -20,7 +20,6 @@ INSTALL_REQUIRES = [
     'seaborn>=0.11.0',
     'numpy >=1.20.3',
     'pandas>=1.2.4',
-    'matplotlib>=3.3.4',
     'scipy>=1.6.3',
     'scikit-learn>=0.24.2',
     'lightgbm>=3.3.2',
