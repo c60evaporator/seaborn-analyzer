@@ -16,7 +16,8 @@ seaborn-analyzer
 **A data analysis and visualization tool using Seaborn library.**
 
 .. image:: https://user-images.githubusercontent.com/59557625/126887193-ceba9bdd-3653-4d58-a916-21dcfe9c38a0.png
-
+   :width: 720px
+   
 =====
 Usage
 =====
@@ -30,8 +31,10 @@ An example of using CustomPairPlot class
     titanic = sns.load_dataset("titanic")
     cp = CustomPairPlot()
     cp.pairanalyzer(titanic, hue='survived')
+.. image:: https://user-images.githubusercontent.com/59557625/115889860-4e8bde80-a48f-11eb-826a-cd3c79556a42.png
+   :width: 480px
    
-If you want to know usage of the other classes, see `API Reference
+If you want to know the usage of the other classes, see `API Reference
 <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#api-reference>`__ and `Examples
 <https://github.com/c60evaporator/seaborn-analyzer/blob/master/README.rst#examples>`__
 
@@ -47,7 +50,7 @@ seaborn-analyzer 0.2.11 requires
 * Seaborn >=0.11.1
 * Scipy >=1.6.3
 * Scikit-learn >=0.24.2
-* LightGBM >=3.2.1
+* LightGBM >=3.3.2
 
 ===========================
 Installing seaborn-analyzer
@@ -129,7 +132,8 @@ CustomPairPlot.pairanalyzer
     cp = CustomPairPlot()
     cp.pairanalyzer(titanic, hue='survived')
 .. image:: https://user-images.githubusercontent.com/59557625/115889860-4e8bde80-a48f-11eb-826a-cd3c79556a42.png
-
+   :width: 640px
+   
 hist.plot_normality
 ===================
 .. code-block:: python
@@ -140,6 +144,7 @@ hist.plot_normality
     df = pd.DataFrame(load_boston().data, columns= load_boston().feature_names)
     hist.plot_normality(df, x='LSTAT', norm_hist=False, rounddigit=5)
 .. image:: https://user-images.githubusercontent.com/59557625/117275256-cfd46f80-ae98-11eb-9da7-6f6e133846fa.png
+   :width: 240px
 
 hist.fit_dist
 =============
@@ -155,7 +160,9 @@ hist.fit_dist
     df_scores = pd.DataFrame(all_scores).T
     df_scores
 .. image:: https://user-images.githubusercontent.com/59557625/115890066-81ce6d80-a48f-11eb-8390-f985d9e2b8b1.png
+   :width: 280px
 .. image:: https://user-images.githubusercontent.com/59557625/115890108-8d219900-a48f-11eb-9896-38f7dedbb6e4.png
+   :width: 280px
 
 classplot.class_separator_plot
 ==============================
@@ -168,6 +175,7 @@ classplot.class_separator_plot
     clf = SVC()
     classplot.class_separator_plot(clf, ['petal_width', 'petal_length'], 'species', iris)
 .. image:: https://user-images.githubusercontent.com/59557625/117274234-d7474900-ae97-11eb-9de2-c8a74dc179a5.png
+   :width: 320px
 
 classplot.class_proba_plot
 ==========================
@@ -181,6 +189,7 @@ classplot.class_proba_plot
     classplot.class_proba_plot(clf, ['petal_width', 'petal_length'], 'species', iris,
                                proba_type='imshow')
 .. image:: https://user-images.githubusercontent.com/59557625/117276085-a1a35f80-ae99-11eb-8368-cdd1cfa78346.png
+   :width: 320px
 
 classplot.plot_roc_curve_multiclass
 ===================================
@@ -211,6 +220,7 @@ classplot.plot_roc_curve_multiclass
             lw=2, color='red', linestyle='--')
     plt.legend(loc='lower right')
 .. image:: https://user-images.githubusercontent.com/59557625/132558369-c6bfee32-156b-4043-bedb-5b1854b00660.png
+   :width: 320px
 
 classplot.roc_plot
 ==================
@@ -236,6 +246,7 @@ classplot.roc_plot
     fig, axes = plt.subplots(4, 1, figsize=(6, 24))
     classplot.roc_plot(estimator, X, y, ax=axes, cv=3, fit_params=fit_params)
 .. image:: https://user-images.githubusercontent.com/59557625/132708291-99f7bda0-eb24-4fc0-8994-a976d097908e.png
+   :width: 320px
 
 regplot.linear_plot
 ===================
@@ -246,6 +257,7 @@ regplot.linear_plot
     iris = sns.load_dataset("iris")
     regplot.linear_plot(x='petal_length', y='sepal_length', data=iris)
 .. image:: https://user-images.githubusercontent.com/59557625/117276994-65243380-ae9a-11eb-8ec8-fa1fb5d60a55.png
+   :width: 320px
 
 regplot.regression_pred_true
 ============================
@@ -258,6 +270,7 @@ regplot.regression_pred_true
     df_temp = pd.read_csv(f'./sample_data/temp_pressure.csv')
     regplot.regression_pred_true(LinearRegression(), x=['altitude', 'latitude'], y='temperature', data=df_temp)
 .. image:: https://user-images.githubusercontent.com/59557625/117277036-6fdec880-ae9a-11eb-887a-5f8b2a93b0f9.png
+   :width: 320px
 
 regplot.regression_plot_1d
 ==========================
@@ -269,6 +282,7 @@ regplot.regression_plot_1d
     iris = sns.load_dataset("iris")
     regplot.regression_plot_1d(SVR(), x='petal_length', y='sepal_length', data=iris)
 .. image:: https://user-images.githubusercontent.com/59557625/117277075-78cf9a00-ae9a-11eb-835c-01f635754f7b.png
+   :width: 320px
 
 regplot.regression_heat_plot
 ============================
@@ -280,6 +294,7 @@ regplot.regression_heat_plot
     df_temp = pd.read_csv(f'./sample_data/temp_pressure.csv')
     regplot.regression_heat_plot(LinearRegression(), x=['altitude', 'latitude'], y='temperature', data=df_temp)
 .. image:: https://user-images.githubusercontent.com/59557625/115955837-1b4f5b00-a534-11eb-91b0-b913019d26ff.png
+   :width: 320px
 
 regplot.average_plot
 ============================
@@ -295,3 +310,4 @@ regplot.average_plot
     y = iris['sepal_length'].values
     regplot.average_plot(svr, X, y, x_colnames=features, cv=3)
 .. image:: https://user-images.githubusercontent.com/59557625/137940484-31f1fec7-012e-4c36-83a8-a1803755caa6.png
+   :width: 320px
