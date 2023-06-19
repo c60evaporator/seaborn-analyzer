@@ -361,11 +361,11 @@ sns.scatterplot(x='1st', y='2nd', hue='species', data=iris)
 
 
 
-# %% 2クラス分類でのROC曲線(plot_roc_curve使用)
+# %% 2クラス分類でのROC曲線(RocCurveDisplay.from_estimator使用)
 import seaborn as sns
 from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import plot_roc_curve
+from sklearn.metrics import RocCurveDisplay
 import numpy as np
 # Load dataset
 iris = sns.load_dataset("iris")
@@ -382,7 +382,7 @@ X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
 X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=True, random_state=42)
 estimator = SVC(probability=True, random_state=42)
 estimator.fit(X_train, y_train)
-plot_roc_curve(estimator, X_test, y_test)
+RocCurveDisplay.from_estimator(estimator, X_test, y_test)
 
 # %% クロスバリデーション＆2クラス分類でのROC曲線
 from sklearn.svm import SVC

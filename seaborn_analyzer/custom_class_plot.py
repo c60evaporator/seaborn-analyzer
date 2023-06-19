@@ -4,7 +4,7 @@ import numbers
 import numpy as np
 import pandas as pd
 from scipy import stats
-from sklearn.metrics import auc, plot_roc_curve, roc_curve, RocCurveDisplay
+from sklearn.metrics import auc, roc_curve, RocCurveDisplay
 from sklearn.model_selection import KFold, LeaveOneOut, GroupKFold, LeaveOneGroupOut
 from sklearn.preprocessing import label_binarize
 from matplotlib import colors
@@ -1045,7 +1045,7 @@ class classplot():
         # 2クラス分類のとき
         if n_classes == 2:
             estimator.fit(X_train, y_train, **fit_params)
-            viz = plot_roc_curve(estimator, X_test, y_test,
+            viz = RocCurveDisplay.from_estimator(estimator, X_test, y_test,
                                 sample_weight=sample_weight, drop_intermediate=drop_intermediate,
                                 response_method=response_method, name=name, ax=ax, pos_label=pos_label,
                                 **class_average_kws
@@ -1125,7 +1125,7 @@ class classplot():
                         ''.format(roc_auc_avg),
                     **class_average_kws)
 
-            # plot_roc_curveに渡す引数            
+            # ax.plotに渡す引数            
             if 'alpha' not in plot_roc_kws.keys():
                 plot_roc_kws['alpha'] = 0.4
             if 'lw' not in plot_roc_kws.keys():
@@ -1301,7 +1301,7 @@ class classplot():
             # 描画用axがNoneのとき、matplotlib.pyplot.gca()を使用
             if ax is None:
                 ax=plt.gca()
-            # plot_roc_curveに渡す引数
+            # RocCurveDisplay.from_estimatorに渡す引数
             name = 'ROC'
             if 'alpha' not in plot_roc_kws.keys():
                 plot_roc_kws['alpha'] = 0.5
@@ -1359,7 +1359,7 @@ class classplot():
             # クロスバリデーション
             for i, (train, test) in enumerate(cv.split(X, y_true, **split_kws)):
                 name = 'ROC fold {}'.format(i)
-                # plot_roc_curveに渡す引数            
+                # RocCurveDisplay.from_estimatorに渡す引数            
                 if 'alpha' not in plot_roc_kws.keys():
                     plot_roc_kws['alpha'] = 0.3
                 if 'lw' not in plot_roc_kws.keys():
