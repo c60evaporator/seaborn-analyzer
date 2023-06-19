@@ -16,19 +16,19 @@ VERSION = seaborn_analyzer.__version__
 PYTHON_REQUIRES = ">=3.6"
 
 INSTALL_REQUIRES = [
-    'matplotlib>=3.1.3',
-    'seaborn>=0.11.0',
-    'numpy >=1.20.3',
-    'pandas>=1.2.4',
-    'scipy>=1.6.3',
-    'scikit-learn>=0.24.2',
-    'lightgbm>=3.3.2',
+    'matplotlib>=3.7.1',
+    'seaborn>=0.12.2',
+    'numpy >=1.22.1',
+    'pandas>=2.0.2',
+    'scipy>=1.10.1',
+    'scikit-learn>=1.2.2',
+    'lightgbm>=3.3.5',
 ]
 
 EXTRAS_REQUIRE = {
     'tutorial': [
         'mlxtend>=0.18.0',
-        'xgboost>=1.4.2',
+        'xgboost>=1.7.4',
     ]
 }
 
