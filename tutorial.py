@@ -20,30 +20,35 @@ iris = sns.load_dataset("iris")
 hist.plot_normality(iris['sepal_width'])
 #%% 概要の「機能2」（分布フィッティングと評価指標算出）
 from seaborn_analyzer import hist
-from sklearn.datasets import load_boston
 import pandas as pd
+import numpy as np
+from sklearn.datasets import fetch_california_housing
 import matplotlib.pyplot as plt
 from scipy import stats
-df = pd.DataFrame(load_boston().data, columns= load_boston().feature_names)
-all_params, all_scores = hist.fit_dist(df, x='LSTAT', dist=['norm', 'gamma', 'lognorm', 'uniform'])
+df = pd.DataFrame(np.column_stack((fetch_california_housing().data, fetch_california_housing().target)),
+    columns = np.append(fetch_california_housing().feature_names, 'price'))
+all_params, all_scores = hist.fit_dist(df, x='price', dist=['norm', 'gamma', 'lognorm', 'uniform'])
 df_scores = pd.DataFrame(all_scores).T
 df_scores
-# %% Bostonデータセットでの正規性検定とQQプロット
+# %% California housingデータセットでの正規性検定とQQプロット
 from seaborn_analyzer import hist
-from sklearn.datasets import load_boston
 import pandas as pd
-df = pd.DataFrame(load_boston().data, columns= load_boston().feature_names)
-hist.plot_normality(df, x='LSTAT', norm_hist=False, rounddigit=5)
+import numpy as np
+from sklearn.datasets import fetch_california_housing
+df = pd.DataFrame(np.column_stack((fetch_california_housing().data, fetch_california_housing().target)),
+    columns = np.append(fetch_california_housing().feature_names, 'price'))
+hist.plot_normality(df, x='price', norm_hist=False, rounddigit=5)
 #%% ガンマ分布をパラメータ変えてフィッティング
 from seaborn_analyzer import hist
-from sklearn.datasets import load_boston
 from scipy import stats
 import pandas as pd
 import numpy as np
+from sklearn.datasets import fetch_california_housing
 import seaborn as sns
 import matplotlib.pyplot as plt
-df = pd.DataFrame(load_boston().data, columns= load_boston().feature_names)
-X = df['LSTAT'].values
+df = pd.DataFrame(np.column_stack((fetch_california_housing().data, fetch_california_housing().target)),
+    columns = np.append(fetch_california_housing().feature_names, 'price'))
+X = df['price'].values
 sns.distplot(X, kde=False, norm_hist=True, hist_kws={'alpha':0.7, 'edgecolor':'white'})
 Xline = np.linspace(min(np.mean(X) - np.std(X) * 4, np.amin(X)), max(np.mean(X) + np.std(X) * 4, np.amax(X)), 100)
 line_legends = []
@@ -894,7 +899,7 @@ regplot.average_plot(svr, X, y, x_colnames=features, cv=3)
 import seaborn as sns
 iris = sns.load_dataset("iris")
 from lightgbm import LGBMRegressor
-from muscle_tuning import LGBMRegressorTuning
+from tune_easy import LGBMRegressorTuning
 import pandas as pd
 from seaborn_analyzer import regplot
 from sklearn.pipeline import Pipeline
@@ -925,3 +930,5 @@ regplot.regression_pred_true(best_estimator, x=USE_EXPLANATORY,
                             fit_params=tuning.fit_params,
                             eval_set_selection='all'
                             )
+
+# %%
