@@ -1,5 +1,4 @@
 import copy
-from joblib import Parallel
 import numpy as np
 import time
 import numbers
@@ -13,7 +12,7 @@ from sklearn.utils.validation import indexable, check_random_state, _check_fit_p
 from sklearn.metrics import check_scoring
 from sklearn.metrics._scorer import _check_multimetric_scoring
 from sklearn.base import is_classifier
-from sklearn.utils.fixes import delayed
+from sklearn.utils.parallel import delayed, Parallel
 from lightgbm import LGBMModel
 from lightgbm import early_stopping, log_evaluation
 
@@ -99,14 +98,27 @@ def _lgbm_early_stop_transform(estimator, fit_params_modified):
                 fit_params_modified['callbacks'].append(early_stopping(fit_params_modified['early_stopping_rounds'], False, False))
                 fit_params_modified.pop('early_stopping_rounds')
 
-def _fit_and_score_eval_set(eval_set_selection, transformer,
-                            estimator, X, y, scorer, train, test, verbose,
-                            parameters, fit_params, return_train_score=False,
-                            return_parameters=False, return_n_test_samples=False,
-                            return_times=False, return_estimator=False,
-                            split_progress=None, candidate_progress=None,
-                            error_score=np.nan,
-                            print_message=None):
+def _fit_and_score_eval_set(
+    eval_set_selection,
+    transformer,
+    estimator,
+    X, 
+    y, 
+    scorer,
+    train,
+    test,
+    verbose,
+    parameters,
+    fit_params,
+    return_train_score=False,
+    return_parameters=False,
+    return_n_test_samples=False,
+    return_times=False,
+    return_estimator=False,
+    split_progress=None,
+    candidate_progress=None,
+    error_score=np.nan,
+    ):
 
     """Fit estimator and compute scores for a given dataset split."""
     # eval_setの中から学習データ or テストデータのみを抽出
@@ -114,8 +126,7 @@ def _fit_and_score_eval_set(eval_set_selection, transformer,
                                               fit_params, train, test)
     # LightGBMのearly_stoppingをコールバック関数に変更
     _lgbm_early_stop_transform(estimator, fit_params_modified)
-    if print_message is not None:
-        print(print_message)
+
     # 学習してスコア計算
     result = _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
                             fit_params_modified,
@@ -134,11 +145,23 @@ def _make_transformer(eval_set_selection, estimator):
     else:
         return None
 
-def cross_validate_eval_set(eval_set_selection,
-                            estimator, X, y=None, groups=None, scoring=None, cv=None,
-                            n_jobs=None, verbose=0, fit_params=None,
-                            pre_dispatch='2*n_jobs', return_train_score=False,
-                            return_estimator=False, error_score=np.nan):
+def cross_validate_eval_set(
+    eval_set_selection,
+    estimator,
+    X, 
+    y=None, 
+    *,
+    groups=None, 
+    scoring=None, 
+    cv=None,
+    n_jobs=None,
+    verbose=0,
+    fit_params=None,
+    pre_dispatch='2*n_jobs',
+    return_train_score=False,
+    return_estimator=False,
+    error_score=np.nan,
+):
     """
     Evaluate a scores by cross-validation with `eval_set` argument in `fit_params`
 
@@ -294,10 +317,20 @@ def cross_validate_eval_set(eval_set_selection,
                         pre_dispatch=pre_dispatch)
     results = parallel(
         delayed(_fit_and_score_eval_set)(
-            eval_set_selection, transformer,
-            clone(estimator), X, y, scorers, train, test, verbose, None,
-            fit_params, return_train_score=return_train_score,
-            return_times=True, return_estimator=return_estimator,
+            eval_set_selection, 
+            transformer,
+            clone(estimator), 
+            X, 
+            y, 
+            scorers, 
+            train, 
+            test, 
+            verbose, 
+            None,
+            fit_params, 
+            return_train_score=return_train_score,
+            return_times=True, 
+            return_estimator=return_estimator,
             error_score=error_score)
         for train, test in cv.split(X, y, groups))
 
@@ -328,10 +361,21 @@ def cross_validate_eval_set(eval_set_selection,
 
     return ret
 
-def cross_val_score_eval_set(eval_set_selection,
-                             estimator, X, y=None, groups=None, scoring=None,
-                             cv=None, n_jobs=None, verbose=0, fit_params=None,
-                             pre_dispatch='2*n_jobs', error_score=np.nan):
+def cross_val_score_eval_set(
+    eval_set_selection,
+    estimator, 
+    X,
+    y=None,
+    *, 
+    groups=None, 
+    scoring=None,
+    cv=None,
+    n_jobs=None,
+    verbose=0,
+    fit_params=None,
+    pre_dispatch='2*n_jobs',
+    error_score=np.nan,
+):
     """
     Evaluate a score by cross-validation with `eval_set` argument in `fit_params`
 
@@ -453,10 +497,23 @@ def cross_val_score_eval_set(eval_set_selection,
                                          error_score=error_score)
     return cv_results['test_score']
 
-def validation_curve_eval_set(eval_set_selection,
-                              estimator, X, y, param_name, param_range, groups=None,
-                              cv=None, scoring=None, n_jobs=None, pre_dispatch="all",
-                              verbose=0, error_score=np.nan, fit_params=None):
+def validation_curve_eval_set(
+    eval_set_selection,
+    estimator,
+    X, 
+    y,
+    *,
+    param_name, 
+    param_range, 
+    groups=None,
+    cv=None, 
+    scoring=None, 
+    n_jobs=None, 
+    pre_dispatch="all",
+    verbose=0, 
+    error_score=np.nan, 
+    fit_params=None
+):
     """Validation curve.
 
     Determine training and test scores for varying parameter values with `eval_set` argument in `fit_params`
@@ -539,17 +596,17 @@ def validation_curve_eval_set(eval_set_selection,
     verbose : int, default=0
         Controls the verbosity: the higher, the more messages.
 
-    fit_params : dict, default=None
-        Parameters to pass to the fit method of the estimator.
-
-        .. versionadded:: 0.24
-
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised.
 
         .. versionadded:: 0.20
+
+    fit_params : dict, default=None
+        Parameters to pass to the fit method of the estimator.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -567,17 +624,27 @@ def validation_curve_eval_set(eval_set_selection,
     # 最終学習器以外の前処理変換器作成
     transformer = _make_transformer(eval_set_selection, estimator)
 
-    parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
-                        verbose=verbose)
-    results = parallel(delayed(_fit_and_score_eval_set)(
-        eval_set_selection, transformer,
-        clone(estimator), X, y, scorer, train, test, verbose,
-        parameters={param_name: v}, fit_params=fit_params,
-        return_train_score=True, error_score=error_score,
-        print_message=f'Caluculating score. {param_name}={v}')
-
+    parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch, verbose=verbose)
+    results = parallel(
+        delayed(_fit_and_score_eval_set)(
+            eval_set_selection,
+            transformer,
+            clone(estimator), 
+            X, 
+            y, 
+            scorer, 
+            train, 
+            test, 
+            verbose,
+            parameters={param_name: v}, 
+            fit_params=fit_params,
+            return_train_score=True, 
+            error_score=error_score,
+        )
         # NOTE do not change order of iteration to allow one time cv splitters
-        for train, test in cv.split(X, y, groups) for v in param_range)
+        for train, test in cv.split(X, y, groups) 
+        for v in param_range
+    )
     n_params = len(param_range)
 
     results = _aggregate_score_dicts(results)
@@ -586,13 +653,26 @@ def validation_curve_eval_set(eval_set_selection,
 
     return train_scores, test_scores
 
-def learning_curve_eval_set(eval_set_selection,
-                            estimator, X, y, groups=None,
-                            train_sizes=np.linspace(0.1, 1.0, 5), cv=None,
-                            scoring=None, exploit_incremental_learning=False,
-                            n_jobs=None, pre_dispatch="all", verbose=0, shuffle=False,
-                            random_state=None, error_score=np.nan, return_times=False,
-                            fit_params=None):
+def learning_curve_eval_set(
+    eval_set_selection,
+    estimator,
+    X, 
+    y,
+    *,
+    groups=None,
+    train_sizes=np.linspace(0.1, 1.0, 5), 
+    cv=None,
+    scoring=None, 
+    exploit_incremental_learning=False,
+    n_jobs=None, 
+    pre_dispatch="all",
+    verbose=0, 
+    shuffle=False,
+    random_state=None, 
+    error_score=np.nan,
+    return_times=False,
+    fit_params=None,
+):
     """Learning curve.
 
     Determines cross-validated training and test scores for different training set sizes with `eval_set` argument in `fit_params`
@@ -742,8 +822,7 @@ def learning_curve_eval_set(eval_set_selection,
     # Because the lengths of folds can be significantly different, it is
     # not guaranteed that we use all of the available training data when we
     # use the first 'n_max_training_samples' samples.
-    train_sizes_abs = _translate_train_sizes(train_sizes,
-                                             n_max_training_samples)
+    train_sizes_abs = _translate_train_sizes(train_sizes, n_max_training_samples)
     n_unique_ticks = train_sizes_abs.shape[0]
     if verbose > 0:
         print("[learning_curve] Training set sizes: " + str(train_sizes_abs))
@@ -751,8 +830,7 @@ def learning_curve_eval_set(eval_set_selection,
     # 最終学習器以外の前処理変換器作成
     transformer = _make_transformer(eval_set_selection, estimator)
 
-    parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
-                        verbose=verbose)
+    parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch, verbose=verbose)
 
     if shuffle:
         rng = check_random_state(random_state)
@@ -760,10 +838,21 @@ def learning_curve_eval_set(eval_set_selection,
 
     if exploit_incremental_learning:
         classes = np.unique(y) if is_classifier(estimator) else None
-        out = parallel(delayed(_incremental_fit_estimator)(
-            clone(estimator), X, y, classes, train, test, train_sizes_abs,
-            scorer, verbose, return_times, error_score=error_score,
-            fit_params=fit_params)
+        out = parallel(
+            delayed(_incremental_fit_estimator)(
+                clone(estimator), 
+                X, 
+                y, 
+                classes, 
+                train, 
+                test, 
+                train_sizes_abs,
+                scorer, 
+                verbose, 
+                return_times, 
+                error_score=error_score,
+                fit_params=fit_params
+            )
             for train, test in cv_iter
         )
         out = np.asarray(out).transpose((2, 1, 0))
@@ -773,11 +862,23 @@ def learning_curve_eval_set(eval_set_selection,
             for n_train_samples in train_sizes_abs:
                 train_test_proportions.append((train[:n_train_samples], test))
 
-        results = parallel(delayed(_fit_and_score_eval_set)(
-            eval_set_selection, transformer,
-            clone(estimator), X, y, scorer, train, test, verbose,
-            parameters=None, fit_params=fit_params, return_train_score=True,
-            error_score=error_score, return_times=return_times)
+        results = parallel(
+            delayed(_fit_and_score_eval_set)(
+                eval_set_selection, 
+                transformer,
+                clone(estimator), 
+                X, 
+                y, 
+                scorer, 
+                train, 
+                test, 
+                verbose,
+                parameters=None, 
+                fit_params=fit_params, 
+                return_train_score=True,
+                error_score=error_score, 
+                return_times=return_times
+            )
             for train, test in train_test_proportions
         )
         results = _aggregate_score_dicts(results)
@@ -821,8 +922,8 @@ class GridSearchCVEvalSet(GridSearchCV):
             If "original_transformed", use `eval_set` transformed by fit_transform() of pipeline if `estimater` is pipeline.
 
         X : array-like of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples, n_output) \
             or (n_samples,), default=None
@@ -835,7 +936,17 @@ class GridSearchCVEvalSet(GridSearchCV):
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
 
         **fit_params : dict of str -> object
-            Parameters passed to the ``fit`` method of the estimator
+            Parameters passed to the `fit` method of the estimator.
+
+            If a fit parameter is an array-like whose length is equal to
+            `num_samples` then it will be split across CV groups along with `X`
+            and `y`. For example, the :term:`sample_weight` parameter is split
+            because `len(sample_weights) = len(X)`.
+
+        Returns
+        -------
+        self : object
+            Instance of fitted estimator.
         """
         estimator = self.estimator
         refit_metric = "score"
@@ -860,63 +971,68 @@ class GridSearchCVEvalSet(GridSearchCV):
         # 最終学習器以外の前処理変換器作成
         transformer = _make_transformer(eval_set_selection, estimator)
 
-        parallel = Parallel(n_jobs=self.n_jobs,
-                            pre_dispatch=self.pre_dispatch)
+        parallel = Parallel(n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch)
 
-        fit_and_score_kwargs = dict(scorer=scorers,
-                                    fit_params=fit_params,
-                                    return_train_score=self.return_train_score,
-                                    return_n_test_samples=True,
-                                    return_times=True,
-                                    return_parameters=False,
-                                    error_score=self.error_score,
-                                    verbose=self.verbose)
+        fit_and_score_kwargs = dict(
+            scorer=scorers,
+            fit_params=fit_params,
+            return_train_score=self.return_train_score,
+            return_n_test_samples=True,
+            return_times=True,
+            return_parameters=False,
+            error_score=self.error_score,
+            verbose=self.verbose,
+        )
         results = {}
         with parallel:
             all_candidate_params = []
             all_out = []
             all_more_results = defaultdict(list)
 
-            def evaluate_candidates(candidate_params, cv=None,
-                                    more_results=None):
+            def evaluate_candidates(candidate_params, cv=None, more_results=None):
                 cv = cv or cv_orig
                 candidate_params = list(candidate_params)
                 n_candidates = len(candidate_params)
 
                 if self.verbose > 0:
-                    print("Fitting {0} folds for each of {1} candidates,"
+                    print(
+                        "Fitting {0} folds for each of {1} candidates,"
                           " totalling {2} fits".format(
-                              n_splits, n_candidates, n_candidates * n_splits))
+                              n_splits, n_candidates, n_candidates * n_splits
+                        )
+                    )
 
-                out = parallel(delayed(_fit_and_score_eval_set)(
-                                        eval_set_selection, transformer,
-                                        clone(base_estimator),
-                                        X, y,
-                                        train=train, test=test,
-                                        parameters=parameters,
-                                        split_progress=(
-                                            split_idx,
-                                            n_splits),
-                                        candidate_progress=(
-                                            cand_idx,
-                                            n_candidates),
-                                        print_message=f'cand={cand_idx}/{n_candidates}, cv={split_idx}: {parameters}',
-                                        **fit_and_score_kwargs)
-                               for (cand_idx, parameters),
-                                   (split_idx, (train, test)) in product(
-                                   enumerate(candidate_params),
-                                   enumerate(cv.split(X, y, groups))))
+                out = parallel(
+                    delayed(_fit_and_score_eval_set)(
+                        eval_set_selection, 
+                        transformer,
+                        clone(base_estimator),
+                        X, 
+                        y,
+                        train=train, 
+                        test=test,
+                        parameters=parameters,
+                        split_progress=(split_idx, n_splits),
+                        candidate_progress=(cand_idx, n_candidates),
+                        **fit_and_score_kwargs,
+                    )
+                    for (cand_idx, parameters), (split_idx, (train, test)) in product(
+                        enumerate(candidate_params),enumerate(cv.split(X, y, groups))
+                    )
+                )
 
                 if len(out) < 1:
-                    raise ValueError('No fits were performed. '
-                                     'Was the CV iterator empty? '
-                                     'Were there no candidates?')
+                    raise ValueError(
+                        "No fits were performed. "
+                        "Was the CV iterator empty? "
+                        "Were there no candidates?"
+                    )
                 elif len(out) != n_candidates * n_splits:
-                    raise ValueError('cv.split and cv.get_n_splits returned '
-                                     'inconsistent results. Expected {} '
-                                     'splits, got {}'
-                                     .format(n_splits,
-                                             len(out) // n_candidates))
+                    raise ValueError(
+                        "cv.split and cv.get_n_splits returned "
+                        "inconsistent results. Expected {} "
+                        "splits, got {}".format(n_splits, len(out) // n_candidates)
+                    )
 
                 # For callable self.scoring, the return type is only know after
                 # calling. If the return type is a dictionary, the error scores
@@ -924,16 +1040,18 @@ class GridSearchCVEvalSet(GridSearchCV):
                 # of out will be done in `_insert_error_scores`.
                 if callable(self.scoring):
                     _insert_error_scores(out, self.error_score)
+
                 all_candidate_params.extend(candidate_params)
                 all_out.extend(out)
+
                 if more_results is not None:
                     for key, value in more_results.items():
                         all_more_results[key].extend(value)
 
                 nonlocal results
                 results = self._format_results(
-                    all_candidate_params, n_splits, all_out,
-                    all_more_results)
+                    all_candidate_params, n_splits, all_out, all_more_results
+                )
 
                 return results
 
@@ -953,27 +1071,23 @@ class GridSearchCVEvalSet(GridSearchCV):
         # best_score_ iff refit is one of the scorer names
         # In single metric evaluation, refit_metric is "score"
         if self.refit or not self.multimetric_:
-            # If callable, refit is expected to return the index of the best
-            # parameter set.
-            if callable(self.refit):
-                self.best_index_ = self.refit(results)
-                if not isinstance(self.best_index_, numbers.Integral):
-                    raise TypeError('best_index_ returned is not an integer')
-                if (self.best_index_ < 0 or
-                   self.best_index_ >= len(results["params"])):
-                    raise IndexError('best_index_ index out of range')
-            else:
-                self.best_index_ = results["rank_test_%s"
-                                           % refit_metric].argmin()
-                self.best_score_ = results["mean_test_%s" % refit_metric][
-                                           self.best_index_]
+            self.best_index_ = self._select_best_index(
+                self.refit, refit_metric, results
+            )
+            if not callable(self.refit):
+                # With a non-custom callable, we can select the best score
+                # based on the best index
+                self.best_score_ = results[f"mean_test_{refit_metric}"][
+                    self.best_index_
+                ]
             self.best_params_ = results["params"][self.best_index_]
 
         if self.refit:
             # we clone again after setting params in case some
             # of the params are estimators as well.
-            self.best_estimator_ = clone(clone(base_estimator).set_params(
-                **self.best_params_))
+            self.best_estimator_ = clone(
+                clone(base_estimator).set_params(**self.best_params_)
+            )
             refit_start_time = time.time()
             if y is not None:
                 self.best_estimator_.fit(X, y, **fit_params)
@@ -981,6 +1095,9 @@ class GridSearchCVEvalSet(GridSearchCV):
                 self.best_estimator_.fit(X, **fit_params)
             refit_end_time = time.time()
             self.refit_time_ = refit_end_time - refit_start_time
+
+            if hasattr(self.best_estimator_, "feature_names_in_"):
+                self.feature_names_in_ = self.best_estimator_.feature_names_in_
 
         # Store the only scorer not as a dict for single metric evaluation
         self.scorer_ = scorers
@@ -1002,7 +1119,7 @@ class RandomizedSearchCVEvalSet(RandomizedSearchCV):
         ----------
         eval_set_selection : {'all', 'train', 'test', 'original', 'original_transformed'}
             Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LightGBM or XGBoost.
-            
+                
             If "all", use all data in `X` and `y`.
 
             If "train", select train data from `X` and `y` using cv.split().
@@ -1014,8 +1131,8 @@ class RandomizedSearchCVEvalSet(RandomizedSearchCV):
             If "original_transformed", use `eval_set` transformed by fit_transform() of pipeline if `estimater` is pipeline.
 
         X : array-like of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples, n_output) \
             or (n_samples,), default=None
@@ -1028,7 +1145,17 @@ class RandomizedSearchCVEvalSet(RandomizedSearchCV):
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
 
         **fit_params : dict of str -> object
-            Parameters passed to the ``fit`` method of the estimator
+            Parameters passed to the `fit` method of the estimator.
+
+            If a fit parameter is an array-like whose length is equal to
+            `num_samples` then it will be split across CV groups along with `X`
+            and `y`. For example, the :term:`sample_weight` parameter is split
+            because `len(sample_weights) = len(X)`.
+
+        Returns
+        -------
+        self : object
+            Instance of fitted estimator.
         """
         estimator = self.estimator
         refit_metric = "score"
@@ -1053,63 +1180,68 @@ class RandomizedSearchCVEvalSet(RandomizedSearchCV):
         # 最終学習器以外の前処理変換器作成
         transformer = _make_transformer(eval_set_selection, estimator)
 
-        parallel = Parallel(n_jobs=self.n_jobs,
-                            pre_dispatch=self.pre_dispatch)
+        parallel = Parallel(n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch)
 
-        fit_and_score_kwargs = dict(scorer=scorers,
-                                    fit_params=fit_params,
-                                    return_train_score=self.return_train_score,
-                                    return_n_test_samples=True,
-                                    return_times=True,
-                                    return_parameters=False,
-                                    error_score=self.error_score,
-                                    verbose=self.verbose)
+        fit_and_score_kwargs = dict(
+            scorer=scorers,
+            fit_params=fit_params,
+            return_train_score=self.return_train_score,
+            return_n_test_samples=True,
+            return_times=True,
+            return_parameters=False,
+            error_score=self.error_score,
+            verbose=self.verbose,
+        )
         results = {}
         with parallel:
             all_candidate_params = []
             all_out = []
             all_more_results = defaultdict(list)
 
-            def evaluate_candidates(candidate_params, cv=None,
-                                    more_results=None):
+            def evaluate_candidates(candidate_params, cv=None, more_results=None):
                 cv = cv or cv_orig
                 candidate_params = list(candidate_params)
                 n_candidates = len(candidate_params)
 
                 if self.verbose > 0:
-                    print("Fitting {0} folds for each of {1} candidates,"
+                    print(
+                        "Fitting {0} folds for each of {1} candidates,"
                           " totalling {2} fits".format(
-                              n_splits, n_candidates, n_candidates * n_splits))
+                              n_splits, n_candidates, n_candidates * n_splits
+                        )
+                    )
 
-                out = parallel(delayed(_fit_and_score_eval_set)(
-                                        eval_set_selection, transformer,
-                                        clone(base_estimator),
-                                        X, y,
-                                        train=train, test=test,
-                                        parameters=parameters,
-                                        split_progress=(
-                                            split_idx,
-                                            n_splits),
-                                        candidate_progress=(
-                                            cand_idx,
-                                            n_candidates),
-                                        print_message=f'cand={cand_idx}/{n_candidates}, cv={split_idx}: {parameters}',
-                                        **fit_and_score_kwargs)
-                               for (cand_idx, parameters),
-                                   (split_idx, (train, test)) in product(
-                                   enumerate(candidate_params),
-                                   enumerate(cv.split(X, y, groups))))
+                out = parallel(
+                    delayed(_fit_and_score_eval_set)(
+                        eval_set_selection, 
+                        transformer,
+                        clone(base_estimator),
+                        X, 
+                        y,
+                        train=train, 
+                        test=test,
+                        parameters=parameters,
+                        split_progress=(split_idx, n_splits),
+                        candidate_progress=(cand_idx, n_candidates),
+                        **fit_and_score_kwargs,
+                    )
+                    for (cand_idx, parameters), (split_idx, (train, test)) in product(
+                        enumerate(candidate_params),enumerate(cv.split(X, y, groups))
+                    )
+                )
 
                 if len(out) < 1:
-                    raise ValueError('No fits were performed. '
-                                     'Was the CV iterator empty? '
-                                     'Were there no candidates?')
+                    raise ValueError(
+                        "No fits were performed. "
+                        "Was the CV iterator empty? "
+                        "Were there no candidates?"
+                    )
                 elif len(out) != n_candidates * n_splits:
-                    raise ValueError('cv.split and cv.get_n_splits returned '
-                                     'inconsistent results. Expected {} '
-                                     'splits, got {}'
-                                     .format(n_splits,
-                                             len(out) // n_candidates))
+                    raise ValueError(
+                        "cv.split and cv.get_n_splits returned "
+                        "inconsistent results. Expected {} "
+                        "splits, got {}".format(n_splits, len(out) // n_candidates)
+                    )
 
                 # For callable self.scoring, the return type is only know after
                 # calling. If the return type is a dictionary, the error scores
@@ -1117,16 +1249,18 @@ class RandomizedSearchCVEvalSet(RandomizedSearchCV):
                 # of out will be done in `_insert_error_scores`.
                 if callable(self.scoring):
                     _insert_error_scores(out, self.error_score)
+
                 all_candidate_params.extend(candidate_params)
                 all_out.extend(out)
+
                 if more_results is not None:
                     for key, value in more_results.items():
                         all_more_results[key].extend(value)
 
                 nonlocal results
                 results = self._format_results(
-                    all_candidate_params, n_splits, all_out,
-                    all_more_results)
+                    all_candidate_params, n_splits, all_out, all_more_results
+                )
 
                 return results
 
@@ -1146,27 +1280,23 @@ class RandomizedSearchCVEvalSet(RandomizedSearchCV):
         # best_score_ iff refit is one of the scorer names
         # In single metric evaluation, refit_metric is "score"
         if self.refit or not self.multimetric_:
-            # If callable, refit is expected to return the index of the best
-            # parameter set.
-            if callable(self.refit):
-                self.best_index_ = self.refit(results)
-                if not isinstance(self.best_index_, numbers.Integral):
-                    raise TypeError('best_index_ returned is not an integer')
-                if (self.best_index_ < 0 or
-                   self.best_index_ >= len(results["params"])):
-                    raise IndexError('best_index_ index out of range')
-            else:
-                self.best_index_ = results["rank_test_%s"
-                                           % refit_metric].argmin()
-                self.best_score_ = results["mean_test_%s" % refit_metric][
-                                           self.best_index_]
+            self.best_index_ = self._select_best_index(
+                self.refit, refit_metric, results
+            )
+            if not callable(self.refit):
+                # With a non-custom callable, we can select the best score
+                # based on the best index
+                self.best_score_ = results[f"mean_test_{refit_metric}"][
+                    self.best_index_
+                ]
             self.best_params_ = results["params"][self.best_index_]
 
         if self.refit:
             # we clone again after setting params in case some
             # of the params are estimators as well.
-            self.best_estimator_ = clone(clone(base_estimator).set_params(
-                **self.best_params_))
+            self.best_estimator_ = clone(
+                clone(base_estimator).set_params(**self.best_params_)
+            )
             refit_start_time = time.time()
             if y is not None:
                 self.best_estimator_.fit(X, y, **fit_params)
@@ -1174,6 +1304,9 @@ class RandomizedSearchCVEvalSet(RandomizedSearchCV):
                 self.best_estimator_.fit(X, **fit_params)
             refit_end_time = time.time()
             self.refit_time_ = refit_end_time - refit_start_time
+
+            if hasattr(self.best_estimator_, "feature_names_in_"):
+                self.feature_names_in_ = self.best_estimator_.feature_names_in_
 
         # Store the only scorer not as a dict for single metric evaluation
         self.scorer_ = scorers
