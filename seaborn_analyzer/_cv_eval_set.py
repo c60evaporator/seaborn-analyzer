@@ -6,47 +6,13 @@ from itertools import product
 from collections import defaultdict
 from sklearn import clone
 from sklearn.pipeline import Pipeline
-from sklearn.model_selection import check_cv, GridSearchCV, RandomizedSearchCV
+from sklearn.model_selection import check_cv, GridSearchCV, RandomizedSearchCV, train_test_split
 from sklearn.model_selection._validation import _fit_and_score, _insert_error_scores, _aggregate_score_dicts, _normalize_score_results, _translate_train_sizes, _incremental_fit_estimator
 from sklearn.utils.validation import indexable, check_random_state, _check_fit_params
 from sklearn.metrics import check_scoring
 from sklearn.metrics._scorer import _check_multimetric_scoring
 from sklearn.base import is_classifier
 from sklearn.utils.parallel import delayed, Parallel
-from lightgbm import LGBMModel
-from lightgbm import early_stopping, log_evaluation
-
-def init_eval_set(src_eval_set_selection, src_fit_params, X, y):
-        """
-        fit_paramsにeval_metricが入力されており、eval_setが入力されていないときの処理
-        
-        Parameters
-        ----------
-        src_eval_set_selection : {'all', 'test', 'train', 'original', 'original_transformed'}, optional
-            eval_setに渡すデータの決め方 ('all': X, 'test': X[test], 'train': X[train], 'original': 入力そのまま, 'original_transformed': 入力そのまま＆パイプラインの時は最終学習器以外の変換実行)
-
-        src_fit_params : Dict
-            処理前の学習時パラメータ
-        """
-
-        fit_params = copy.deepcopy(src_fit_params)
-        eval_set_selection = src_eval_set_selection
-        # fit_paramsにeval_metricが設定されているときのみ以下の処理を実施
-        if 'eval_metric' in src_fit_params and src_fit_params['eval_metric'] is not None:
-            # fit_paramsにeval_setが存在しないとき、入力データをそのまま追加
-            if 'eval_set' not in src_fit_params:
-                print('There is no "eval_set" in fit_params, so "eval_set" is set to (self.X, self.y)')
-                fit_params['eval_set'] = [(X, y)]
-                if src_eval_set_selection is None:  # eval_set_selection未指定時、eval_setが入力されていなければeval_set_selection='test'とする
-                    eval_set_selection = 'test'
-                if eval_set_selection not in ['all', 'train', 'test']:  # eval_set_selectionの指定が間違っていたらエラーを出す
-                    raise ValueError('The `eval_set_selection` argument should be "all", "train", or "test" when `eval_set` is not in `fit_params`')
-            # src_fit_paramsにeval_setが存在するとき、eval_set_selection未指定ならばeval_set_selection='original_transformed'とする
-            else:
-                if src_eval_set_selection is None:
-                    eval_set_selection = 'original_transformed'
-
-        return fit_params, eval_set_selection
 
 def _transform_except_last_estimator(transformer, X_src, X_train):
     """パイプラインのとき、最終学習器以外のtransformを適用"""
@@ -57,49 +23,53 @@ def _transform_except_last_estimator(transformer, X_src, X_train):
     else:
         return X_src
 
-def _eval_set_selection(eval_set_selection, transformer,
-                        fit_params, train, test):
+def _eval_set_selection(validation_fraction, 
+                        transformer, 
+                        X, 
+                        y,
+                        fit_params, 
+                        train, 
+                        test, 
+                        random_state,
+                        stratify
+                        ):
     """eval_setの中から学習データ or テストデータのみを抽出"""
     fit_params_modified = copy.deepcopy(fit_params)
     # eval_setが存在しない or Noneなら、そのままfit_paramsを返す
     eval_sets = [v for v in fit_params.keys() if 'eval_set' in v]
     if len(eval_sets) == 0 or fit_params[eval_sets[0]] is None:
         return fit_params_modified
-    eval_set_name = eval_sets[0]  # eval_setの列名(pipelineでは列名が変わるため)
+    # eval_setの列名(pipelineでは列名が変わるため)
+    eval_set_name = eval_sets[0]
     # 元のeval_setからX, yを取得
     X_fit = fit_params[eval_set_name][0][0]
     y_fit = fit_params[eval_set_name][0][1]
-    # eval_setに該当データを入力し直す
-    if eval_set_selection == 'train':
-        fit_params_modified[eval_set_name] = [(_transform_except_last_estimator(transformer, X_fit[train], X_fit[train])\
-                                              , y_fit[train])]
-    elif eval_set_selection == 'test':
-        fit_params_modified[eval_set_name] = [(_transform_except_last_estimator(transformer, X_fit[test], X_fit[train])\
-                                              , y_fit[test])]
-    elif eval_set_selection == 'all':
-        fit_params_modified[eval_set_name] = [(_transform_except_last_estimator(transformer, X_fit, X_fit[train])\
-                                              , y_fit)]
+    # Training dataの一部をeval_setとして使用する場合
+    if isinstance(validation_fraction, float):
+        # Select training data from source training data
+        rng = np.random.default_rng(seed=random_state)
+        size = int(train.shape[0]*validation_fraction)
+        train_divided = rng.choice(train, size=size, replace=False)
+        train_divided.sort()
+        # Select validation data from difference set of the selected training data and the source training data
+        val_divided = np.setdiff1d(train, train_divided)
+        fit_params_modified[eval_set_name] = [(_transform_except_last_estimator(transformer, X[val_divided], X[train_divided])\
+                                              , y[val_divided])]
+    # Cross validationのテストデータをeval_setとして使用する場合
+    elif validation_fraction == 'cv':
+        fit_params_modified[eval_set_name] = [(_transform_except_last_estimator(transformer, X[test], X[train])\
+                                              , y[test])]
+        train_divided = train
+    # eval_setをそのまま使用、またはPipelineのみ適用して使用する場合
     else:
-        fit_params_modified[eval_set_name] = [(_transform_except_last_estimator(transformer, X_fit, X_fit)\
+        fit_params_modified[eval_set_name] = [(_transform_except_last_estimator(transformer, X_fit, X[train])\
                                               , y_fit)]
-    return fit_params_modified
+        train_divided = train
 
-def _lgbm_early_stop_transform(estimator, fit_params_modified):
-    """LightGBMのearly_stoppingおよびverbose引数をコールバック関数に変更 (FutureWarning対策)"""
-    if isinstance(estimator, LGBMModel):
-        if 'early_stopping_rounds' in fit_params_modified.keys() or 'verbose' in fit_params_modified.keys():
-            if 'callbacks' in fit_params_modified.keys():
-                raise ValueError('The `callbacks` argument and the `early_stopping_rounds` or the `verbose` argument cannot be compatible in `fit_params`')
-            fit_params_modified['callbacks'] = []
-            if 'verbose' in fit_params_modified.keys():
-                fit_params_modified['callbacks'].append(log_evaluation(fit_params_modified['verbose']))
-                fit_params_modified.pop('verbose')
-            if 'early_stopping_rounds' in fit_params_modified.keys():
-                fit_params_modified['callbacks'].append(early_stopping(fit_params_modified['early_stopping_rounds'], False, False))
-                fit_params_modified.pop('early_stopping_rounds')
+    return fit_params_modified, train_divided
 
 def _fit_and_score_eval_set(
-    eval_set_selection,
+    validation_fraction,
     transformer,
     estimator,
     X, 
@@ -119,16 +89,24 @@ def _fit_and_score_eval_set(
     candidate_progress=None,
     error_score=np.nan,
     ):
-
     """Fit estimator and compute scores for a given dataset split."""
-    # eval_setの中から学習データ or テストデータのみを抽出
-    fit_params_modified = _eval_set_selection(eval_set_selection, transformer,
-                                              fit_params, train, test)
-    # LightGBMのearly_stoppingをコールバック関数に変更
-    _lgbm_early_stop_transform(estimator, fit_params_modified)
+    
+    # fit_params内のデータをvalidation_fractionに合わせて整形 (validation_fraction='')
+    stratify = y if is_classifier(estimator) else None
+    fit_params_modified, train_divided = _eval_set_selection(
+        validation_fraction, 
+        transformer, 
+        X, 
+        y,
+        fit_params, 
+        train, 
+        test,
+        estimator.random_state,
+        stratify
+        )
 
     # 学習してスコア計算
-    result = _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
+    result = _fit_and_score(estimator, X, y, scorer, train_divided, test, verbose, parameters,
                             fit_params_modified,
                             return_train_score=return_train_score,
                             return_parameters=return_parameters, return_n_test_samples=return_n_test_samples,
@@ -137,27 +115,26 @@ def _fit_and_score_eval_set(
                             error_score=error_score)
     return result
 
-def _make_transformer(eval_set_selection, estimator):
+def _make_transformer(validation_fraction, estimator):
     """estimatorがパイプラインのとき、最終学習器以外の変換器(前処理クラスのリスト)を作成"""
-    if isinstance(estimator, Pipeline) and eval_set_selection != 'original':
+    if isinstance(estimator, Pipeline) and validation_fraction is not None:
         transformer = Pipeline([step for i, step in enumerate(estimator.steps) if i < len(estimator) - 1])
         return transformer
     else:
         return None
 
-def cross_validate_eval_set(
-    eval_set_selection,
-    estimator,
-    X, 
-    y=None, 
+def cross_validate_eval_set(estimator,
+    X,
+    y=None,
+    validation_fraction='cv',
     *,
-    groups=None, 
-    scoring=None, 
+    groups=None,
+    scoring=None,
     cv=None,
     n_jobs=None,
     verbose=0,
     fit_params=None,
-    pre_dispatch='2*n_jobs',
+    pre_dispatch="2*n_jobs",
     return_train_score=False,
     return_estimator=False,
     error_score=np.nan,
@@ -169,29 +146,26 @@ def cross_validate_eval_set(
 
     Parameters
     ----------
-    eval_set_selection : {'all', 'train', 'test', 'original', 'original_transformed'}
-        Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LightGBM or XGBoost.
-            
-        If "all", use all data in `X` and `y`.
-
-        If "train", select train data from `X` and `y` using cv.split().
-
-        If "test", select test data from `X` and `y` using cv.split().
-
-        If "original", use raw `eval_set`.
-
-        If "original_transformed", use `eval_set` transformed by fit_transform() of pipeline if `estimater` is pipeline.
-
     estimator : estimator object implementing 'fit'
         The object to use to fit the data.
 
     X : array-like of shape (n_samples, n_features)
         The data to fit. Can be for example a list, or an array.
 
-    y : array-like of shape (n_samples,) or (n_samples, n_outputs), \
-            default=None
+    y : array-like of shape (n_samples,) or (n_samples, n_outputs), default=None
         The target variable to try to predict in the case of
         supervised learning.
+
+    validation_fraction : {float, 'cv', 'transformed', or None}
+        Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LGBMRegressor, LGBMClassifier, XGBRegressor, or XGBClassifier.
+
+        If float, devide source training data into training data and eval_set according to the specified ratio like sklearn.ensemble.GradientBoostingRegressor.
+        
+        If "cv", select test data from `X` and `y` using cv.split() like lightgbm.cv.
+
+        If "transformed", use `eval_set` transformed by `fit_transform()` of the pipeline if the `estimater` is sklearn.pipeline.Pipeline object.
+
+        If None, use raw `eval_set`.
 
     groups : array-like of shape (n_samples,), default=None
         Group labels for the samples used while splitting the dataset into
@@ -227,7 +201,7 @@ def cross_validate_eval_set(
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`.Fold` is used. These splitters are instantiated
+        other cases, :class:`KFold` is used. These splitters are instantiated
         with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -295,6 +269,33 @@ def cross_validate_eval_set(
     -------
     scores : dict of float arrays of shape (n_splits,)
         Array of scores of the estimator for each run of the cross validation.
+
+        A dict of arrays containing the score/time arrays for each scorer is
+        returned. The possible keys for this ``dict`` are:
+
+            ``test_score``
+                The score array for test scores on each cv split.
+                Suffix ``_score`` in ``test_score`` changes to a specific
+                metric like ``test_r2`` or ``test_auc`` if there are
+                multiple scoring metrics in the scoring parameter.
+            ``train_score``
+                The score array for train scores on each cv split.
+                Suffix ``_score`` in ``train_score`` changes to a specific
+                metric like ``train_r2`` or ``train_auc`` if there are
+                multiple scoring metrics in the scoring parameter.
+                This is available only if ``return_train_score`` parameter
+                is ``True``.
+            ``fit_time``
+                The time for fitting the estimator on the train
+                set for each cv split.
+            ``score_time``
+                The time for scoring the estimator on the test set for each
+                cv split. (Note time for scoring on the train set is not
+                included even if ``return_train_score`` is set to ``True``
+            ``estimator``
+                The estimator objects for each cv split.
+                This is available only if ``return_estimator`` parameter
+                is set to ``True``.
     """
 
     X, y, groups = indexable(X, y, groups)
@@ -309,7 +310,7 @@ def cross_validate_eval_set(
         scorers = _check_multimetric_scoring(estimator, scoring)
 
     # 最終学習器以外の前処理変換器作成
-    transformer = _make_transformer(eval_set_selection, estimator)
+    transformer = _make_transformer(validation_fraction, estimator)
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
@@ -317,20 +318,10 @@ def cross_validate_eval_set(
                         pre_dispatch=pre_dispatch)
     results = parallel(
         delayed(_fit_and_score_eval_set)(
-            eval_set_selection, 
-            transformer,
-            clone(estimator), 
-            X, 
-            y, 
-            scorers, 
-            train, 
-            test, 
-            verbose, 
-            None,
-            fit_params, 
-            return_train_score=return_train_score,
-            return_times=True, 
-            return_estimator=return_estimator,
+            validation_fraction, transformer,
+            clone(estimator), X, y, scorers, train, test, verbose, None,
+            fit_params, return_train_score=return_train_score,
+            return_times=True, return_estimator=return_estimator,
             error_score=error_score)
         for train, test in cv.split(X, y, groups))
 
@@ -362,18 +353,18 @@ def cross_validate_eval_set(
     return ret
 
 def cross_val_score_eval_set(
-    eval_set_selection,
-    estimator, 
+    estimator,
     X,
     y=None,
-    *, 
-    groups=None, 
+    validation_fraction='cv',
+    *,
+    groups=None,
     scoring=None,
     cv=None,
     n_jobs=None,
     verbose=0,
     fit_params=None,
-    pre_dispatch='2*n_jobs',
+    pre_dispatch="2*n_jobs",
     error_score=np.nan,
 ):
     """
@@ -383,19 +374,6 @@ def cross_val_score_eval_set(
 
     Parameters
     ----------
-    eval_set_selection : {'all', 'train', 'test', 'original', 'original_transformed'}
-        Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LightGBM or XGBoost.
-            
-        If "all", use all data in `X` and `y`.
-
-        If "train", select train data from `X` and `y` using cv.split().
-
-        If "test", select test data from `X` and `y` using cv.split().
-
-        If "original", use raw `eval_set`.
-
-        If "original_transformed", use `eval_set` transformed by fit_transform() of pipeline if `estimater` is pipeline.
-    
     estimator : estimator object implementing 'fit'
         The object to use to fit the data.
 
@@ -406,6 +384,17 @@ def cross_val_score_eval_set(
             default=None
         The target variable to try to predict in the case of
         supervised learning.
+    
+    validation_fraction : {float, 'cv', 'transformed', or None}, default='cv'
+        Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LGBMRegressor, LGBMClassifier, XGBRegressor, or XGBClassifier.
+
+        If float, devide source training data into training data and eval_set according to the specified ratio like sklearn.ensemble.GradientBoostingRegressor.
+        
+        If "cv", select test data from `X` and `y` using cv.split() like lightgbm.cv.
+
+        If "transformed", use `eval_set` transformed by `fit_transform()` of the pipeline if the `estimater` is sklearn.pipeline.Pipeline object.
+
+        If None, use raw `eval_set`.
 
     groups : array-like of shape (n_samples,), default=None
         Group labels for the samples used while splitting the dataset into
@@ -421,18 +410,18 @@ def cross_val_score_eval_set(
         Similar to :func:`cross_validate`
         but only a single metric is permitted.
 
-        If None, the estimator's default scorer (if available) is used.
+        If `None`, the estimator's default scorer (if available) is used.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 5-fold cross validation,
+        - `None`, to use the default 5-fold cross validation,
         - int, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - An iterable that generates (train, test) splits as arrays of indices.
 
-        For int/None inputs, if the estimator is a classifier and ``y`` is
+        For `int`/`None` inputs, if the estimator is a classifier and `y` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used. These splitters are instantiated
         with `shuffle=False` so the splits will be the same across calls.
@@ -441,7 +430,7 @@ def cross_val_score_eval_set(
         cross-validation strategies that can be used here.
 
         .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
+            `cv` default value if `None` changed from 3-fold to 5-fold.
 
     n_jobs : int, default=None
         Number of jobs to run in parallel. Training the estimator and computing
@@ -462,7 +451,7 @@ def cross_val_score_eval_set(
         explosion of memory consumption when more jobs get dispatched
         than CPUs can process. This parameter can be:
 
-            - None, in which case all the jobs are immediately
+            - ``None``, in which case all the jobs are immediately
               created and spawned. Use this for lightweight and
               fast-running jobs, to avoid delays due to on-demand
               spawning of the jobs
@@ -488,8 +477,8 @@ def cross_val_score_eval_set(
     # To ensure multimetric format is not supported
     scorer = check_scoring(estimator, scoring=scoring)
 
-    cv_results = cross_validate_eval_set(eval_set_selection=eval_set_selection,
-                                         estimator=estimator, X=X, y=y, groups=groups,
+    cv_results = cross_validate_eval_set(estimator=estimator, X=X, y=y, validation_fraction=validation_fraction,
+                                         groups=groups,
                                          scoring={'score': scorer}, cv=cv,
                                          n_jobs=n_jobs, verbose=verbose,
                                          fit_params=fit_params,
@@ -498,13 +487,13 @@ def cross_val_score_eval_set(
     return cv_results['test_score']
 
 def validation_curve_eval_set(
-    eval_set_selection,
     estimator,
     X, 
     y,
     *,
     param_name, 
     param_range, 
+    validation_fraction='cv',
     groups=None,
     cv=None, 
     scoring=None, 
@@ -519,20 +508,7 @@ def validation_curve_eval_set(
     Determine training and test scores for varying parameter values with `eval_set` argument in `fit_params`
 
     Parameters
-    ----------
-    eval_set_selection : {'all', 'train', 'test', 'original', 'original_transformed'}
-        Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LightGBM or XGBoost.
-            
-        If "all", use all data in `X` and `y`.
-
-        If "train", select train data from `X` and `y` using cv.split().
-
-        If "test", select test data from `X` and `y` using cv.split().
-
-        If "original", use raw `eval_set`.
-
-        If "original_transformed", use `eval_set` transformed by fit_transform() of pipeline if `estimater` is pipeline.
-    
+    ----------    
     estimator : object type that implements the "fit" and "predict" methods
         An object of that type which is cloned for each validation.
 
@@ -549,6 +525,17 @@ def validation_curve_eval_set(
 
     param_range : array-like of shape (n_values,)
         The values of the parameter that will be evaluated.
+
+    validation_fraction : {float, 'cv', 'transformed', or None}, default='cv'
+        Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LGBMRegressor, LGBMClassifier, XGBRegressor, or XGBClassifier.
+
+        If float, devide source training data into training data and eval_set according to the specified ratio like sklearn.ensemble.GradientBoostingRegressor.
+        
+        If "cv", select test data from `X` and `y` using cv.split() like lightgbm.cv.
+
+        If "transformed", use `eval_set` transformed by `fit_transform()` of the pipeline if the `estimater` is sklearn.pipeline.Pipeline object.
+
+        If None, use raw `eval_set`.
 
     groups : array-like of shape (n_samples,), default=None
         Group labels for the samples used while splitting the dataset into
@@ -622,12 +609,12 @@ def validation_curve_eval_set(
     scorer = check_scoring(estimator, scoring=scoring)
 
     # 最終学習器以外の前処理変換器作成
-    transformer = _make_transformer(eval_set_selection, estimator)
+    transformer = _make_transformer(validation_fraction, estimator)
 
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch, verbose=verbose)
     results = parallel(
         delayed(_fit_and_score_eval_set)(
-            eval_set_selection,
+            validation_fraction,
             transformer,
             clone(estimator), 
             X, 
@@ -654,11 +641,11 @@ def validation_curve_eval_set(
     return train_scores, test_scores
 
 def learning_curve_eval_set(
-    eval_set_selection,
     estimator,
     X, 
     y,
     *,
+    validation_fraction='cv',
     groups=None,
     train_sizes=np.linspace(0.1, 1.0, 5), 
     cv=None,
@@ -679,19 +666,6 @@ def learning_curve_eval_set(
 
     Parameters
     ----------
-    eval_set_selection : {'all', 'train', 'test', 'original', 'original_transformed'}
-        Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LightGBM or XGBoost.
-            
-        If "all", use all data in `X` and `y`.
-
-        If "train", select train data from `X` and `y` using cv.split().
-
-        If "test", select test data from `X` and `y` using cv.split().
-
-        If "original", use raw `eval_set`.
-
-        If "original_transformed", use `eval_set` transformed by fit_transform() of pipeline if `estimater` is pipeline.
-    
     estimator : object type that implements the "fit" and "predict" methods
         An object of that type which is cloned for each validation.
 
@@ -702,6 +676,17 @@ def learning_curve_eval_set(
     y : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Target relative to X for classification or regression;
         None for unsupervised learning.
+
+    validation_fraction : {float, 'cv', 'transformed', or None}, default='cv'
+        Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LGBMRegressor, LGBMClassifier, XGBRegressor, or XGBClassifier.
+
+        If float, devide source training data into training data and eval_set according to the specified ratio like sklearn.ensemble.GradientBoostingRegressor.
+        
+        If "cv", select test data from `X` and `y` using cv.split() like lightgbm.cv.
+
+        If "transformed", use `eval_set` transformed by `fit_transform()` of the pipeline if the `estimater` is sklearn.pipeline.Pipeline object.
+
+        If None, use raw `eval_set`.
 
     groups : array-like of  shape (n_samples,), default=None
         Group labels for the samples used while splitting the dataset into
@@ -828,7 +813,7 @@ def learning_curve_eval_set(
         print("[learning_curve] Training set sizes: " + str(train_sizes_abs))
 
     # 最終学習器以外の前処理変換器作成
-    transformer = _make_transformer(eval_set_selection, estimator)
+    transformer = _make_transformer(validation_fraction, estimator)
 
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch, verbose=verbose)
 
@@ -864,7 +849,7 @@ def learning_curve_eval_set(
 
         results = parallel(
             delayed(_fit_and_score_eval_set)(
-                eval_set_selection, 
+                validation_fraction, 
                 transformer,
                 clone(estimator), 
                 X, 
@@ -902,24 +887,16 @@ class GridSearchCVEvalSet(GridSearchCV):
     """
     Exhaustive search over specified parameter values for an estimator with `eval_set` argument in `fit_params`.
     """
-    def fit(self, eval_set_selection,
-            X, y=None, groups=None, **fit_params):
+    def fit(self,
+            X, 
+            y=None, 
+            groups=None,
+            validation_fraction='cv',
+            **fit_params):
         """Run fit with all sets of parameters.
 
         Parameters
         ----------
-        eval_set_selection : {'all', 'train', 'test', 'original', 'original_transformed'}
-            Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LightGBM or XGBoost.
-                
-            If "all", use all data in `X` and `y`.
-
-            If "train", select train data from `X` and `y` using cv.split().
-
-            If "test", select test data from `X` and `y` using cv.split().
-
-            If "original", use raw `eval_set`.
-
-            If "original_transformed", use `eval_set` transformed by fit_transform() of pipeline if `estimater` is pipeline.
 
         X : array-like of shape (n_samples, n_features)
             Training vector, where `n_samples` is the number of samples and
@@ -934,6 +911,17 @@ class GridSearchCVEvalSet(GridSearchCV):
             Group labels for the samples used while splitting the dataset into
             train/test set. Only used in conjunction with a "Group" :term:`cv`
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
+
+        validation_fraction : {float, 'cv', 'transformed', or None}, default='cv'
+            Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LGBMRegressor, LGBMClassifier, XGBRegressor, or XGBClassifier.
+
+            If float, devide source training data into training data and eval_set according to the specified ratio like sklearn.ensemble.GradientBoostingRegressor.
+            
+            If "cv", select test data from `X` and `y` using cv.split() like lightgbm.cv.
+
+            If "transformed", use `eval_set` transformed by `fit_transform()` of the pipeline if the `estimater` is sklearn.pipeline.Pipeline object.
+
+            If None, use raw `eval_set`.
 
         **fit_params : dict of str -> object
             Parameters passed to the `fit` method of the estimator.
@@ -969,7 +957,7 @@ class GridSearchCVEvalSet(GridSearchCV):
         base_estimator = clone(self.estimator)
 
         # 最終学習器以外の前処理変換器作成
-        transformer = _make_transformer(eval_set_selection, estimator)
+        transformer = _make_transformer(validation_fraction, estimator)
 
         parallel = Parallel(n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch)
 
@@ -1004,7 +992,7 @@ class GridSearchCVEvalSet(GridSearchCV):
 
                 out = parallel(
                     delayed(_fit_and_score_eval_set)(
-                        eval_set_selection, 
+                        validation_fraction, 
                         transformer,
                         clone(base_estimator),
                         X, 
@@ -1111,24 +1099,16 @@ class RandomizedSearchCVEvalSet(RandomizedSearchCV):
     """
     Randomized search on hyper parameters with `eval_set` argument in `fit_params`.
     """
-    def fit(self, eval_set_selection,
-            X, y=None, groups=None, **fit_params):
+    def fit(self,
+            X, 
+            y=None, 
+            groups=None,
+            validation_fraction='cv',
+            **fit_params):
         """Run fit with all sets of parameters.
 
         Parameters
         ----------
-        eval_set_selection : {'all', 'train', 'test', 'original', 'original_transformed'}
-            Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LightGBM or XGBoost.
-                
-            If "all", use all data in `X` and `y`.
-
-            If "train", select train data from `X` and `y` using cv.split().
-
-            If "test", select test data from `X` and `y` using cv.split().
-
-            If "original", use raw `eval_set`.
-
-            If "original_transformed", use `eval_set` transformed by fit_transform() of pipeline if `estimater` is pipeline.
 
         X : array-like of shape (n_samples, n_features)
             Training vector, where `n_samples` is the number of samples and
@@ -1143,6 +1123,17 @@ class RandomizedSearchCVEvalSet(RandomizedSearchCV):
             Group labels for the samples used while splitting the dataset into
             train/test set. Only used in conjunction with a "Group" :term:`cv`
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
+
+        validation_fraction : {float, 'cv', 'transformed', or None}, default='cv'
+            Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LGBMRegressor, LGBMClassifier, XGBRegressor, or XGBClassifier.
+
+            If float, devide source training data into training data and eval_set according to the specified ratio like sklearn.ensemble.GradientBoostingRegressor.
+            
+            If "cv", select test data from `X` and `y` using cv.split() like lightgbm.cv.
+
+            If "transformed", use `eval_set` transformed by `fit_transform()` of the pipeline if the `estimater` is sklearn.pipeline.Pipeline object.
+
+            If None, use raw `eval_set`.
 
         **fit_params : dict of str -> object
             Parameters passed to the `fit` method of the estimator.
@@ -1178,7 +1169,7 @@ class RandomizedSearchCVEvalSet(RandomizedSearchCV):
         base_estimator = clone(self.estimator)
 
         # 最終学習器以外の前処理変換器作成
-        transformer = _make_transformer(eval_set_selection, estimator)
+        transformer = _make_transformer(validation_fraction, estimator)
 
         parallel = Parallel(n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch)
 
@@ -1213,7 +1204,7 @@ class RandomizedSearchCVEvalSet(RandomizedSearchCV):
 
                 out = parallel(
                     delayed(_fit_and_score_eval_set)(
-                        eval_set_selection, 
+                        validation_fraction, 
                         transformer,
                         clone(base_estimator),
                         X, 

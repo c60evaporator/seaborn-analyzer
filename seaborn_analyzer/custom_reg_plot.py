@@ -10,7 +10,7 @@ from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error, m
 from sklearn.model_selection import KFold, LeaveOneOut, GroupKFold, LeaveOneGroupOut
 import decimal
 
-from ._cv_eval_set import init_eval_set, _make_transformer, _eval_set_selection, cross_val_score_eval_set
+from ._cv_eval_set_old import init_eval_set, _make_transformer, _eval_set_selection, cross_val_score_eval_set
 
 class regplot():
     # regression_heat_plotメソッド (回帰モデルヒートマップ表示)における、散布図カラーマップ

@@ -12,7 +12,7 @@ import copy
 import decimal
 
 from .multiclass_fitparams import OneVsRestClassifierPatched
-from ._cv_eval_set import init_eval_set, _make_transformer, _eval_set_selection
+from ._cv_eval_set_old import init_eval_set, _make_transformer, _eval_set_selection
 
 class classplot():
     # 散布図カラーリスト
