@@ -3,8 +3,7 @@ import numpy as np
 from sklearn import clone
 from sklearn.multiclass import OneVsRestClassifier, _ConstantPredictor
 from sklearn.preprocessing import LabelBinarizer
-from sklearn.utils.fixes import delayed
-from joblib import Parallel
+from sklearn.utils.parallel import delayed, Parallel
 
 def _fit_binary(estimator, X, y, classes=None, **kwargs):
     """Fit a single binary estimator with kwargs."""
