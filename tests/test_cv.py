@@ -6,7 +6,11 @@ from sklearn.datasets import fetch_california_housing
 from sklearn.model_selection import KFold
 import lightgbm as lgb
 
-from seaborn_analyzer import cross_val_score_eval_set
+import os
+import sys
+ROOT = os.path.dirname(os.path.dirname(__file__))
+sys.path.append(ROOT)
+from seaborn_analyzer._cv_eval_set import cross_val_score_eval_set
 
 class TestCvClassifiers:
     # Test data
