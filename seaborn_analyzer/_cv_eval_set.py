@@ -48,7 +48,7 @@ def _eval_set_selection(validation_fraction,
     if isinstance(validation_fraction, float):
         # Select training data from source training data
         rng = np.random.default_rng(seed=random_state)
-        size = int(train.shape[0]*validation_fraction)
+        size = int(train.shape[0]*(1.0 - validation_fraction))
         train_divided = rng.choice(train, size=size, replace=False)
         train_divided.sort()
         # Select validation data from difference set of the selected training data and the source training data
@@ -101,7 +101,7 @@ def _fit_and_score_eval_set(
         fit_params, 
         train, 
         test,
-        estimator.random_state,
+        estimator.steps[-1][1].random_state if isinstance(estimator, Pipeline) else estimator.random_state,
         stratify
         )
 
