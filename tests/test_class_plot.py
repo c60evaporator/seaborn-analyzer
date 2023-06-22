@@ -51,8 +51,8 @@ class TestClassPlot:
     lgb_pipe_fit_params = {
         'lgbm__eval_set':[(X, y)]
         }
-    lgbr_pipe = Pipeline([("scaler", StandardScaler()), ("lgbm", LGBMClassifier())])
-    lgbr_pipe.set_params(**lgb_pipe_params)
+    lgb_pipe = Pipeline([("scaler", StandardScaler()), ("lgbm", LGBMClassifier())])
+    lgb_pipe.set_params(**lgb_pipe_params)
     # SVM model
     svm_pipe_params = {
         'svm__kernel': 'rbf',
@@ -72,7 +72,7 @@ class TestClassPlot:
                             )
     
     def test_1_1_2_class_separator_plot_cv_lgbm_pipe(self):
-        classplot.class_separator_plot(self.lgbr_pipe, x=self.X,
+        classplot.class_separator_plot(self.lgb_pipe, x=self.X,
                             y=self.y,
                             x_colnames=self.USE_EXPLANATORY,
                             cv=self.cv,
@@ -100,7 +100,7 @@ class TestClassPlot:
                             )
     
     def test_1_2_2_class_separator_plot_float_lgbm_pipe(self):
-        classplot.class_separator_plot(self.lgbr_pipe, x=self.X,
+        classplot.class_separator_plot(self.lgb_pipe, x=self.X,
                             y=self.y,
                             x_colnames=self.USE_EXPLANATORY,
                             cv=self.cv,
@@ -121,7 +121,7 @@ class TestClassPlot:
                             )
     
     def test_2_1_2_class_proba_plot_cv_lgbm_pipe(self):
-        classplot.class_proba_plot(self.lgbr_pipe, x=self.X,
+        classplot.class_proba_plot(self.lgb_pipe, x=self.X,
                             y=self.y,
                             x_colnames=self.USE_EXPLANATORY,
                             cv=self.cv,
@@ -150,7 +150,7 @@ class TestClassPlot:
                             )
     
     def test_3_1_2_roc_plot_cv_lgbm_pipe(self):
-        classplot.roc_plot(self.lgbr_pipe, x=self.X,
+        classplot.roc_plot(self.lgb_pipe, x=self.X,
                             y=self.y,
                             x_colnames=self.USE_EXPLANATORY,
                             cv=self.cv,
