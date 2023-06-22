@@ -30,15 +30,14 @@ def _eval_set_selection(validation_fraction,
                         fit_params, 
                         train, 
                         test, 
-                        random_state,
-                        stratify
+                        random_state
                         ):
     """eval_setの中から学習データ or テストデータのみを抽出"""
     fit_params_modified = copy.deepcopy(fit_params)
     # eval_setが存在しない or Noneなら、そのままfit_paramsを返す
     eval_sets = [v for v in fit_params.keys() if 'eval_set' in v]
     if len(eval_sets) == 0 or fit_params[eval_sets[0]] is None:
-        return fit_params_modified
+        return fit_params_modified, train
     # eval_setの列名(pipelineでは列名が変わるため)
     eval_set_name = eval_sets[0]
     # 元のeval_setからX, yを取得
@@ -92,7 +91,6 @@ def _fit_and_score_eval_set(
     """Fit estimator and compute scores for a given dataset split."""
     
     # fit_params内のデータをvalidation_fractionに合わせて整形 (validation_fraction='')
-    stratify = y if is_classifier(estimator) else None
     fit_params_modified, train_divided = _eval_set_selection(
         validation_fraction, 
         transformer, 
@@ -101,8 +99,7 @@ def _fit_and_score_eval_set(
         fit_params, 
         train, 
         test,
-        estimator.steps[-1][1].random_state if isinstance(estimator, Pipeline) else estimator.random_state,
-        stratify
+        estimator.steps[-1][1].random_state if isinstance(estimator, Pipeline) else estimator.random_state
         )
 
     # 学習してスコア計算
@@ -156,7 +153,7 @@ def cross_validate_eval_set(estimator,
         The target variable to try to predict in the case of
         supervised learning.
 
-    validation_fraction : {float, 'cv', 'transformed', or None}
+    validation_fraction : {float, 'cv', 'transformed', or None}, default='cv'
         Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LGBMRegressor, LGBMClassifier, XGBRegressor, or XGBClassifier.
 
         If float, devide source training data into training data and eval_set according to the specified ratio like sklearn.ensemble.GradientBoostingRegressor.

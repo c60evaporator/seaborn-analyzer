@@ -491,18 +491,16 @@ class classplot():
         fit_params: dict, optional
             Parameters passed to the fit() method of the classifier, e.g. ``early_stopping_round`` and ``eval_set`` of XGBClassifier. If the classifier is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         
-        validation_fraction: {'all', 'test', 'train', 'original', 'original_transformed'}, optional
-            Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LightGBM or XGBoost.
+        validation_fraction : {float, 'cv', 'transformed', or None}, default='cv'
+            Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LGBMRegressor, LGBMClassifier, XGBRegressor, or XGBClassifier.
+
+            If float, devide source training data into training data and eval_set according to the specified ratio like sklearn.ensemble.GradientBoostingRegressor.
             
-            If "all", use all data in `X` and `y`.
+            If "cv", select test data from `X` and `y` using cv.split() like lightgbm.cv.
 
-            If "train", select train data from `X` and `y` using cv.split().
+            If "transformed", use `eval_set` transformed by `fit_transform()` of the pipeline if the `estimater` is sklearn.pipeline.Pipeline object.
 
-            If "test", select test data from `X` and `y` using cv.split().
-
-            If "original", use raw `eval_set`.
-
-            If "original_transformed", use `eval_set` transformed by fit_transform() of pipeline if `estimater` is pipeline.
+            If None, use raw `eval_set`.
 
         subplot_kws: dict, optional
             Additional parameters passed to matplotlib.pyplot.subplots(), e.g. ``figsize.`` See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
@@ -643,8 +641,7 @@ class classplot():
                     fit_params, 
                     train, 
                     test,
-                    clf.steps[-1][1].random_state if isinstance(clf, Pipeline) else clf.random_state,
-                    stratify=y if is_classifier(clf) else None
+                    clf.steps[-1][1].random_state if isinstance(clf, Pipeline) else clf.random_state
                     )
 
                 # 学習と推論
@@ -748,18 +745,16 @@ class classplot():
         fit_params: dict, optional
             Parameters passed to the fit() method of the classifier, e.g. ``early_stopping_round`` and ``eval_set`` of XGBClassifier. If the classifier is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
 
-        validation_fraction: {'all', 'test', 'train', 'original', 'original_transformed'}, optional
-            Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LightGBM or XGBoost.
+        validation_fraction : {float, 'cv', 'transformed', or None}, default='cv'
+            Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LGBMRegressor, LGBMClassifier, XGBRegressor, or XGBClassifier.
+
+            If float, devide source training data into training data and eval_set according to the specified ratio like sklearn.ensemble.GradientBoostingRegressor.
             
-            If "all", use all data in `X` and `y`.
+            If "cv", select test data from `X` and `y` using cv.split() like lightgbm.cv.
 
-            If "train", select train data from `X` and `y` using cv.split().
+            If "transformed", use `eval_set` transformed by `fit_transform()` of the pipeline if the `estimater` is sklearn.pipeline.Pipeline object.
 
-            If "test", select test data from `X` and `y` using cv.split().
-
-            If "original", use raw `eval_set`.
-
-            If "original_transformed", use `eval_set` transformed by fit_transform() of pipeline if `estimater` is pipeline.
+            If None, use raw `eval_set`.
 
         subplot_kws: dict, optional
             Additional parameters passed to matplotlib.pyplot.subplots(), e.g. ``figsize``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
@@ -946,8 +941,7 @@ class classplot():
                     fit_params, 
                     train, 
                     test,
-                    clf.steps[-1][1].random_state if isinstance(clf, Pipeline) else clf.random_state,
-                    stratify=y if is_classifier(clf) else None
+                    clf.steps[-1][1].random_state if isinstance(clf, Pipeline) else clf.random_state
                     )
 
                 # 学習と推論
@@ -1241,18 +1235,16 @@ class classplot():
         fit_params : dict, default=None
             Parameters passed to the fit() method of the classifier, e.g. ``early_stopping_round`` and ``eval_set`` of XGBClassifier. If the classifier is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         
-        validation_fraction: {'all', 'test', 'train', 'original', 'original_transformed'}, optional
-            Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LightGBM or XGBoost.
+        validation_fraction : {float, 'cv', 'transformed', or None}, default='cv'
+            Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LGBMRegressor, LGBMClassifier, XGBRegressor, or XGBClassifier.
+
+            If float, devide source training data into training data and eval_set according to the specified ratio like sklearn.ensemble.GradientBoostingRegressor.
             
-            If "all", use all data in `X` and `y`.
+            If "cv", select test data from `X` and `y` using cv.split() like lightgbm.cv.
 
-            If "train", select train data from `X` and `y` using cv.split().
+            If "transformed", use `eval_set` transformed by `fit_transform()` of the pipeline if the `estimater` is sklearn.pipeline.Pipeline object.
 
-            If "test", select test data from `X` and `y` using cv.split().
-
-            If "original", use raw `eval_set`.
-
-            If "original_transformed", use `eval_set` transformed by fit_transform() of pipeline if `estimater` is pipeline.
+            If None, use raw `eval_set`.
 
         draw_grid: bool, default=True
             If True, grid lines are drawn.
@@ -1396,8 +1388,7 @@ class classplot():
                     fit_params, 
                     train, 
                     test,
-                    clf.steps[-1][1].random_state if isinstance(clf, Pipeline) else clf.random_state,
-                    stratify=y if is_classifier(clf) else None
+                    clf.steps[-1][1].random_state if isinstance(clf, Pipeline) else clf.random_state
                     )
                 
                 # CVごとのROC曲線をプロット

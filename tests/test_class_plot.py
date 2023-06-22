@@ -81,6 +81,14 @@ class TestClassPlot:
                             validation_fraction='cv'
                             )
     
+    def test_1_1_3_class_separator_plot_cv_svm_pipe(self):
+        classplot.class_separator_plot(self.svm_pipe, x=self.X,
+                            y=self.y,
+                            x_colnames=self.USE_EXPLANATORY,
+                            cv=self.cv,
+                            pair_sigmarange=0.5
+                            )
+    
     def test_1_2_1_class_separator_plot_float_lgbm(self):
         classplot.class_separator_plot(self.lgb, x=self.X,
                             y=self.y,
@@ -123,6 +131,15 @@ class TestClassPlot:
                             validation_fraction='cv'
                             )
     
+    def test_2_1_3_class_proba_plot_float_svm_pipe(self):
+        classplot.class_proba_plot(self.svm_pipe, x=self.X,
+                            y=self.y,
+                            x_colnames=self.USE_EXPLANATORY,
+                            cv=self.cv,
+                            pair_sigmarange=0.5,
+                            proba_type='imshow',
+                            )
+    
     def test_3_1_1_roc_plot_cv_lgbm(self):
         classplot.roc_plot(self.lgb, x=self.X,
                             y=self.y,
@@ -150,5 +167,5 @@ class TestClassPlot:
         
 if __name__ == "__main__":
     test_class_plot = TestClassPlot()
-    test_class_plot.test_1_2_2_class_separator_plot_float_lgbm_pipe()
+    test_class_plot.test_2_1_3_class_proba_plot_float_svm_pipe()
 # %%
