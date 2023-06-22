@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from sklearn.datasets import fetch_california_housing
 from sklearn.model_selection import KFold
-import lightgbm as lgb
+from lightgbm import LGBMClassifier, LGBMRegressor
 
 import os
 import sys
@@ -34,7 +34,7 @@ class TestCvClassifiers:
     lgb_fit_params = {
         'eval_set':[(X, y)]
         }
-    lgbr = lgb.LGBMClassifier(**lgb_params)
+    lgbr = LGBMClassifier(**lgb_params)
 
     def test_cross_val_score_cls_lgbm(self):
         scores = cross_val_score_eval_set(
@@ -72,7 +72,7 @@ class TestCvRegressors:
     lgb_fit_params = {
         'eval_set':[(X, y)]
         }
-    lgbr = lgb.LGBMRegressor(**lgb_params)
+    lgbr = LGBMRegressor(**lgb_params)
 
     def test_cross_val_score_reg_lgbm_float(self):
         scores = cross_val_score_eval_set(

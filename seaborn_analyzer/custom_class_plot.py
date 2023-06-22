@@ -7,12 +7,14 @@ from scipy import stats
 from sklearn.metrics import auc, roc_curve, RocCurveDisplay
 from sklearn.model_selection import KFold, LeaveOneOut, GroupKFold, LeaveOneGroupOut
 from sklearn.preprocessing import label_binarize
+from sklearn.pipeline import Pipeline
+from sklearn.base import is_classifier
 from matplotlib import colors
 import copy
 import decimal
 
 from .multiclass_fitparams import OneVsRestClassifierPatched
-from ._cv_eval_set_old import init_eval_set, _make_transformer, _eval_set_selection
+from ._cv_eval_set import _make_transformer, _eval_set_selection
 
 class classplot():
     # 散布図カラーリスト
@@ -419,7 +421,7 @@ class classplot():
                              plot_scatter = 'class_error', rounddigit_x3 = 2,
                              scatter_colors = None, true_marker = 'o', false_marker = 'x',
                              cv=None, cv_seed=42, cv_group=None, display_cv_indices = 0,
-                             clf_params=None, fit_params=None, eval_set_selection=None,
+                             clf_params=None, fit_params=None, validation_fraction=None,
                              subplot_kws=None, contourf_kws=None, scatter_kws=None, legend_kws=None):
         """
         Plot class separation lines of any scikit-learn classifier with 2 to 4D explanatory variables.
@@ -489,7 +491,7 @@ class classplot():
         fit_params: dict, optional
             Parameters passed to the fit() method of the classifier, e.g. ``early_stopping_round`` and ``eval_set`` of XGBClassifier. If the classifier is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         
-        eval_set_selection: {'all', 'test', 'train', 'original', 'original_transformed'}, optional
+        validation_fraction: {'all', 'test', 'train', 'original', 'original_transformed'}, optional
             Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LightGBM or XGBoost.
             
             If "all", use all data in `X` and `y`.
@@ -610,12 +612,10 @@ class classplot():
                 cv_num = cv.n_splits
 
             # fit_paramsにeval_metricが入力されており、eval_setが入力されていないときの処理(eval_setにテストデータを使用)
-            if eval_set_selection is None:
-                eval_set_selection = 'test'
-            fit_params, eval_set_selection = init_eval_set(
-                    eval_set_selection, fit_params, X, y)
+            if validation_fraction is None:
+                validation_fraction = 'cv'
             # 最終学習器以外の前処理変換器作成
-            transformer = _make_transformer(eval_set_selection, clf)
+            transformer = _make_transformer(validation_fraction, clf)
 
             # クロスバリデーション
             for i, (train, test) in enumerate(cv.split(X, y_true, **split_kws)):
@@ -635,11 +635,20 @@ class classplot():
                 y_test = y_true[test]
 
                 # eval_setの中から学習データ or テストデータのみを抽出
-                fit_params_modified = _eval_set_selection(eval_set_selection, transformer,
-                                                        fit_params, train, test)
+                fit_params_modified, train_divided = _eval_set_selection(
+                    validation_fraction, 
+                    transformer, 
+                    X,
+                    y,
+                    fit_params, 
+                    train, 
+                    test,
+                    clf.steps[-1][1].random_state if isinstance(clf, Pipeline) else clf.random_state,
+                    stratify=y if is_classifier(clf) else None
+                    )
 
                 # 学習と推論
-                clf.fit(X_train, y_train, **fit_params_modified)
+                clf.fit(X[train_divided], y[train_divided], **fit_params_modified)
                 y_pred = clf.predict(X_test)
                 # 決定境界図をプロット
                 cls._class_chart_plot(clf, X_test, y_pred, y_test, x_chart, x_not_chart, x_chart_indices,
@@ -657,7 +666,7 @@ class classplot():
                          proba_class = None, proba_cmap_dict = None, proba_type = 'contourf',
                          scatter_colors = None, true_marker = 'o', false_marker = 'x',
                          cv=None, cv_seed=42, cv_group=None, display_cv_indices = 0,
-                         clf_params=None, fit_params=None, eval_set_selection=None,
+                         clf_params=None, fit_params=None, validation_fraction=None,
                          subplot_kws=None, contourf_kws=None, imshow_kws=None, scatter_kws=None, legend_kws=None):
         """
         Plot class prediction probability of any scikit-learn classifier with 2 to 4D explanatory variables.
@@ -739,7 +748,7 @@ class classplot():
         fit_params: dict, optional
             Parameters passed to the fit() method of the classifier, e.g. ``early_stopping_round`` and ``eval_set`` of XGBClassifier. If the classifier is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
 
-        eval_set_selection: {'all', 'test', 'train', 'original', 'original_transformed'}, optional
+        validation_fraction: {'all', 'test', 'train', 'original', 'original_transformed'}, optional
             Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LightGBM or XGBoost.
             
             If "all", use all data in `X` and `y`.
@@ -897,12 +906,10 @@ class classplot():
                 cv_num = cv.n_splits
 
             # fit_paramsにeval_metricが入力されており、eval_setが入力されていないときの処理(eval_setにテストデータを使用)
-            if eval_set_selection is None:
-                eval_set_selection = 'test'
-            fit_params, eval_set_selection = init_eval_set(
-                    eval_set_selection, fit_params, X, y)
+            if validation_fraction is None:
+                validation_fraction = 'cv'
             # 最終学習器以外の前処理変換器作成
-            transformer = _make_transformer(eval_set_selection, clf)
+            transformer = _make_transformer(validation_fraction, clf)
 
             # クロスバリデーション
             for i, (train, test) in enumerate(cv.split(X, y_true, **split_kws)):
@@ -931,11 +938,20 @@ class classplot():
                 proba_cmap_dict = {k: v for k, v in proba_cmap_dict.items() if k in class_list_train}
 
                 # eval_setの中から学習データ or テストデータのみを抽出
-                fit_params_modified = _eval_set_selection(eval_set_selection, transformer,
-                                                        fit_params, train, test)
+                fit_params_modified, train_divided = _eval_set_selection(
+                    validation_fraction, 
+                    transformer, 
+                    X,
+                    y,
+                    fit_params, 
+                    train, 
+                    test,
+                    clf.steps[-1][1].random_state if isinstance(clf, Pipeline) else clf.random_state,
+                    stratify=y if is_classifier(clf) else None
+                    )
 
                 # 学習と推論
-                clf.fit(X_train, y_train, **fit_params_modified)
+                clf.fit(X[train_divided], y[train_divided], **fit_params_modified)
                 y_pred = clf.predict(X_test)
                 # クラス確率を推定
                 proba_pred = clf.predict_proba(X_test)[:, proba_class_indices]
@@ -1161,7 +1177,7 @@ class classplot():
                  ax=None,
                  sample_weight=None, drop_intermediate=True,
                  response_method="predict_proba", pos_label=None, average='macro',
-                 clf_params=None, fit_params=None, eval_set_selection=None,
+                 clf_params=None, fit_params=None, validation_fraction=None,
                  draw_grid=True, grid_kws=None, subplot_kws=None, legend_kws=None,
                  plot_roc_kws=None, class_average_kws=None, cv_mean_kws=None, chance_plot_kws=None):
         """Plot Receiver operating characteristic (ROC) curve with cross validation.
@@ -1225,7 +1241,7 @@ class classplot():
         fit_params : dict, default=None
             Parameters passed to the fit() method of the classifier, e.g. ``early_stopping_round`` and ``eval_set`` of XGBClassifier. If the classifier is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         
-        eval_set_selection: {'all', 'test', 'train', 'original', 'original_transformed'}, optional
+        validation_fraction: {'all', 'test', 'train', 'original', 'original_transformed'}, optional
             Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LightGBM or XGBoost.
             
             If "all", use all data in `X` and `y`.
@@ -1338,12 +1354,10 @@ class classplot():
                 cv_num = cv.n_splits
 
             # fit_paramsにeval_metricが入力されており、eval_setが入力されていないときの処理(eval_setにテストデータを使用)
-            if eval_set_selection is None:
-                eval_set_selection = 'test'
-            fit_params, eval_set_selection = init_eval_set(
-                    eval_set_selection, fit_params, X, y)
+            if validation_fraction is None:
+                validation_fraction = 'test'
             # 最終学習器以外の前処理変換器作成
-            transformer = _make_transformer(eval_set_selection, clf)
+            transformer = _make_transformer(validation_fraction, clf)
 
             # 表示用のax作成
             if ax is None:
@@ -1374,11 +1388,20 @@ class classplot():
                 class_average_kws['color'] = color_list[i]
 
                 # eval_setの中から学習データ or テストデータのみを抽出
-                fit_params_modified = _eval_set_selection(eval_set_selection, transformer,
-                                                        fit_params, train, test)
+                fit_params_modified, train_divided = _eval_set_selection(
+                    validation_fraction, 
+                    transformer, 
+                    X,
+                    y,
+                    fit_params, 
+                    train, 
+                    test,
+                    clf.steps[-1][1].random_state if isinstance(clf, Pipeline) else clf.random_state,
+                    stratify=y if is_classifier(clf) else None
+                    )
                 
                 # CVごとのROC曲線をプロット
-                viz = cls.plot_roc_curve_multiclass(clf, X[train], y_true[train], 
+                viz = cls.plot_roc_curve_multiclass(clf, X[train_divided], y_true[train_divided], 
                                                     X_test=X[test], y_test=y_true[test],
                                                     sample_weight=sample_weight, drop_intermediate=drop_intermediate,
                                                     response_method=response_method,
