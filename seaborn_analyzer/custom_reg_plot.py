@@ -8,9 +8,11 @@ from scipy import stats
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error, mean_squared_log_error, mean_absolute_percentage_error
 from sklearn.model_selection import KFold, LeaveOneOut, GroupKFold, LeaveOneGroupOut
+from sklearn.pipeline import Pipeline
+from sklearn.base import is_classifier
 import decimal
 
-from ._cv_eval_set_old import init_eval_set, _make_transformer, _eval_set_selection, cross_val_score_eval_set
+from ._cv_eval_set import _make_transformer, _eval_set_selection, cross_val_score_eval_set
 
 class regplot():
     # regression_heat_plotメソッド (回帰モデルヒートマップ表示)における、散布図カラーマップ
@@ -249,7 +251,7 @@ class regplot():
                              x_colnames: List[str] = None, hue=None, linecolor='red', rounddigit=3,
                              rank_number=None, rank_col=None, scores='mae', 
                              cv_stats='mean', cv=None, cv_seed=42, cv_group=None, ax=None,
-                             estimator_params=None, fit_params=None, eval_set_selection=None,
+                             estimator_params=None, fit_params=None, validation_fraction=None,
                              subplot_kws=None, scatter_kws=None, legend_kws=None):
 
         """
@@ -311,18 +313,16 @@ class regplot():
         fit_params : dict, optional
             Parameters passed to the fit() method of the regression estimator, e.g. ``early_stopping_round`` and ``eval_set`` of XGBRegressor. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
 
-        eval_set_selection: {'all', 'test', 'train', 'original', 'original_transformed'}, optional
-            Select data passed to `eval_set` in `fit_params`. Available only if `estimator` is LightGBM or XGBoost and `cv` is not None.
+        validation_fraction : {float, 'cv', 'transformed', or None}, default='cv'
+            Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LGBMRegressor, LGBMClassifier, XGBRegressor, or XGBClassifier.
+
+            If float, devide source training data into training data and eval_set according to the specified ratio like sklearn.ensemble.GradientBoostingRegressor.
             
-            If "all", use all data in `X` and `y`.
+            If "cv", select test data from `X` and `y` using cv.split() like lightgbm.cv.
 
-            If "train", select train data from `X` and `y` using cv.split().
+            If "transformed", use `eval_set` transformed by `fit_transform()` of the pipeline if the `estimater` is sklearn.pipeline.Pipeline object.
 
-            If "test", select test data from `X` and `y` using cv.split().
-
-            If "original", use raw `eval_set`.
-
-            If "original_transformed", use `eval_set` transformed by fit_transform() of pipeline if `estimater` is pipeline.
+            If None, use raw `eval_set`.
 
         subplot_kws : dict, optional
             Additional parameters passed to matplotlib.pyplot.subplots(), e.g. figsize. Available only if ``axes`` is None. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
@@ -415,48 +415,46 @@ class regplot():
                 cv_num = cv.n_splits
 
             # fit_paramsにeval_metricが入力されており、eval_setが入力されていないときの処理(eval_setにテストデータを使用)
-            if eval_set_selection is None:
-                eval_set_selection = 'test'
-            fit_params, eval_set_selection = init_eval_set(
-                    eval_set_selection, fit_params, X, y)
+            if validation_fraction is None:
+                validation_fraction = 'cv'
             # 最終学習器以外の前処理変換器作成
-            transformer = _make_transformer(eval_set_selection, estimator)
+            transformer = _make_transformer(validation_fraction, estimator)
 
             # スコア種類ごとにクロスバリデーションスコアの算出
             score_all_dict = {}
             for scoring in scores:
                 # cross_val_scoreでクロスバリデーション
                 if scoring == 'r2':
-                    score_all_dict['r2'] = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true,
+                    score_all_dict['r2'] = cross_val_score_eval_set(estimator, X, y_true, validation_fraction,
                                                     cv=cv, scoring='r2',
                                                     fit_params=fit_params, n_jobs=-1, **split_kws)
                 elif scoring == 'mae':
-                    neg_mae = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true,
+                    neg_mae = cross_val_score_eval_set(estimator, X, y_true, validation_fraction,
                                                     cv=cv, scoring='neg_mean_absolute_error',
                                                     fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['mae'] = -neg_mae  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'mse':
-                    neg_mse = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true,
+                    neg_mse = cross_val_score_eval_set(estimator, X, y_true, validation_fraction,
                                                     cv=cv, scoring='neg_mean_squared_error',
                                                     fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['mse'] = -neg_mse  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'rmse':
-                    neg_rmse = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true,
+                    neg_rmse = cross_val_score_eval_set(estimator, X, y_true, validation_fraction,
                                                     cv=cv, scoring='neg_root_mean_squared_error',
                                                     fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['rmse'] = -neg_rmse  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'rmsle':
-                    neg_msle = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true, 
+                    neg_msle = cross_val_score_eval_set(estimator, X, y_true, validation_fraction,
                                                     cv=cv, scoring='neg_mean_squared_log_error',
                                                     fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['rmsle'] = np.sqrt(-neg_msle)  # 正負を逆にしてルートをとる
                 elif scoring == 'mape':
-                    neg_mape = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true,
+                    neg_mape = cross_val_score_eval_set(estimator, X, y_true, validation_fraction,
                                                     cv=cv, scoring='neg_mean_absolute_percentage_error',
                                                     fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['mape'] = -neg_mape  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'max_error':
-                    neg_max_error = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true,
+                    neg_max_error = cross_val_score_eval_set(estimator, X, y_true, validation_fraction,
                                                     cv=cv, scoring='max_error',
                                                     fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['max_error'] = - neg_max_error  # scikit-learnの仕様に合わせ正負を逆に
@@ -503,15 +501,23 @@ class regplot():
                     rank_col_test = np.array([])
 
                 # eval_setの中から学習データ or テストデータのみを抽出
-                fit_params_modified = _eval_set_selection(eval_set_selection, transformer,
-                                                        fit_params, train, test)
+                fit_params_modified, train_divided = _eval_set_selection(
+                    validation_fraction, 
+                    transformer, 
+                    X,
+                    y,
+                    fit_params, 
+                    train, 
+                    test,
+                    estimator.steps[-1][1].random_state if isinstance(estimator, Pipeline) else estimator.random_state
+                    )
 
                 # 学習と推論
-                estimator.fit(X_train, y_train, **fit_params_modified)
+                estimator.fit(X[train_divided], y[train_divided], **fit_params_modified)
                 y_pred = estimator.predict(X_test)
                 # 学習データスコア算出
-                y_pred_train = estimator.predict(X_train)
-                score_dict = cls._make_score_dict(y_train, y_pred_train, scores)
+                y_pred_train = estimator.predict(X[train_divided])
+                score_dict = cls._make_score_dict(y[train_divided], y_pred_train, scores)
                 for score in scores:
                     if f'{score}_train' not in score_train_dict:
                         score_train_dict[f'{score}_train'] = []
@@ -608,7 +614,7 @@ class regplot():
                      x_colnames: List[str] = None, hue=None,
                      aggregate='mean',
                      cv=None, cv_seed=42, cv_group=None, display_cv_indices = 0,
-                     estimator_params=None, fit_params=None, eval_set_selection=None,
+                     estimator_params=None, fit_params=None, validation_fraction=None,
                      subplot_kws=None, plot_kws=None, scatter_kws=None, legend_kws=None):
         """
         Plot relationship between one explanatory variable and predicted value by line graph.
@@ -655,18 +661,16 @@ class regplot():
         fit_params : dict, optional
             Parameters passed to the fit() method of the regression estimator, e.g. ``early_stopping_round`` and ``eval_set`` of XGBRegressor. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
         
-        eval_set_selection: {'all', 'test', 'train', 'original', 'original_transformed'}, optional
-            Select data passed to `eval_set` in `fit_params`. Available only if `estimator` is LightGBM or XGBoost and `cv` is not None.
+        validation_fraction : {float, 'cv', 'transformed', or None}, default='cv'
+            Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LGBMRegressor, LGBMClassifier, XGBRegressor, or XGBClassifier.
+
+            If float, devide source training data into training data and eval_set according to the specified ratio like sklearn.ensemble.GradientBoostingRegressor.
             
-            If "all", use all data in `X` and `y`.
+            If "cv", select test data from `X` and `y` using cv.split() like lightgbm.cv.
 
-            If "train", select train data from `X` and `y` using cv.split().
+            If "transformed", use `eval_set` transformed by `fit_transform()` of the pipeline if the `estimater` is sklearn.pipeline.Pipeline object.
 
-            If "test", select test data from `X` and `y` using cv.split().
-
-            If "original", use raw `eval_set`.
-
-            If "original_transformed", use `eval_set` transformed by fit_transform() of pipeline if `estimater` is pipeline.
+            If None, use raw `eval_set`.
 
         subplot_kws: dict, optional
             Additional parameters passed to matplotlib.pyplot.subplots(), e.g. ``figsize``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
@@ -743,12 +747,10 @@ class regplot():
                 cv_num = cv.n_splits
 
             # fit_paramsにeval_metricが入力されており、eval_setが入力されていないときの処理(eval_setにテストデータを使用)
-            if eval_set_selection is None:
-                eval_set_selection = 'test'
-            fit_params, eval_set_selection = init_eval_set(
-                    eval_set_selection, fit_params, X, y)
+            if validation_fraction is None:
+                validation_fraction = 'cv'
             # 最終学習器以外の前処理変換器作成
-            transformer = _make_transformer(eval_set_selection, estimator)
+            transformer = _make_transformer(validation_fraction, estimator)
 
             # クロスバリデーション
             for i, (train, test) in enumerate(cv.split(X, y_true, **split_kws)):
@@ -762,11 +764,19 @@ class regplot():
                 data_test = data.iloc[test]
                 
                 # eval_setの中から学習データ or テストデータのみを抽出
-                fit_params_modified = _eval_set_selection(eval_set_selection, transformer,
-                                                        fit_params, train, test)
+                fit_params_modified, train_divided = _eval_set_selection(
+                    validation_fraction, 
+                    transformer, 
+                    X,
+                    y,
+                    fit_params, 
+                    train, 
+                    test,
+                    estimator.steps[-1][1].random_state if isinstance(estimator, Pipeline) else estimator.random_state
+                    )
 
                 # 学習と推論
-                estimator.fit(X_train, y_train, **fit_params_modified)
+                estimator.fit(X[train_divided], y[train_divided], **fit_params_modified)
                 # ヒートマップをプロット
                 cls._average_plot(estimator, data_test, x_colnames, y_colname, hue,
                                   aggregate=aggregate,
@@ -951,7 +961,7 @@ class regplot():
                            hue=None, linecolor='red', rounddigit=3,
                            rank_number=None, rank_col=None, scores='mae',
                            cv_stats='mean', cv=None, cv_seed=42, cv_group=None,
-                           estimator_params=None, fit_params=None, eval_set_selection=None,
+                           estimator_params=None, fit_params=None, validation_fraction=None,
                            subplot_kws=None, scatter_kws=None, legend_kws=None):
         """
         Plot regression lines of any scikit-learn regressor with 1D explanatory variable.
@@ -1012,18 +1022,16 @@ class regplot():
         subplot_kws : dict, optional
             Additional parameters passed to matplotlib.pyplot.subplots(), e.g. ``figsize``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
 
-        eval_set_selection: {'all', 'test', 'train', 'original', 'original_transformed'}, optional
-            Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LightGBM or XGBoost.
+        validation_fraction : {float, 'cv', 'transformed', or None}, default='cv'
+            Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LGBMRegressor, LGBMClassifier, XGBRegressor, or XGBClassifier.
+
+            If float, devide source training data into training data and eval_set according to the specified ratio like sklearn.ensemble.GradientBoostingRegressor.
             
-            If "all", use all data in `X` and `y`.
+            If "cv", select test data from `X` and `y` using cv.split() like lightgbm.cv.
 
-            If "train", select train data from `X` and `y` using cv.split().
+            If "transformed", use `eval_set` transformed by `fit_transform()` of the pipeline if the `estimater` is sklearn.pipeline.Pipeline object.
 
-            If "test", select test data from `X` and `y` using cv.split().
-
-            If "original", use raw `eval_set`.
-
-            If "original_transformed", use `eval_set` transformed by fit_transform() of pipeline if `estimater` is pipeline.
+            If None, use raw `eval_set`.
 
         scatter_kws: dict, optional
             Additional parameters passed to sns.scatterplot(), e.g. ``alpha``. See https://seaborn.pydata.org/generated/seaborn.scatterplot.html
@@ -1112,48 +1120,46 @@ class regplot():
                 cv_num = cv.n_splits
 
             # fit_paramsにeval_metricが入力されており、eval_setが入力されていないときの処理(eval_setにテストデータを使用)
-            if eval_set_selection is None:
-                eval_set_selection = 'test'
-            fit_params, eval_set_selection = init_eval_set(
-                    eval_set_selection, fit_params, X, y)
+            if validation_fraction is None:
+                validation_fraction = 'cv'
             # 最終学習器以外の前処理変換器作成
-            transformer = _make_transformer(eval_set_selection, estimator)
+            transformer = _make_transformer(validation_fraction, estimator)
 
             # スコア種類ごとにクロスバリデーションスコアの算出
             score_all_dict = {}
             for scoring in scores:
                 # cross_val_scoreでクロスバリデーション
                 if scoring == 'r2':
-                    score_all_dict['r2'] = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true, 
+                    score_all_dict['r2'] = cross_val_score_eval_set(estimator, X, y_true, validation_fraction,
                                                     cv=cv, scoring='r2',
                                                     fit_params=fit_params, n_jobs=-1, **split_kws)
                 elif scoring == 'mae':
-                    neg_mae = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true, 
+                    neg_mae = cross_val_score_eval_set(estimator, X, y_true, validation_fraction,
                                                     cv=cv, scoring='neg_mean_absolute_error',
                                                     fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['mae'] = -neg_mae  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'mse':
-                    neg_mse = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true,
+                    neg_mse = cross_val_score_eval_set(estimator, X, y_true, validation_fraction,
                                                     cv=cv, scoring='neg_mean_squared_error',
                                                     fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['mse'] = -neg_mse  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'rmse':
-                    neg_rmse = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true,
+                    neg_rmse = cross_val_score_eval_set(estimator, X, y_true, validation_fraction,
                                                     cv=cv, scoring='neg_root_mean_squared_error',
                                                     fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['rmse'] = -neg_rmse  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'rmsle':
-                    neg_msle = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true,
+                    neg_msle = cross_val_score_eval_set(estimator, X, y_true, validation_fraction,
                                                     cv=cv, scoring='neg_mean_squared_log_error',
                                                     fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['rmsle'] = np.sqrt(-neg_msle)  # 正負を逆にしてルートをとる
                 elif scoring == 'mape':
-                    neg_mape = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true,
+                    neg_mape = cross_val_score_eval_set(estimator, X, y_true, validation_fraction,
                                                     cv=cv, scoring='neg_mean_absolute_percentage_error',
                                                     fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['mape'] = -neg_mape  # scikit-learnの仕様に合わせ正負を逆に
                 elif scoring == 'max_error':
-                    neg_max_error = cross_val_score_eval_set(eval_set_selection, estimator, X, y_true,
+                    neg_max_error = cross_val_score_eval_set(estimator, X, y_true, validation_fraction,
                                                     cv=cv, scoring='max_error',
                                                     fit_params=fit_params, n_jobs=-1, **split_kws)
                     score_all_dict['max_error'] = - neg_max_error  # scikit-learnの仕様に合わせ正負を逆に
@@ -1187,14 +1193,22 @@ class regplot():
                         rank_col_test = data[rank_col].values[test]
                 
                 # eval_setの中から学習データ or テストデータのみを抽出
-                fit_params_modified = _eval_set_selection(eval_set_selection, transformer,
-                                                        fit_params, train, test)
+                fit_params_modified, train_divided = _eval_set_selection(
+                    validation_fraction, 
+                    transformer, 
+                    X,
+                    y,
+                    fit_params, 
+                    train, 
+                    test,
+                    estimator.steps[-1][1].random_state if isinstance(estimator, Pipeline) else estimator.random_state
+                    )
 
                 # 学習と推論
-                estimator.fit(X_train, y_train, **fit_params_modified)
+                estimator.fit(X[train_divided], y[train_divided], **fit_params_modified)
                 # 学習データスコア算出
-                y_pred_train = estimator.predict(X_train)
-                score_dict = cls._make_score_dict(y_train, y_pred_train, scores)
+                y_pred_train = estimator.predict(X[train_divided])
+                score_dict = cls._make_score_dict(y[train_divided], y_pred_train, scores)
                 for score in scores:
                     if f'{score}_train' not in score_train_dict:
                         score_train_dict[f'{score}_train'] = []
@@ -1499,7 +1513,7 @@ class regplot():
                              plot_scatter = 'true', rounddigit_rank=3, rounddigit_x1=2, rounddigit_x2=2, rounddigit_x3=2,
                              rank_number=None, rank_col=None,
                              cv=None, cv_seed=42, cv_group=None, display_cv_indices = 0,
-                             estimator_params=None, fit_params=None, eval_set_selection=None,
+                             estimator_params=None, fit_params=None, validation_fraction=None,
                              subplot_kws=None, heat_kws=None, scatter_kws=None, legend_kws=None):
         """
         Plot regression heatmaps of any scikit-learn regressor with 2 to 4D explanatory variables.
@@ -1581,18 +1595,16 @@ class regplot():
         fit_params : dict, optional
             Parameters passed to the fit() method of the regression estimator, e.g. ``early_stopping_round`` and ``eval_set`` of XGBRegressor. If the estimator is pipeline, each parameter name must be prefixed such that parameter p for step s has key s__p.
 
-        eval_set_selection: {'all', 'test', 'train', 'original', 'original_transformed'}, optional
-            Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LightGBM or XGBoost.
+        validation_fraction : {float, 'cv', 'transformed', or None}, default='cv'
+            Select data passed to `eval_set` in `fit_params`. Available only if "estimator" is LGBMRegressor, LGBMClassifier, XGBRegressor, or XGBClassifier.
+
+            If float, devide source training data into training data and eval_set according to the specified ratio like sklearn.ensemble.GradientBoostingRegressor.
             
-            If "all", use all data in `X` and `y`.
+            If "cv", select test data from `X` and `y` using cv.split() like lightgbm.cv.
 
-            If "train", select train data from `X` and `y` using cv.split().
+            If "transformed", use `eval_set` transformed by `fit_transform()` of the pipeline if the `estimater` is sklearn.pipeline.Pipeline object.
 
-            If "test", select test data from `X` and `y` using cv.split().
-
-            If "original", use raw `eval_set`.
-
-            If "original_transformed", use `eval_set` transformed by fit_transform() of pipeline if `estimater` is pipeline.
+            If None, use raw `eval_set`.
 
         subplot_kws: dict, optional
             Additional parameters passed to matplotlib.pyplot.subplots(), e.g. ``figsize``. See https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html
@@ -1718,12 +1730,10 @@ class regplot():
                 cv_num = cv.n_splits
 
             # fit_paramsにeval_metricが入力されており、eval_setが入力されていないときの処理(eval_setにテストデータを使用)
-            if eval_set_selection is None:
-                eval_set_selection = 'test'
-            fit_params, eval_set_selection = init_eval_set(
-                    eval_set_selection, fit_params, X, y)
+            if validation_fraction is None:
+                validation_fraction = 'cv'
             # 最終学習器以外の前処理変換器作成
-            transformer = _make_transformer(eval_set_selection, estimator)
+            transformer = _make_transformer(validation_fraction, estimator)
 
             # クロスバリデーション
             for i, (train, test) in enumerate(cv.split(X, y_true, **split_kws)):
@@ -1738,11 +1748,19 @@ class regplot():
                 y_test = y_true[test]
 
                 # eval_setの中から学習データ or テストデータのみを抽出
-                fit_params_modified = _eval_set_selection(eval_set_selection, transformer,
-                                                        fit_params, train, test)
+                fit_params_modified, train_divided = _eval_set_selection(
+                    validation_fraction, 
+                    transformer, 
+                    X,
+                    y,
+                    fit_params, 
+                    train, 
+                    test,
+                    estimator.steps[-1][1].random_state if isinstance(estimator, Pipeline) else estimator.random_state
+                    )
 
                 # 学習と推論
-                estimator.fit(X_train, y_train, **fit_params_modified)
+                estimator.fit(X[train_divided], y[train_divided], **fit_params_modified)
                 y_pred = estimator.predict(X_test)
                 # 誤差上位表示用データ取得
                 if rank_number is not None:

@@ -70,7 +70,7 @@ class TestRegPlot:
                             scores='mse',
                             cv=self.cv,
                             fit_params=self.lgb_fit_params,
-                            eval_set_selection='test'
+                            validation_fraction='cv'
                             )
     
     def test_1_1_2_reg_pred_true_cv_lgbm_pipe(self):
@@ -80,7 +80,7 @@ class TestRegPlot:
                             scores='mse',
                             cv=self.cv,
                             fit_params=self.lgb_pipe_fit_params,
-                            eval_set_selection='test'
+                            validation_fraction='cv'
                             )
     
     def test_1_1_3_reg_pred_true_cv_svm_pipe(self):
@@ -118,7 +118,7 @@ class TestRegPlot:
                     x_colnames=self.USE_EXPLANATORY,
                     cv=self.cv,
                     fit_params=self.lgb_fit_params,
-                    eval_set_selection='test'
+                    validation_fraction='cv'
                     )
     
     def test_2_1_2_average_plot_cv_lgbm_pipe(self):
@@ -127,7 +127,7 @@ class TestRegPlot:
                     x_colnames=self.USE_EXPLANATORY,
                     cv=self.cv,
                     fit_params=self.lgb_pipe_fit_params,
-                    eval_set_selection='test'
+                    validation_fraction='cv'
                     )
     
     def test_2_1_3_average_plot_float_svm_pipe(self):
@@ -136,6 +136,24 @@ class TestRegPlot:
                     x_colnames=self.USE_EXPLANATORY,
                     cv=self.cv,
                     )
+        
+    def test_2_2_1_average_plot_float_lgbm(self):
+        regplot.average_plot(self.lgb, x=self.X,
+                    y=self.y,
+                    x_colnames=self.USE_EXPLANATORY,
+                    cv=self.cv,
+                    fit_params=self.lgb_fit_params,
+                    validation_fraction=0.3
+                    )
+    
+    def test_2_2_2_average_plot_float_lgbm_pipe(self):
+        regplot.average_plot(self.lgb_pipe, x=self.X,
+                    y=self.y,
+                    x_colnames=self.USE_EXPLANATORY,
+                    cv=self.cv,
+                    fit_params=self.lgb_pipe_fit_params,
+                    validation_fraction=0.3
+                    )
     
     def test_3_1_1_regression_heat_plot_cv_lgbm(self):
         regplot.regression_heat_plot(self.lgb, x=self.X,
@@ -143,7 +161,7 @@ class TestRegPlot:
                     x_colnames=self.USE_EXPLANATORY,
                     cv=self.cv,
                     fit_params=self.lgb_fit_params,
-                    eval_set_selection='test',
+                    validation_fraction='cv',
                     rounddigit_x1=3,
                     rounddigit_x2=3,
                     rounddigit_x3=3
@@ -155,7 +173,7 @@ class TestRegPlot:
                     x_colnames=self.USE_EXPLANATORY,
                     cv=self.cv,
                     fit_params=self.lgb_pipe_fit_params,
-                    eval_set_selection='test',
+                    validation_fraction='cv',
                     rounddigit_x1=3,
                     rounddigit_x2=3,
                     rounddigit_x3=3
@@ -171,7 +189,31 @@ class TestRegPlot:
                     rounddigit_x3=3
                     )
         
+    def test_3_2_1_regression_heat_plot_float_lgbm(self):
+        regplot.regression_heat_plot(self.lgb, x=self.X,
+                    y=self.y,
+                    x_colnames=self.USE_EXPLANATORY,
+                    cv=self.cv,
+                    fit_params=self.lgb_fit_params,
+                    validation_fraction=0.3,
+                    rounddigit_x1=3,
+                    rounddigit_x2=3,
+                    rounddigit_x3=3
+                    )
+    
+    def test_3_2_2_regression_heat_plot_float_lgbm_pipe(self):
+        regplot.regression_heat_plot(self.lgb_pipe, x=self.X,
+                    y=self.y,
+                    x_colnames=self.USE_EXPLANATORY,
+                    cv=self.cv,
+                    fit_params=self.lgb_pipe_fit_params,
+                    validation_fraction=0.3,
+                    rounddigit_x1=3,
+                    rounddigit_x2=3,
+                    rounddigit_x3=3
+                    )
+        
 if __name__ == "__main__":
     test_reg_plot = TestRegPlot()
-    test_reg_plot.test_3_1_3_regression_heat_plot_cv_svm_pipe()
+    test_reg_plot.test_3_2_2_regression_heat_plot_float_lgbm_pipe()
 # %%
