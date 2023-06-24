@@ -140,6 +140,28 @@ class TestClassPlot:
                             proba_type='imshow',
                             )
     
+    def test_2_2_1_class_proba_plot_float_lgbm(self):
+        classplot.class_proba_plot(self.lgb, x=self.X,
+                            y=self.y,
+                            x_colnames=self.USE_EXPLANATORY,
+                            cv=self.cv,
+                            pair_sigmarange=0.5,
+                            proba_type='imshow',
+                            fit_params=self.lgb_fit_params,
+                            validation_fraction=0.3
+                            )
+    
+    def test_2_2_2_class_proba_plot_float_lgbm_pipe(self):
+        classplot.class_proba_plot(self.lgb_pipe, x=self.X,
+                            y=self.y,
+                            x_colnames=self.USE_EXPLANATORY,
+                            cv=self.cv,
+                            pair_sigmarange=0.5,
+                            proba_type='imshow',
+                            fit_params=self.lgb_pipe_fit_params,
+                            validation_fraction=0.3
+                            )
+    
     def test_3_1_1_roc_plot_cv_lgbm(self):
         classplot.roc_plot(self.lgb, x=self.X,
                             y=self.y,
@@ -165,7 +187,25 @@ class TestClassPlot:
                             cv=self.cv
                             )
         
+    def test_3_2_1_roc_plot_float_lgbm(self):
+        classplot.roc_plot(self.lgb, x=self.X,
+                            y=self.y,
+                            x_colnames=self.USE_EXPLANATORY,
+                            cv=self.cv,
+                            fit_params=self.lgb_fit_params,
+                            validation_fraction=0.3
+                            )
+    
+    def test_3_2_2_roc_plot_float_lgbm_pipe(self):
+        classplot.roc_plot(self.lgb_pipe, x=self.X,
+                            y=self.y,
+                            x_colnames=self.USE_EXPLANATORY,
+                            cv=self.cv,
+                            fit_params=self.lgb_pipe_fit_params,
+                            validation_fraction=0.3
+                            )
+        
 if __name__ == "__main__":
     test_class_plot = TestClassPlot()
-    test_class_plot.test_2_1_3_class_proba_plot_float_svm_pipe()
+    test_class_plot.test_3_1_1_roc_plot_cv_lgbm()
 # %%
