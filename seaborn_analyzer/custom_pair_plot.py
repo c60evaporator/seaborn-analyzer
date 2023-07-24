@@ -189,14 +189,15 @@ class CustomPairPlot():
         grid_kws : dict
             Additional parameters passed to seaborn.PairGrid.__init__() other than the above arguments. See https://seaborn.pydata.org/generated/seaborn.PairGrid.html
         """
+        # int, float, bool型の列のみを選択
+        self.df = df.select_dtypes(include=[int, float, bool])
         # bool型の列をintに変換
-        self.df = df.copy()
         bool_cols = self.df.select_dtypes(include=bool).columns
         for col in bool_cols:
             self.df[col] = self.df[col] * 1
         #メンバ変数入力
         self.hue = hue
-        self.corr_mat = df.corr(method="pearson")
+        self.corr_mat = self.df.corr(method="pearson")
         #文字サイズ調整
         sns.set_context("notebook")
 
