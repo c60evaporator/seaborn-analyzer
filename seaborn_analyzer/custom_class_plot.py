@@ -474,7 +474,7 @@ class classplot():
             Marker style of False label. Available only if ``plot_scatter`` is set to 'error' or 'class_error'. See https://matplotlib.org/stable/api/markers_api.html#module-matplotlib.markers
 
         cv : int, cross-validation generator, or an iterable, optional
-            Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
+            Determines the cross-validation splitting strategy. If None, no cross-validation is used and the training data is displayed. If int, to specify the number of folds in a KFold.
 
         cv_seed: int, optional
             Seed for random number generator of cross validation.
@@ -728,7 +728,7 @@ class classplot():
             Marker style of False label. Available only if ``plot_scatter`` is set to 'error' or 'class_error'. See https://matplotlib.org/stable/api/markers_api.html#module-matplotlib.markers
 
         cv: int or sklearn.model_selection.*, optional
-            Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
+            Determines the cross-validation splitting strategy. If None, no cross-validation is used and the training data is displayed. If int, to specify the number of folds in a KFold.
 
         cv_seed: int, optional
             Seed for random number generator of cross validation.
@@ -1198,8 +1198,8 @@ class classplot():
         x_colnames: list[str], default=None
             Names of explanatory variables. Available only if ``data`` is NOT pd.DataFrame
 
-        cv: int or sklearn.model_selection.*, default=5
-            Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
+        cv: int or sklearn.model_selection.*, default=None
+            Determines the cross-validation splitting strategy. If None, no cross-validation is used and the training data is displayed. If int, to specify the number of folds in a KFold.
 
         cv_seed: int, default=42
             Seed for random number generator of cross validation.

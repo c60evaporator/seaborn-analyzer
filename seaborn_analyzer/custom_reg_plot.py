@@ -296,7 +296,7 @@ class regplot():
             Statistical method of cross validation score that are displayed at the lower right of the graph.
 
         cv : int, cross-validation generator, or an iterable, optional
-            Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
+            Determines the cross-validation splitting strategy. If None, no cross-validation is used and the training data is displayed. If int, to specify the number of folds in a KFold.
 
         cv_seed : int, optional
             Seed for random number generator of cross validation.
@@ -644,7 +644,7 @@ class regplot():
             Statistic method of aggregating explanatory variables except x_axis variable.
 
         cv : int, cross-validation generator, or an iterable, optional
-            Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
+            Determines the cross-validation splitting strategy. If None, no cross-validation is used and the training data is displayed. If int, to specify the number of folds in a KFold.
 
         cv_seed : int, optional
             Seed for random number generator of cross validation.
@@ -1005,7 +1005,7 @@ class regplot():
             Statistical method of cross validation score that are displayed at the lower right of the graph.
 
         cv : int, cross-validation generator, or an iterable, optional
-            Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
+            Determines the cross-validation splitting strategy. If None, no cross-validation is used and the training data is displayed. If int, to specify the number of folds in a KFold.
 
         cv_seed : int, optional
             Seed for random number generator of cross validation.
@@ -1578,7 +1578,7 @@ class regplot():
             Variables that are displayed with emphasized data that are in the top posiotions for regression error.
 
         cv : int, cross-validation generator, or an iterable, optional
-            Determines the cross-validation splitting strategy. If None, to use the default 5-fold cross validation. If int, to specify the number of folds in a KFold.
+            Determines the cross-validation splitting strategy. If None, no cross-validation is used and the training data is displayed. If int, to specify the number of folds in a KFold.
 
         cv_seed : int, optional
             Seed for random number generator of cross validation.
