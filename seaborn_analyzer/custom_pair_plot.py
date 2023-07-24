@@ -205,7 +205,7 @@ class CustomPairPlot():
         diag_sharey = diag_kind == "hist"
         g = sns.PairGrid(self.df, hue=self.hue,
                  palette=palette, vars=vars, diag_sharey=diag_sharey,
-                 height=height, aspect=aspect, dropna=dropna, size=None, **grid_kws)
+                 height=height, aspect=aspect, dropna=dropna, **grid_kws)
         self.hue_names = g.hue_names
 
         #マーカーを設定
