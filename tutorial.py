@@ -308,12 +308,14 @@ classplot.class_separator_plot(pipe, x=['petal_width', 'petal_length'],
 import seaborn as sns
 iris = sns.load_dataset("iris")
 from xgboost import XGBClassifier
+from sklearn.preprocessing import OrdinalEncoder
 import matplotlib.pyplot as plt
 # モデルの学習
 clf = XGBClassifier()
 features = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']
 X = iris[features].values
-y = iris['species'].values
+ode = OrdinalEncoder()
+y = ode.fit_transform(iris['species'].values.reshape(-1, 1))
 clf.fit(X, y)
 # 特徴量重要度の取得と可視化
 importances = list(clf.feature_importances_)
@@ -328,7 +330,7 @@ import pandas as pd
 from seaborn_analyzer import classplot
 features = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']
 X = iris[features].values
-y = iris['species'].values
+y = ode.fit_transform(iris['species'].values.reshape(-1, 1))
 # 前処理として標準化
 ss = StandardScaler()
 ss.fit(X)  # 標準化パラメータの学習
@@ -494,13 +496,15 @@ OBJECTIVE_VARIALBLE = 'species'  # Objective variable
 USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # Explantory variables
 y = iris[OBJECTIVE_VARIALBLE].values
 X = iris[USE_EXPLANATORY].values
-fit_params = {'verbose': 0,
-              'early_stopping_rounds': 10,
-              'eval_metric': 'multi_logloss',
-              'eval_set': [(X, y)]
-              }
+params = {'random_state': 42,
+          'boosting_type': 'gbdt',
+          'n_estimators': 10000,
+          'verbose': -1,
+          'early_stopping_round': 10}
+fit_params = {'eval_metric': 'multi_logloss',
+              'eval_set': [(X, y)]}
 # Plot ROC curve with cross validation in multiclass classification
-estimator = LGBMClassifier(random_state=42, n_estimators=10000)
+estimator = LGBMClassifier(**params)
 fig, axes = plt.subplots(4, 1, figsize=(6, 24))
 classplot.roc_plot(estimator, X, y, ax=axes, cv=3, fit_params=fit_params)
 
@@ -514,7 +518,7 @@ import numpy as np
 from seaborn_analyzer import classplot
 # Load dataset
 iris = sns.load_dataset("iris")
-iris = iris[iris['species'] != 'setosa'] 
+iris = iris[iris['species'] != 'setosa']
 OBJECTIVE_VARIALBLE = 'species'  # Objective variable
 USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # Explantory variables
 y = iris[OBJECTIVE_VARIALBLE].values
@@ -523,13 +527,15 @@ X = iris[USE_EXPLANATORY].values
 random_state = np.random.RandomState(0)
 n_samples, n_features = X.shape
 X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
-fit_params = {'verbose': 0,
-              'early_stopping_rounds': 10,
-              'eval_metric': 'binary_logloss',
-              'eval_set': [(X, y)]
-              }
+lgbm_params = {'random_state': 42,
+          'boosting_type': 'gbdt',
+          'n_estimators': 10000,
+          'verbose': -1,
+          'early_stopping_round': 10}
+fit_params = {'eval_metric': 'binary_logloss',
+              'eval_set': [(X, y)]}
 # Plot ROC curve with three classifiers
-estimator1 = LGBMClassifier(random_state=42, n_estimators=10000)
+estimator1 = LGBMClassifier(**lgbm_params)
 estimator2 = SVC(probability=True, random_state=42)
 estimator3 = RandomForestClassifier(random_state=42)
 fig, axes = plt.subplots(4, 3, figsize=(18, 24))
@@ -555,13 +561,15 @@ OBJECTIVE_VARIALBLE = 'species'  # Objective variable
 USE_EXPLANATORY = ['petal_width', 'petal_length', 'sepal_width', 'sepal_length']  # Explantory variables
 y = iris[OBJECTIVE_VARIALBLE].values
 X = iris[USE_EXPLANATORY].values
-fit_params = {'verbose': 0,
-              'early_stopping_rounds': 10,
-              'eval_metric': 'multi_logloss',
-              'eval_set': [(X, y)]
-              }
+lgbm_params = {'random_state': 42,
+          'boosting_type': 'gbdt',
+          'n_estimators': 10000,
+          'verbose': -1,
+          'early_stopping_round': 10}
+fit_params = {'eval_metric': 'multi_logloss',
+              'eval_set': [(X, y)]}
 # Plot ROC curve with three classifiers
-estimator1 = LGBMClassifier(random_state=42, n_estimators=10000)
+estimator1 = LGBMClassifier(**lgbm_params)
 estimator2 = SVC(probability=True, random_state=42)
 estimator3 = RandomForestClassifier(random_state=42)
 fig, axes = plt.subplots(4, 3, figsize=(18, 24))
@@ -592,13 +600,15 @@ X = iris[USE_EXPLANATORY].values
 random_state = np.random.RandomState(0)
 n_samples, n_features = X.shape
 X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
-fit_params = {'verbose': 0,
-              'early_stopping_rounds': 10,
-              'eval_metric': 'multi_logloss',
-              'eval_set': [(X, y)]
-              }
+lgbm_params = {'random_state': 42,
+          'boosting_type': 'gbdt',
+          'n_estimators': 10000,
+          'verbose': -1,
+          'early_stopping_round': 10}
+fit_params = {'eval_metric': 'multi_logloss',
+              'eval_set': [(X, y)]}
 # Plot ROC curve with three classifiers
-estimator1 = LGBMClassifier(random_state=42, n_estimators=10000)
+estimator1 = LGBMClassifier(**lgbm_params)
 estimator2 = SVC(probability=True, random_state=42)
 estimator3 = RandomForestClassifier(random_state=42)
 fig, axes = plt.subplots(4, 3, figsize=(18, 24))
