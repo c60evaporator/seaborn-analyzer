@@ -513,11 +513,11 @@ class regplot():
                     )
 
                 # 学習と推論
-                estimator.fit(X[train_divided], y[train_divided], **fit_params_modified)
+                estimator.fit(X[train_divided], y_true[train_divided], **fit_params_modified)
                 y_pred = estimator.predict(X_test)
                 # 学習データスコア算出
                 y_pred_train = estimator.predict(X[train_divided])
-                score_dict = cls._make_score_dict(y[train_divided], y_pred_train, scores)
+                score_dict = cls._make_score_dict(y_true[train_divided], y_pred_train, scores)
                 for score in scores:
                     if f'{score}_train' not in score_train_dict:
                         score_train_dict[f'{score}_train'] = []
@@ -776,7 +776,7 @@ class regplot():
                     )
 
                 # 学習と推論
-                estimator.fit(X[train_divided], y[train_divided], **fit_params_modified)
+                estimator.fit(X[train_divided], y_true[train_divided], **fit_params_modified)
                 # ヒートマップをプロット
                 cls._average_plot(estimator, data_test, x_colnames, y_colname, hue,
                                   aggregate=aggregate,
@@ -1205,10 +1205,10 @@ class regplot():
                     )
 
                 # 学習と推論
-                estimator.fit(X[train_divided], y[train_divided], **fit_params_modified)
+                estimator.fit(X[train_divided], y_true[train_divided], **fit_params_modified)
                 # 学習データスコア算出
                 y_pred_train = estimator.predict(X[train_divided])
-                score_dict = cls._make_score_dict(y[train_divided], y_pred_train, scores)
+                score_dict = cls._make_score_dict(y_true[train_divided], y_pred_train, scores)
                 for score in scores:
                     if f'{score}_train' not in score_train_dict:
                         score_train_dict[f'{score}_train'] = []
@@ -1760,7 +1760,7 @@ class regplot():
                     )
 
                 # 学習と推論
-                estimator.fit(X[train_divided], y[train_divided], **fit_params_modified)
+                estimator.fit(X[train_divided], y_true[train_divided], **fit_params_modified)
                 y_pred = estimator.predict(X_test)
                 # 誤差上位表示用データ取得
                 if rank_number is not None:
