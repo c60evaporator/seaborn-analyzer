@@ -645,7 +645,7 @@ class classplot():
                     )
 
                 # 学習と推論
-                clf.fit(X[train_divided], y[train_divided], **fit_params_modified)
+                clf.fit(X[train_divided], y_true[train_divided], **fit_params_modified)
                 y_pred = clf.predict(X_test)
                 # 決定境界図をプロット
                 cls._class_chart_plot(clf, X_test, y_pred, y_test, x_chart, x_not_chart, x_chart_indices,
@@ -945,7 +945,7 @@ class classplot():
                     )
 
                 # 学習と推論
-                clf.fit(X[train_divided], y[train_divided], **fit_params_modified)
+                clf.fit(X[train_divided], y_true[train_divided], **fit_params_modified)
                 y_pred = clf.predict(X_test)
                 # クラス確率を推定
                 proba_pred = clf.predict_proba(X_test)[:, proba_class_indices]
