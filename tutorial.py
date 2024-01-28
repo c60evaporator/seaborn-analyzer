@@ -601,10 +601,10 @@ random_state = np.random.RandomState(0)
 n_samples, n_features = X.shape
 X = np.c_[X, random_state.randn(n_samples, 10 * n_features)]
 lgbm_params = {'random_state': 42,
-          'boosting_type': 'gbdt',
-          'n_estimators': 10000,
-          'verbose': -1,
-          'early_stopping_round': 10}
+               'boosting_type': 'gbdt',
+               'n_estimators': 10000,
+               'verbose': -1,
+               'early_stopping_round': 10}
 fit_params = {'eval_metric': 'multi_logloss',
               'eval_set': [(X, y)]}
 # Plot ROC curve with three classifiers

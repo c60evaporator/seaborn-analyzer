@@ -26,8 +26,6 @@ class TestClassPlot:
     cv = KFold(n_splits=5, shuffle=True, random_state=42)
     # LightGBM model
     lgb_params = {
-        'objective': 'multiclass',
-        'metric': 'multi_logloss',
         'random_state': 42,
         'boosting_type': 'gbdt',  # boosting_type
         'n_estimators': 10000,
@@ -35,13 +33,12 @@ class TestClassPlot:
         'early_stopping_round': 10
         }
     lgb_fit_params = {
+        'eval_metric': 'multi_logloss',
         'eval_set':[(X, y)]
         }
     lgb = LGBMClassifier(**lgb_params)
     # LightGBM pipeline model
     lgb_pipe_params = {
-        'lgbm__objective': 'multiclass',
-        'lgbm__metric': 'multi_logloss',
         'lgbm__random_state': 42,
         'lgbm__boosting_type': 'gbdt',  # boosting_type
         'lgbm__n_estimators': 10000,
@@ -49,6 +46,7 @@ class TestClassPlot:
         'lgbm__early_stopping_round': 10
         }
     lgb_pipe_fit_params = {
+        'lgbm__eval_metric': 'multi_logloss',
         'lgbm__eval_set':[(X, y)]
         }
     lgb_pipe = Pipeline([("scaler", StandardScaler()), ("lgbm", LGBMClassifier())])
