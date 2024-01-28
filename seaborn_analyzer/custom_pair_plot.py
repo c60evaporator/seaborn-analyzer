@@ -189,7 +189,10 @@ class CustomPairPlot():
         grid_kws : dict
             Additional parameters passed to seaborn.PairGrid.__init__() other than the above arguments. See https://seaborn.pydata.org/generated/seaborn.PairGrid.html
         """
-        # int, float, bool型の列のみを選択
+        # Check whether hue column is exist in df
+        if hue not in df.columns:
+            raise AttributeError(f"'{hue}' doesn't exist in the columns of `df`")
+        # Select columns whose type is in [int, float, bool]
         self.df = df.select_dtypes(include=[int, float, bool])
         # bool型の列をintに変換
         bool_cols = self.df.select_dtypes(include=bool).columns
@@ -200,6 +203,10 @@ class CustomPairPlot():
         self.corr_mat = self.df.corr(method="pearson")
         #文字サイズ調整
         sns.set_context("notebook")
+
+        # Add hue column if the column was deleted because of the type filter
+        if hue not in self.df.columns:
+            self.df[hue] = df[hue]
 
         #PairGridインスタンス作成
         plt.figure()
