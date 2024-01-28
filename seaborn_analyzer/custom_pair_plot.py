@@ -224,9 +224,9 @@ class CustomPairPlot():
 
         #対角にヒストグラム or KDEをプロット
         if diag_kind == "hist":
-            g.map_diag(plt.hist, **diag_kws)
+            g.map_diag(sns.histplot, **diag_kws)
         elif diag_kind == "kde":
-            diag_kws.setdefault("shade", True)
+            diag_kws.setdefault("fill", True)
             diag_kws["legend"] = False
             g.map_diag(sns.kdeplot, **diag_kws)
 
