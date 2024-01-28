@@ -8,7 +8,7 @@ from sklearn import clone
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import check_cv, GridSearchCV, RandomizedSearchCV, train_test_split
 from sklearn.model_selection._validation import _fit_and_score, _insert_error_scores, _aggregate_score_dicts, _normalize_score_results, _translate_train_sizes, _incremental_fit_estimator
-from sklearn.utils.validation import indexable, check_random_state, _check_fit_params
+from sklearn.utils.validation import indexable, check_random_state
 from sklearn.metrics import check_scoring
 from sklearn.metrics._scorer import _check_multimetric_scoring
 from sklearn.base import is_classifier
@@ -79,6 +79,7 @@ def _fit_and_score_eval_set(
     verbose,
     parameters,
     fit_params,
+    score_params=None,
     return_train_score=False,
     return_parameters=False,
     return_n_test_samples=False,
@@ -89,7 +90,11 @@ def _fit_and_score_eval_set(
     error_score=np.nan,
     ):
     """Fit estimator and compute scores for a given dataset split."""
-    
+    # random_state取得
+    if isinstance(estimator, Pipeline):
+        random_state = estimator.steps[-1][1].random_state if 'random_state' in estimator.steps[-1][1].__dict__.keys() else None
+    else:
+        random_state = estimator.random_state if 'random_state' in estimator.__dict__.keys() else None
     # fit_params内のデータをvalidation_fractionに合わせて整形 (validation_fraction='')
     fit_params_modified, train_divided = _eval_set_selection(
         validation_fraction, 
@@ -99,12 +104,15 @@ def _fit_and_score_eval_set(
         fit_params, 
         train, 
         test,
-        estimator.steps[-1][1].random_state if isinstance(estimator, Pipeline) else estimator.random_state
+        random_state
         )
 
     # 学習してスコア計算
-    result = _fit_and_score(estimator, X, y, scorer, train_divided, test, verbose, parameters,
-                            fit_params_modified,
+    result = _fit_and_score(estimator, X, y, 
+                            scorer=scorer, train=train_divided, 
+                            test=test, verbose=verbose, parameters=parameters,
+                            fit_params=fit_params_modified,
+                            score_params=score_params,
                             return_train_score=return_train_score,
                             return_parameters=return_parameters, return_n_test_samples=return_n_test_samples,
                             return_times=return_times, return_estimator=return_estimator,
@@ -946,7 +954,7 @@ class GridSearchCVEvalSet(GridSearchCV):
             refit_metric = self.refit
 
         X, y, groups = indexable(X, y, groups)
-        fit_params = _check_fit_params(X, fit_params)
+        #fit_params = _check_method_params(X, fit_params)
 
         cv_orig = check_cv(self.cv, y, classifier=is_classifier(estimator))
         n_splits = cv_orig.get_n_splits(X, y, groups)
@@ -1158,7 +1166,7 @@ class RandomizedSearchCVEvalSet(RandomizedSearchCV):
             refit_metric = self.refit
 
         X, y, groups = indexable(X, y, groups)
-        fit_params = _check_fit_params(X, fit_params)
+        # fit_params = _check_method_params(X, fit_params)  TODO: Replace _checkfit_params() to _check_method_params() to comply with scikit-learn >= 1.4
 
         cv_orig = check_cv(self.cv, y, classifier=is_classifier(estimator))
         n_splits = cv_orig.get_n_splits(X, y, groups)

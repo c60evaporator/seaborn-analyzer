@@ -500,6 +500,12 @@ class regplot():
                 else:
                     rank_col_test = np.array([])
 
+                # random_state取得
+                if isinstance(estimator, Pipeline):
+                    random_state = estimator.steps[-1][1].random_state if 'random_state' in estimator.steps[-1][1].__dict__.keys() else None
+                else:
+                    random_state = estimator.random_state if 'random_state' in estimator.__dict__.keys() else None
+
                 # eval_setの中から学習データ or テストデータのみを抽出
                 fit_params_modified, train_divided = _eval_set_selection(
                     validation_fraction, 
@@ -509,7 +515,7 @@ class regplot():
                     fit_params, 
                     train, 
                     test,
-                    estimator.steps[-1][1].random_state if isinstance(estimator, Pipeline) else estimator.random_state
+                    random_state
                     )
 
                 # 学習と推論
@@ -1747,6 +1753,12 @@ class regplot():
                 X_test = X[test]
                 y_test = y_true[test]
 
+                # random_state取得
+                if isinstance(estimator, Pipeline):
+                    random_state = estimator.steps[-1][1].random_state if 'random_state' in estimator.steps[-1][1].__dict__.keys() else None
+                else:
+                    random_state = estimator.random_state if 'random_state' in estimator.__dict__.keys() else None
+
                 # eval_setの中から学習データ or テストデータのみを抽出
                 fit_params_modified, train_divided = _eval_set_selection(
                     validation_fraction, 
@@ -1756,7 +1768,7 @@ class regplot():
                     fit_params, 
                     train, 
                     test,
-                    estimator.steps[-1][1].random_state if isinstance(estimator, Pipeline) else estimator.random_state
+                    random_state
                     )
 
                 # 学習と推論
